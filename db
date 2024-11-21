@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Anamakine: 127.0.0.1
--- Üretim Zamanı: 21 Kas 2024, 04:11:05
+-- Üretim Zamanı: 21 Kas 2024, 17:45:42
 -- Sunucu sürümü: 10.4.32-MariaDB
 -- PHP Sürümü: 8.2.12
 
@@ -34,9 +34,12 @@ CREATE TABLE `follows` (
 --
 
 INSERT INTO `follows` (`user_id`, `following`, `followers`, `created_at`, `updated_at`) VALUES
-(469349221, '[547623719]', '[547623719]', '2024-11-21 00:48:30', '2024-11-21 02:45:58'),
-(547623719, '[469349221]', '[469349221,996326876]', '2024-11-21 00:46:20', '2024-11-21 02:46:47'),
-(996326876, '[547623719]', '[]', '2024-11-21 02:04:56', '2024-11-21 02:46:47');
+(358057337, '[469349221,526705234,547623719,996326876]', '[]', '2024-11-21 10:24:46', '2024-11-21 10:27:16'),
+(469349221, '[547623719]', '[996326876,526705234,547623719,358057337]', '2024-11-20 21:48:30', '2024-11-21 10:27:13'),
+(526705234, '[547623719,469349221,996326876]', '[547623719,358057337]', '2024-11-21 08:36:55', '2024-11-21 10:27:15'),
+(547623719, '[996326876,469349221,526705234]', '[996326876,469349221,526705234,918982810,358057337]', '2024-11-20 21:46:20', '2024-11-21 10:27:15'),
+(918982810, '[547623719]', '[]', '2024-11-21 09:45:00', '2024-11-21 10:02:47'),
+(996326876, '[547623719,469349221]', '[547623719,526705234,358057337]', '2024-11-20 23:04:56', '2024-11-21 10:27:16');
 
 -- --------------------------------------------------------
 
@@ -51,11 +54,50 @@ CREATE TABLE `freelancers` (
   `bank_name` varchar(255) DEFAULT NULL,
   `iban` varchar(255) DEFAULT NULL,
   `tax_number` varchar(255) DEFAULT NULL,
-  `hourly_rate` decimal(10,2) DEFAULT NULL,
-  `experience_years` int(11) DEFAULT NULL,
+  `daily_rate` decimal(10,2) DEFAULT NULL,
+  `experience_time` int(11) DEFAULT NULL COMMENT 'Experience time in days',
   `availability_status` enum('AVAILABLE','UNAVAILABLE') DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `freelancers`
+--
+
+INSERT INTO `freelancers` (`freelancer_id`, `user_id`, `account_holder`, `bank_name`, `iban`, `tax_number`, `daily_rate`, `experience_time`, `availability_status`, `created_at`) VALUES
+(3, 547623719, 'Can Yılmaz', 'Akbank', 'TR56 1561 6516 5165 1656 5165 16', '1561651651', 5000.00, 0, 'AVAILABLE', '2024-11-21 12:13:21');
+
+--
+-- Tetikleyiciler `freelancers`
+--
+DELIMITER $$
+CREATE TRIGGER `init_freelancer_experience` BEFORE INSERT ON `freelancers` FOR EACH ROW BEGIN
+    -- created_at'i Istanbul saatine göre ayarla
+    SET NEW.created_at = CONVERT_TZ(CURRENT_TIMESTAMP, @@session.time_zone, '+03:00');
+    
+    -- Kullanıcının kayıt tarihinden bu yana geçen süreyi Istanbul saatine göre hesapla
+    SELECT DATEDIFF(
+        CONVERT_TZ(CURRENT_TIMESTAMP, @@session.time_zone, '+03:00'),
+        CONVERT_TZ(created_at, @@session.time_zone, '+03:00')
+    ) INTO @user_days
+    FROM users WHERE user_id = NEW.user_id;
+    
+    SET NEW.experience_time = @user_days;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `update_freelancer_experience` BEFORE UPDATE ON `freelancers` FOR EACH ROW BEGIN
+    -- CONVERT_TZ ile Istanbul saatine çeviriyoruz
+    IF OLD.created_at IS NOT NULL THEN
+        SET NEW.experience_time = DATEDIFF(
+            CONVERT_TZ(CURRENT_TIMESTAMP, @@session.time_zone, '+03:00'),
+            CONVERT_TZ(OLD.created_at, @@session.time_zone, '+03:00')
+        );
+    END IF;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -77,7 +119,10 @@ CREATE TABLE `invitations` (
 
 INSERT INTO `invitations` (`invitation_id`, `inviter_id`, `invited_user_id`, `invitation_code`, `used_at`) VALUES
 (8, 469349221, 547623719, '673D0E081', NULL),
-(9, 469349221, 996326876, '673D0E081', NULL);
+(9, 469349221, 996326876, '673D0E081', NULL),
+(10, 547623719, 526705234, '673E68726', NULL),
+(11, 469349221, 918982810, '673D0E081', NULL),
+(12, 547623719, 358057337, '673E68726', NULL);
 
 -- --------------------------------------------------------
 
@@ -128,15 +173,30 @@ CREATE TABLE `login_attempts` (
 --
 
 INSERT INTO `login_attempts` (`attempt_id`, `user_id`, `ip_address`, `attempt_time`, `status`, `country`, `city`, `region`, `isp`, `timezone`, `browser`, `browser_version`, `os`, `verified`) VALUES
-(26, 469349221, '5.25.167.186', '2024-11-20 12:16:21', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
-(32, 547623719, '5.27.27.52', '2024-11-20 23:33:50', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
-(33, 469349221, '5.27.27.52', '2024-11-20 23:59:10', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
-(34, 547623719, '5.27.27.52', '2024-11-20 23:59:52', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
-(35, 469349221, '5.27.27.52', '2024-11-21 00:48:30', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
-(36, 547623719, '5.27.27.52', '2024-11-21 01:31:20', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
-(37, 469349221, '5.27.27.52', '2024-11-21 01:49:14', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
-(38, 547623719, '5.27.27.52', '2024-11-21 01:51:45', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
-(39, 469349221, '5.27.27.52', '2024-11-21 01:56:32', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0);
+(26, 469349221, '5.25.167.186', '2024-11-20 09:16:21', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(32, 547623719, '5.27.27.52', '2024-11-20 20:33:50', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(33, 469349221, '5.27.27.52', '2024-11-20 20:59:10', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(34, 547623719, '5.27.27.52', '2024-11-20 20:59:52', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(35, 469349221, '5.27.27.52', '2024-11-20 21:48:30', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(36, 547623719, '5.27.27.52', '2024-11-20 22:31:20', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(37, 469349221, '5.27.27.52', '2024-11-20 22:49:14', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(38, 547623719, '5.27.27.52', '2024-11-20 22:51:45', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(39, 469349221, '5.27.27.52', '2024-11-20 22:56:32', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(40, 547623719, '5.27.27.52', '2024-11-21 00:33:45', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(41, 469349221, '5.27.27.52', '2024-11-21 00:59:11', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(42, 547623719, '5.27.27.52', '2024-11-21 01:09:46', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(43, 469349221, '5.27.27.52', '2024-11-21 01:23:28', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(44, 547623719, '5.27.27.52', '2024-11-21 01:28:40', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(45, 469349221, '5.27.27.52', '2024-11-21 01:38:22', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '131.0.0.0', 'Windows', 0),
+(46, 547623719, '5.27.27.52', '2024-11-21 08:20:48', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(47, 547623719, '194.27.158.149', '2024-11-21 09:37:38', 'SUCCESS', 'Türkiye', 'Muğla', 'Muğla', 'National Academic Network and Information Center', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(48, 547623719, '194.27.158.149', '2024-11-21 09:41:01', 'SUCCESS', 'Türkiye', 'Muğla', 'Muğla', 'National Academic Network and Information Center', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(49, 547623719, '5.27.27.52', '2024-11-21 10:15:24', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(50, 547623719, '5.27.27.52', '2024-11-21 10:23:54', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(51, 547623719, '5.27.27.52', '2024-11-21 10:28:19', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(52, 547623719, '5.27.27.52', '2024-11-21 10:28:30', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(53, 547623719, '5.27.27.52', '2024-11-21 10:55:13', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(54, 547623719, '5.27.27.52', '2024-11-21 11:29:48', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0);
 
 -- --------------------------------------------------------
 
@@ -158,9 +218,12 @@ CREATE TABLE `referral_sources` (
 --
 
 INSERT INTO `referral_sources` (`source_id`, `user_id`, `source_type`, `specific_source`, `is_referral_signup`, `join_date`) VALUES
-(27, 469349221, 'ORGANIC', '673D0E081', 0, '2024-11-19 22:16:18'),
-(32, 547623719, 'ORGANIC', '673E68726', 1, '2024-11-20 22:53:58'),
-(33, 996326876, 'ORGANIC', '673E952F7', 1, '2024-11-21 02:04:54');
+(27, 469349221, 'ORGANIC', '673D0E081', 0, '2024-11-19 19:16:18'),
+(32, 547623719, 'ORGANIC', '673E68726', 1, '2024-11-20 19:53:58'),
+(33, 996326876, 'ORGANIC', '673E952F7', 1, '2024-11-20 23:04:54'),
+(34, 526705234, 'ORGANIC', '673F1B499', 1, '2024-11-21 08:36:53'),
+(35, 918982810, 'ORGANIC', '673F2B27E', 1, '2024-11-21 09:44:58'),
+(36, 358057337, 'ORGANIC', '673F348AD', 1, '2024-11-21 10:24:44');
 
 -- --------------------------------------------------------
 
@@ -175,6 +238,18 @@ CREATE TABLE `skills` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `skills`
+--
+
+INSERT INTO `skills` (`id`, `user_id`, `skills`, `created_at`, `updated_at`) VALUES
+(2, 996326876, '[{\"name\":\"few\",\"level\":5},{\"name\":\"csa\",\"level\":2}]', '2024-11-21 00:16:47', '2024-11-21 00:23:00'),
+(3, 547623719, '[{\"name\":\"few\",\"level\":3},{\"name\":\"few\",\"level\":2}]', '2024-11-21 00:33:45', '2024-11-21 01:31:07'),
+(4, 469349221, '[]', '2024-11-21 00:59:11', NULL),
+(5, 526705234, '[]', '2024-11-21 08:36:55', NULL),
+(6, 918982810, '[]', '2024-11-21 09:45:00', NULL),
+(7, 358057337, '[]', '2024-11-21 10:24:46', NULL);
 
 -- --------------------------------------------------------
 
@@ -195,9 +270,12 @@ CREATE TABLE `social_links` (
 --
 
 INSERT INTO `social_links` (`id`, `user_id`, `social_links`, `created_at`, `updated_at`) VALUES
-(2, 469349221, '[]', '2024-11-20 00:51:45', '2024-11-20 01:00:45'),
-(6, 547623719, '[{\"platform\":\"youtube\",\"url\":\"https:\\/\\/youtube.com\\/can\"}]', '2024-11-20 22:53:58', '2024-11-21 01:51:58'),
-(7, 996326876, '[]', '2024-11-21 02:04:54', NULL);
+(2, 469349221, '[]', '2024-11-19 21:51:45', '2024-11-19 22:00:45'),
+(6, 547623719, '[{\"platform\":\"youtube\",\"url\":\"https:\\/\\/youtube.com\\/can\"},{\"platform\":\"facebook\",\"url\":\"https:\\/\\/facebook.com\\/jknk\"},{\"platform\":\"discord\",\"url\":\"https:\\/\\/discord.com\\/users\\/bhbjbh\"}]', '2024-11-20 19:53:58', '2024-11-21 01:34:28'),
+(7, 996326876, '[{\"platform\":\"youtube\",\"url\":\"https:\\/\\/youtube.com\\/merhaba\"}]', '2024-11-20 23:04:54', '2024-11-21 00:23:19'),
+(8, 526705234, '[]', '2024-11-21 08:36:55', NULL),
+(9, 918982810, '[]', '2024-11-21 09:45:00', NULL),
+(10, 358057337, '[]', '2024-11-21 10:24:46', NULL);
 
 -- --------------------------------------------------------
 
@@ -221,9 +299,9 @@ CREATE TABLE `staff` (
 --
 
 INSERT INTO `staff` (`staff_id`, `username`, `password`, `email`, `role`, `is_active`, `created_at`, `last_login`) VALUES
-(6, 'admin', '$2y$10$0QqrVX5J7GbVHbgcvRx7fOI/FcfeR3e4MxSBGdlIxKtTMItLhWavS', 'admin@lureid.com', 'ADMIN', 1, '2024-11-19 15:29:38', '2024-11-19 18:52:41'),
-(7, 'mod', '$2y$10$.JgApAzxzLdgmlTe1WQxiOZj0bG2A8FHocG6gyCMRwNrabpABlCaS', 'moderator@lureid.com', 'MODERATOR', 1, '2024-11-19 15:29:38', '2024-11-19 15:33:39'),
-(8, 'sup', '$2y$10$R0QQciU4BasDU.T54J.Brep6koZiGzBKEzUt94jEwd5Ov88zsmUq2', 'support@lureid.com', 'SUPPORT', 1, '2024-11-19 15:29:38', '2024-11-19 18:54:20');
+(6, 'admin', '$2y$10$0QqrVX5J7GbVHbgcvRx7fOI/FcfeR3e4MxSBGdlIxKtTMItLhWavS', 'admin@lureid.com', 'ADMIN', 1, '2024-11-19 12:29:38', '2024-11-21 10:30:11'),
+(7, 'mod', '$2y$10$.JgApAzxzLdgmlTe1WQxiOZj0bG2A8FHocG6gyCMRwNrabpABlCaS', 'moderator@lureid.com', 'MODERATOR', 1, '2024-11-19 12:29:38', '2024-11-19 12:33:39'),
+(8, 'sup', '$2y$10$R0QQciU4BasDU.T54J.Brep6koZiGzBKEzUt94jEwd5Ov88zsmUq2', 'support@lureid.com', 'SUPPORT', 1, '2024-11-19 12:29:38', '2024-11-19 15:54:20');
 
 -- --------------------------------------------------------
 
@@ -246,6 +324,13 @@ CREATE TABLE `staff_login_attempts` (
   `browser_version` varchar(50) DEFAULT NULL,
   `os` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `staff_login_attempts`
+--
+
+INSERT INTO `staff_login_attempts` (`attempt_id`, `staff_id`, `ip_address`, `attempt_time`, `status`, `country`, `city`, `region`, `isp`, `timezone`, `browser`, `browser_version`, `os`) VALUES
+(14, 6, '5.27.27.52', '2024-11-21 10:30:11', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows');
 
 -- --------------------------------------------------------
 
@@ -289,8 +374,14 @@ CREATE TABLE `transactions` (
 --
 
 INSERT INTO `transactions` (`transaction_id`, `sender_id`, `receiver_id`, `amount`, `transaction_type`, `status`, `description`, `created_at`) VALUES
-(13537610606, 469349221, 469349221, 100.00, 'DEPOSIT', 'COMPLETED', 'Credit card deposit to wallet', '2024-11-20 13:51:46'),
-(81572491994, 469349221, 469349221, 50.00, 'WITHDRAWAL', 'COMPLETED', 'Withdrawal from wallet', '2024-11-20 13:51:15');
+(13537610606, 469349221, 469349221, 100.00, 'DEPOSIT', 'COMPLETED', 'Credit card deposit to wallet', '2024-11-20 10:51:46'),
+(41574092911, 547623719, 547623719, 200.00, 'DEPOSIT', 'COMPLETED', 'Credit card deposit to wallet', '2024-11-21 09:42:51'),
+(43079215437, 358057337, 358057337, 200.00, 'DEPOSIT', 'COMPLETED', 'Credit card deposit to wallet', '2024-11-21 10:26:17'),
+(62348709953, 469349221, 547623719, 50.00, 'TRANSFER', 'COMPLETED', 'Transfer to canyilmaz', '2024-11-21 01:38:46'),
+(63588032091, 358057337, 469349221, 50.00, 'TRANSFER', 'COMPLETED', 'Transfer to tospaa1', '2024-11-21 10:26:45'),
+(66124406625, 547623719, 996326876, 200.00, 'TRANSFER', 'COMPLETED', 'Transfer to osman', '2024-11-21 09:43:18'),
+(68017650665, 358057337, 358057337, 100.00, 'WITHDRAWAL', 'COMPLETED', 'Withdrawal from wallet', '2024-11-21 10:26:29'),
+(81572491994, 469349221, 469349221, 50.00, 'WITHDRAWAL', 'COMPLETED', 'Withdrawal from wallet', '2024-11-20 10:51:15');
 
 -- --------------------------------------------------------
 
@@ -318,9 +409,12 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `username`, `email`, `password`, `full_name`, `google_id`, `is_verified`, `remember_token`, `two_factor_auth`, `user_type`, `created_at`, `remember_token_expires_at`) VALUES
-(469349221, 'tospaa1', 'osmananlatici@gmail.com', '$2y$10$lTnWj4AJ2AEqnlgj2EJTnuqkNLIjOyFkAjsl8ktojyyH/pwJSVdqy', 'Osman Taha Anlatıcı', NULL, 1, NULL, 0, 'user', '2024-11-19 22:16:18', NULL),
-(547623719, 'canyilmaz', 'cnylmz735@gmail.com', '$2y$10$eCUzu0GL8mK736ucA/zt1eYUJKCQ1iWXew33mpw4N/pjjWK/sd.qC', 'Can Yılmaz', NULL, 1, NULL, 0, 'user', '2024-11-20 22:53:58', NULL),
-(996326876, 'yeni', 'yeni@a.a', '$2y$10$tSOqe7Zt81ZJKrrdW0YJyO7SPba5/HyX3SEAYojnUMfXKpLCrAiT6', 'yeni', NULL, 1, NULL, 0, 'user', '2024-11-21 02:04:54', NULL);
+(358057337, 'rasit', 'rasit@ra.sit', '$2y$10$IzxxDNaVI.zUBJVC/Vd7.u3cS8SNcQ/g9AwaURAhmyYXiTkORCunu', 'Raşit', NULL, 1, NULL, 0, 'user', '2024-11-21 10:24:44', NULL),
+(469349221, 'tospaa1', 'osmananlatici@gmail.com', '$2y$10$lTnWj4AJ2AEqnlgj2EJTnuqkNLIjOyFkAjsl8ktojyyH/pwJSVdqy', 'Osman Taha Anlatıcı', NULL, 1, NULL, 0, 'user', '2024-11-19 19:16:18', NULL),
+(526705234, 'deneme', 'dene@dene.me', '$2y$10$ET9qPBaxo//blaZMd8htm..K32ntj.S7yozVWSBHkCesWGR3WAY9y', 'Deneme', NULL, 1, NULL, 0, 'user', '2024-11-21 08:36:53', NULL),
+(547623719, 'canyilmaz', 'cnylmz735@gmail.com', '$2y$10$eCUzu0GL8mK736ucA/zt1eYUJKCQ1iWXew33mpw4N/pjjWK/sd.qC', 'Can Yılmaz', NULL, 1, NULL, 0, 'user', '2024-11-20 19:53:58', NULL),
+(918982810, 'can', 'ca@ca.n', '$2y$10$IxG4Et8vCFHi2zLFUZT7luDG.exC8NZdfn8jPCPiDnQfwGzip1u1C', 'Can', NULL, 1, NULL, 0, 'user', '2024-11-21 09:44:58', NULL),
+(996326876, 'osman', 'yeni@a.a', '$2y$10$tSOqe7Zt81ZJKrrdW0YJyO7SPba5/HyX3SEAYojnUMfXKpLCrAiT6', 'yeni', NULL, 1, NULL, 0, 'user', '2024-11-20 23:04:54', NULL);
 
 -- --------------------------------------------------------
 
@@ -344,9 +438,12 @@ CREATE TABLE `user_profiles` (
 --
 
 INSERT INTO `user_profiles` (`profile_id`, `user_id`, `age`, `biography`, `city`, `country`, `profile_photo_url`, `website`) VALUES
-(27, 469349221, 20, 'Osman gültekin senmisin', 'Bursa', 'Türkiye', 'profile/avatars/469349221.jpg', 'http://www.osmangultekin.com'),
-(30, 547623719, 20, 'LureID Founder', 'Antalya', 'Türkiye', 'profile/avatars/547623719.jpg', 'http://lure.id'),
-(31, 996326876, NULL, NULL, NULL, NULL, 'profile/avatars/996326876.jpg', NULL);
+(27, 469349221, 20, 'Osman gültekin', 'Bursa', 'Türkiye', 'profile/avatars/469349221.jpg', 'http://www.osmangultekin.com'),
+(30, 547623719, 21, 'LureID Founder', 'Antalya', '', 'profile/avatars/547623719.jpg', 'http://lure.id'),
+(31, 996326876, 20, 'LureID Founder', 'Antalya', 'Türkiye', 'profile/avatars/996326876.jpg', 'http://can.com'),
+(32, 526705234, NULL, NULL, NULL, NULL, 'profile/avatars/526705234.jpg', NULL),
+(33, 918982810, NULL, NULL, NULL, NULL, 'profile/avatars/918982810.jpg', NULL),
+(34, 358057337, NULL, NULL, NULL, NULL, 'profile/avatars/358057337.jpg', NULL);
 
 -- --------------------------------------------------------
 
@@ -362,6 +459,13 @@ CREATE TABLE `verification` (
   `expiry_date` timestamp NULL DEFAULT NULL,
   `expires_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `verification`
+--
+
+INSERT INTO `verification` (`verification_id`, `user_id`, `code`, `remember_token`, `expiry_date`, `expires_at`) VALUES
+(30, 547623719, '429593', NULL, NULL, '2024-11-21 11:10:13');
 
 -- --------------------------------------------------------
 
@@ -384,9 +488,56 @@ CREATE TABLE `wallet` (
 --
 
 INSERT INTO `wallet` (`wallet_id`, `user_id`, `balance`, `coins`, `created_at`, `updated_at`, `last_transaction_date`) VALUES
-(35, 469349221, 100.00, 250, '2024-11-19 22:16:18', '2024-11-21 02:04:54', '2024-11-21 02:04:54'),
-(42, 547623719, 0.00, 25, '2024-11-20 22:53:58', NULL, '2024-11-20 22:53:58'),
-(43, 996326876, 0.00, 25, '2024-11-21 02:04:54', NULL, '2024-11-21 02:04:54');
+(35, 469349221, 100.00, 300, '2024-11-19 19:16:18', '2024-11-21 10:26:45', '2024-11-21 10:26:45'),
+(42, 547623719, 50.00, 125, '2024-11-20 19:53:58', '2024-11-21 10:24:44', '2024-11-21 10:24:44'),
+(43, 996326876, 200.00, 25, '2024-11-20 23:04:54', '2024-11-21 09:43:18', '2024-11-21 09:43:18'),
+(44, 526705234, 0.00, 25, '2024-11-21 08:36:53', NULL, '2024-11-21 08:36:53'),
+(45, 918982810, 0.00, 25, '2024-11-21 09:44:58', NULL, '2024-11-21 09:44:58'),
+(46, 358057337, 50.00, 25, '2024-11-21 10:24:44', '2024-11-21 10:26:45', '2024-11-21 10:26:45');
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `works`
+--
+
+CREATE TABLE `works` (
+  `work_id` int(11) NOT NULL,
+  `freelancer_id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `category` varchar(100) NOT NULL,
+  `requirements` text NOT NULL,
+  `daily_rate` decimal(10,2) DEFAULT NULL,
+  `fixed_price` decimal(10,2) DEFAULT NULL,
+  `tags` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`tags`)),
+  `visibility` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tetikleyiciler `works`
+--
+DELIMITER $$
+CREATE TRIGGER `update_work_timestamp` BEFORE UPDATE ON `works` FOR EACH ROW BEGIN
+    SET NEW.updated_at = CURRENT_TIMESTAMP;
+END
+$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `works_media`
+--
+
+CREATE TABLE `works_media` (
+  `media_id` int(11) NOT NULL,
+  `work_id` int(11) NOT NULL,
+  `media_paths` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`media_paths`)),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dökümü yapılmış tablolar için indeksler
@@ -510,6 +661,20 @@ ALTER TABLE `wallet`
   ADD KEY `wallet_ibfk_1` (`user_id`);
 
 --
+-- Tablo için indeksler `works`
+--
+ALTER TABLE `works`
+  ADD PRIMARY KEY (`work_id`),
+  ADD KEY `freelancer_id` (`freelancer_id`);
+
+--
+-- Tablo için indeksler `works_media`
+--
+ALTER TABLE `works_media`
+  ADD PRIMARY KEY (`media_id`),
+  ADD KEY `work_id` (`work_id`);
+
+--
 -- Dökümü yapılmış tablolar için AUTO_INCREMENT değeri
 --
 
@@ -517,13 +682,13 @@ ALTER TABLE `wallet`
 -- Tablo için AUTO_INCREMENT değeri `freelancers`
 --
 ALTER TABLE `freelancers`
-  MODIFY `freelancer_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `freelancer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `invitations`
 --
 ALTER TABLE `invitations`
-  MODIFY `invitation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `invitation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `jobs`
@@ -535,25 +700,25 @@ ALTER TABLE `jobs`
 -- Tablo için AUTO_INCREMENT değeri `login_attempts`
 --
 ALTER TABLE `login_attempts`
-  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `referral_sources`
 --
 ALTER TABLE `referral_sources`
-  MODIFY `source_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `source_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `skills`
 --
 ALTER TABLE `skills`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `social_links`
 --
 ALTER TABLE `social_links`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `staff`
@@ -565,13 +730,13 @@ ALTER TABLE `staff`
 -- Tablo için AUTO_INCREMENT değeri `staff_login_attempts`
 --
 ALTER TABLE `staff_login_attempts`
-  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `temp_users`
 --
 ALTER TABLE `temp_users`
-  MODIFY `temp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
+  MODIFY `temp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `users`
@@ -583,19 +748,31 @@ ALTER TABLE `users`
 -- Tablo için AUTO_INCREMENT değeri `user_profiles`
 --
 ALTER TABLE `user_profiles`
-  MODIFY `profile_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `profile_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `verification`
 --
 ALTER TABLE `verification`
-  MODIFY `verification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `verification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `wallet`
 --
 ALTER TABLE `wallet`
-  MODIFY `wallet_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+  MODIFY `wallet_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `works`
+--
+ALTER TABLE `works`
+  MODIFY `work_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `works_media`
+--
+ALTER TABLE `works_media`
+  MODIFY `media_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Dökümü yapılmış tablolar için kısıtlamalar
@@ -625,7 +802,7 @@ ALTER TABLE `invitations`
 --
 ALTER TABLE `jobs`
   ADD CONSTRAINT `jobs_ibfk_1` FOREIGN KEY (`client_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `jobs_ibfk_2` FOREIGN KEY (`freelancer_id`) REFERENCES `freelancers` (`freelancer_id`);
+  ADD CONSTRAINT `jobs_ibfk_2` FOREIGN KEY (`freelancer_id`) REFERENCES `freelancers` (`freelancer_id`) ON DELETE SET NULL;
 
 --
 -- Tablo kısıtlamaları `login_attempts`
@@ -681,4 +858,34 @@ ALTER TABLE `verification`
 --
 ALTER TABLE `wallet`
   ADD CONSTRAINT `wallet_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `works`
+--
+ALTER TABLE `works`
+  ADD CONSTRAINT `works_ibfk_1` FOREIGN KEY (`freelancer_id`) REFERENCES `freelancers` (`freelancer_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `works_media`
+--
+ALTER TABLE `works_media`
+  ADD CONSTRAINT `works_media_ibfk_1` FOREIGN KEY (`work_id`) REFERENCES `works` (`work_id`) ON DELETE CASCADE;
+
+DELIMITER $$
+--
+-- Olaylar
+--
+CREATE DEFINER=`root`@`localhost` EVENT `daily_update_freelancer_experience` ON SCHEDULE EVERY 1 DAY STARTS '2024-11-21 18:14:40' ON COMPLETION NOT PRESERVE ENABLE DO BEGIN
+    -- Timezone'u event içinde de ayarlıyoruz
+    SET time_zone = '+03:00';
+    
+    UPDATE freelancers 
+    SET experience_time = DATEDIFF(
+        CONVERT_TZ(CURRENT_TIMESTAMP, @@session.time_zone, '+03:00'),
+        CONVERT_TZ(created_at, @@session.time_zone, '+03:00')
+    )
+    WHERE created_at IS NOT NULL;
+END$$
+
+DELIMITER ;
 COMMIT;

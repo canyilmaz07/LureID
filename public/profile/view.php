@@ -1,4 +1,5 @@
 <?php
+// view.php
 session_start();
 require_once '../../config/database.php';
 
@@ -24,7 +25,7 @@ if (!$username) {
     exit;
 }
 
-// Profil bilgilerini getir
+// Profil bilgilerini getir - Move this BEFORE accessing $profile
 $stmt = $db->prepare("
     SELECT 
         u.*,
@@ -46,6 +47,31 @@ $profile = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$profile) {
     header('Location: /');
     exit;
+}
+
+$isFreelancer = false;
+$freelancerData = null;
+$works = [];
+
+// Now we can safely use $profile['user_id']
+$stmt = $db->prepare("SELECT * FROM freelancers WHERE user_id = ?");
+$stmt->execute([$profile['user_id']]);
+$freelancerData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if ($freelancerData) {
+    $isFreelancer = true;
+
+    // İlanları getir
+    $stmt = $db->prepare("
+        SELECT w.*, wm.media_paths
+        FROM works w
+        LEFT JOIN works_media wm ON w.work_id = wm.work_id
+        WHERE w.freelancer_id = ? AND w.visibility = 1
+        ORDER BY w.created_at DESC
+        LIMIT 6
+    ");
+    $stmt->execute([$freelancerData['freelancer_id']]);
+    $works = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 // Avatar yolu kontrolü
@@ -214,6 +240,14 @@ if (isset($_SESSION['user_id'])) {
                                 <?php echo htmlspecialchars($profile['website']); ?>
                             </a>
                         <?php endif; ?>
+                        <?php if ($isFreelancer): ?>
+                            <div class="mt-2 flex items-center">
+                                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">Freelancer</span>
+                                <span class="mx-2 text-gray-400">•</span>
+                                <span
+                                    class="text-gray-600">₺<?php echo number_format($freelancerData['daily_rate'], 2); ?>/day</span>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -257,6 +291,91 @@ if (isset($_SESSION['user_id'])) {
                 </div>
             <?php endif; ?>
         </div>
+        <!-- İlanlar Bölümü - sosyal linklerden sonra -->
+        <?php if ($isFreelancer && !empty($works)): ?>
+            <div class="mb-8">
+                <h3 class="text-xl font-bold mb-4">Works</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <?php foreach ($works as $work): ?>
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <?php
+                            $mediaPaths = json_decode($work['media_paths'], true);
+                            $firstImage = null;
+                            if ($mediaPaths) {
+                                foreach ($mediaPaths as $type => $path) {
+                                    if (strpos($type, 'image_') !== false) {
+                                        $firstImage = $path;
+                                        break;
+                                    }
+                                }
+                            }
+                            ?>
+                            <?php if ($firstImage): ?>
+                                <div class="relative pt-[56.25%]">
+                                    <img src="/<?php echo htmlspecialchars($firstImage); ?>"
+                                        alt="<?php echo htmlspecialchars($work['title']); ?>"
+                                        class="absolute inset-0 w-full h-full object-cover">
+                                </div>
+                            <?php endif; ?>
+                            <div class="p-4">
+                                <h4 class="font-semibold mb-2"><?php echo htmlspecialchars($work['title']); ?></h4>
+                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                    <?php echo htmlspecialchars($work['description']); ?>
+                                </p>
+                                <div class="flex items-center justify-between">
+                                    <div class="text-sm text-gray-500">
+                                        <?php echo date('M j, Y', strtotime($work['created_at'])); ?>
+                                    </div>
+                                    <a href="/public/views/work.php?id=<?php echo $work['work_id']; ?>"
+                                        class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
+                                        View
+                                    </a>
+                                </div>
+                                <div class="mt-2 flex flex-wrap gap-2">
+                                    <?php if ($work['daily_rate']): ?>
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                            ₺<?php echo number_format($work['daily_rate'], 2); ?>/day
+                                        </span>
+                                    <?php endif; ?>
+                                    <?php if ($work['fixed_price']): ?>
+                                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                                            ₺<?php echo number_format($work['fixed_price'], 2); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    <?php
+                                    $tags = json_decode($work['tags'], true);
+                                    if ($tags):
+                                        foreach (array_slice($tags, 0, 2) as $tag):
+                                            ?>
+                                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">
+                                                <?php echo htmlspecialchars($tag); ?>
+                                            </span>
+                                            <?php
+                                        endforeach;
+                                        if (count($tags) > 2):
+                                            ?>
+                                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">
+                                                +<?php echo count($tags) - 2; ?>
+                                            </span>
+                                            <?php
+                                        endif;
+                                    endif;
+                                    ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php if (count($works) >= 6): ?>
+                    <div class="text-center mt-4">
+                        <a href="/public/views/works.php?user=<?php echo htmlspecialchars($profile['username']); ?>"
+                            class="inline-block px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                            View All Works
+                        </a>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
     </main>
 
     <!-- Followers/Following Modals -->
@@ -424,11 +543,11 @@ if (isset($_SESSION['user_id'])) {
                                         websiteLink.attr('href', formData.website).text(formData.website);
                                     } else {
                                         $('.mb-4').append(`
-                                <a href="${formData.website}" target="_blank" 
-                                   class="text-blue-500 hover:underline">
-                                    ${formData.website}
-                                </a>
-                            `);
+                                            <a href="${formData.website}" target="_blank" 
+                                               class="text-blue-500 hover:underline">
+                                                ${formData.website}
+                                            </a>
+                                        `);
                                     }
                                 } else {
                                     websiteLink.remove();

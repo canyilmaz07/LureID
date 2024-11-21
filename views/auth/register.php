@@ -75,16 +75,11 @@ class Database
 
     private function debugLog($message)
     {
-        // Log dosyasına yazma
-        file_put_contents(
-            __DIR__ . '/debug.log',
-            date('Y-m-d H:i:s') . " - " . $message . "\n",
-            FILE_APPEND
-        );
+        // Mevcut logger'ı kullanarak debug loglarını kaydet
+        $this->logger->log($message, 'DEBUG');
 
-        // Ekrana yazdırma (geliştirme aşamasında)
+        // AJAX isteği ise hata logunu da ekle
         if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-            // AJAX isteği ise
             error_log($message);
         }
     }
@@ -229,13 +224,14 @@ class Database
             // Get temp user data
             $tempUser = $this->getTempUser($email);
             if (!$tempUser) {
+                $this->debugLog("Error: Temporary registration not found for email: $email");
                 throw new Exception("Temporary registration not found");
             }
             $this->debugLog("Temp user found: " . json_encode($tempUser));
 
             // Generate unique user ID
             $userId = $this->generateUniqueUserId();
-            $this->debugLog("Generated user ID: $userId");
+            $this->debugLog("Generated user ID: $userId for email: $email");
 
             // Insert into users table
             $stmt = $this->conn->prepare("
@@ -251,7 +247,7 @@ class Database
                 password_hash($password, PASSWORD_DEFAULT),
                 $tempUser['full_name']
             ]);
-            $this->debugLog("User inserted into users table");
+            $this->debugLog("User inserted into users table - UserID: $userId, Username: $username");
 
             // Insert invitation code
             $stmt = $this->conn->prepare("
@@ -264,10 +260,10 @@ class Database
                 $tempUser['invite_code'],
                 $referralCode ? true : false
             ]);
-            $this->debugLog("Referral source created");
+            $this->debugLog("Referral source created for UserID: $userId");
 
             if ($referralCode) {
-                $this->debugLog("Processing referral code: $referralCode");
+                $this->debugLog("Processing referral code: $referralCode for UserID: $userId");
 
                 // Get referrer's user ID
                 $stmt = $this->conn->prepare("
@@ -276,7 +272,7 @@ class Database
                 ");
                 $stmt->execute([$referralCode]);
                 $referrerId = $stmt->fetchColumn();
-                $this->debugLog("Found referrer ID: $referrerId");
+                $this->debugLog("Found referrer ID: $referrerId for referral code: $referralCode");
 
                 if ($referrerId) {
                     // Create wallet for new user with referral bonus
@@ -285,9 +281,9 @@ class Database
                         VALUES (?, 25, CURRENT_TIMESTAMP)
                     ");
                     $stmt->execute([$userId]);
-                    $this->debugLog("Created wallet with 25 coins for new user");
+                    $this->debugLog("Created wallet with 25 coins for new user: $userId");
 
-                    // Update referrer's existing wallet
+                    // Update referrer's wallet
                     $stmt = $this->conn->prepare("
                         UPDATE wallet 
                         SET coins = coins + 50,
@@ -295,7 +291,7 @@ class Database
                         WHERE user_id = ?
                     ");
                     $stmt->execute([$referrerId]);
-                    $this->debugLog("Updated referrer's wallet with +50 coins");
+                    $this->debugLog("Updated referrer's ($referrerId) wallet with +50 coins");
 
                     // Record invitation
                     $stmt = $this->conn->prepare("
@@ -304,10 +300,10 @@ class Database
                         ) VALUES (?, ?, ?)
                     ");
                     $stmt->execute([$referrerId, $userId, $referralCode]);
-                    $this->debugLog("Recorded invitation relationship");
+                    $this->debugLog("Recorded invitation relationship - Inviter: $referrerId, Invited: $userId");
                 }
             } else {
-                $this->debugLog("No referral code, creating wallet with 0 coins");
+                $this->debugLog("Creating wallet with 0 coins for UserID: $userId (no referral)");
                 $stmt = $this->conn->prepare("
                     INSERT INTO wallet (user_id, coins, last_transaction_date)
                     VALUES (?, 0, CURRENT_TIMESTAMP)
@@ -318,18 +314,19 @@ class Database
             // Delete temp user
             $stmt = $this->conn->prepare("DELETE FROM temp_users WHERE email = ?");
             $stmt->execute([$email]);
-            $this->debugLog("Deleted temp user record");
+            $this->debugLog("Deleted temp user record for email: $email");
 
             $this->conn->commit();
-            $this->debugLog("Registration completed successfully");
+            $this->debugLog("Registration completed successfully for UserID: $userId");
             return $userId;
 
         } catch (Exception $e) {
             $this->conn->rollBack();
-            $this->debugLog("Registration failed: " . $e->getMessage());
+            $this->debugLog("Registration failed for email $email: " . $e->getMessage());
             throw new Exception("Failed to complete registration");
         }
     }
+
 
     public function generateUniqueInviteCode()
     {
@@ -1009,7 +1006,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.0/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.0/CustomEase.min.js"></script>
     <script src="../../sources/js/slider.js" defer></script>
-    <script>        // API işlemleri
+    <script>
+        // API işlemleri
         async function checkUsername(username) {
             const response = await fetch(window.location.href, {
                 method: 'POST',

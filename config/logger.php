@@ -56,3 +56,4 @@ class Logger
         chmod($this->logFile, 0644);     
     } 
 }
+?>

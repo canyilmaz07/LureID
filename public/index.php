@@ -4,7 +4,7 @@ session_start();
 require_once '../config/database.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: views/auth/login.php');
+    header('Location: ../views/auth/login.php');
     exit;
 }
 
@@ -220,6 +220,31 @@ if ($checkSocialLinksStmt->fetchColumn() == 0) {
         </div>
     </div>
 
+    <!-- Freelancer Section -->
+    <div id="freelancerSection" class="hidden">
+        <div class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <button id="backFromFreelancer" class="flex items-center text-gray-600 hover:text-gray-900">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Dashboard
+                    </button>
+                    <h1 class="text-xl font-semibold">Freelancer Registration</h1>
+                    <div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div id="freelancerContent" class="bg-white rounded-lg shadow p-6">
+                <!-- Freelancer content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
     <!-- Main Dashboard -->
     <div id="mainDashboard">
         <header class="bg-white shadow">
@@ -244,6 +269,17 @@ if ($checkSocialLinksStmt->fetchColumn() == 0) {
                             <path d="M18 12a2 2 0 0 0 0 4h4v-4z"></path>
                         </svg>
                         Wallet (₺<?php echo number_format($_SESSION['user_data']['balance'], 2); ?>)
+                    </button>
+                    <button id="openFreelancer"
+                        class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        Freelancer
                     </button>
                     <button id="openSettings" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
                         Profile Settings
@@ -319,6 +355,27 @@ if ($checkSocialLinksStmt->fetchColumn() == 0) {
                 $('#walletContent').html('<div class="text-center py-4">Loading...</div>');
                 $.get('components/wallet.php', function (response) {
                     $('#walletContent').html(response);
+                });
+            }
+
+            // Freelancer Panel Functions
+            $('#openFreelancer').click(function () {
+                $('#mainDashboard').hide();
+                $('#settingsSection').hide();
+                $('#walletSection').hide();
+                $('#freelancerSection').show();
+                loadFreelancer();
+            });
+
+            $('#backFromFreelancer').click(function () {
+                $('#freelancerSection').hide();
+                $('#mainDashboard').show();
+            });
+
+            function loadFreelancer() {
+                $('#freelancerContent').html('<div class="text-center py-4">Loading...</div>');
+                $.get('components/freelancer_subs.php', function (response) {
+                    $('#freelancerContent').html(response);
                 });
             }
 

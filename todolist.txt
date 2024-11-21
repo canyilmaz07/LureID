@@ -59,3 +59,8 @@ menü:
     > topluluk
     > eğitim
     > profil
+
+buglar:
+    > profil ayarlarında hesap silme çalışmıyor
+    > davet edilen kişi 1970 tarihinde katılmış gözüküyor
+    > index.php de sayfaya href # gelince search çalışmıyor

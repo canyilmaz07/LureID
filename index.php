@@ -143,12 +143,14 @@
    </style>
 </head>
 <body>
+    <a href="public/index.php">GİRİŞ</a>
 
 <div class="search-container">
    <div class="search-wrapper">
        <input type="text" class="search-input" placeholder="Search...">
        <img src="sources/icons/linear/search-normal.svg" class="search-icon" alt="search">
    </div>
+   
 
    <div class="menu-section">
        <div class="section-title">Recent Searches</div>
