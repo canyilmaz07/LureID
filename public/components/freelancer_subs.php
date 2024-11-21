@@ -472,6 +472,81 @@ if ($freelancer) {
             </div>
         </div>
 
+        <!-- Active Works Section -->
+        <div class="bg-white rounded-lg shadow">
+            <h3 class="font-bold text-lg p-6 border-b">Active Works</h3>
+            <div class="p-6">
+                <?php
+                // Get active jobs for the freelancer
+                $stmt = $db->prepare("
+            SELECT j.*, u.username as client_username, u.full_name as client_name,
+                   w.title as work_title
+            FROM jobs j
+            JOIN users u ON j.user_id = u.user_id
+            JOIN works w ON j.title = w.title
+            JOIN freelancers f ON j.freelancer_id = f.freelancer_id
+            WHERE f.user_id = :user_id 
+            AND j.status IN ('IN_PROGRESS', 'DELIVERED')
+            ORDER BY j.created_at DESC
+        ");
+                $stmt->execute([':user_id' => $_SESSION['user_id']]);
+                $activeJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                if (empty($activeJobs)): ?>
+                    <p class="text-gray-500 text-center">No active works found.</p>
+                <?php else: ?>
+                    <div class="space-y-4">
+                        <?php foreach ($activeJobs as $job): ?>
+                            <div class="border rounded-lg p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="font-medium"><?php echo htmlspecialchars($job['work_title']); ?></h4>
+                                        <p class="text-sm text-gray-600">Client:
+                                            <?php echo htmlspecialchars($job['client_name']); ?>
+                                            (@<?php echo htmlspecialchars($job['client_username']); ?>)
+                                        </p>
+                                        <p class="text-sm text-gray-600">Budget: ₺<?php echo number_format($job['budget'], 2); ?>
+                                        </p>
+                                        <p class="text-sm text-gray-600">Status: <span
+                                                class="font-medium <?php echo $job['status'] === 'DELIVERED' ? 'text-yellow-600' : 'text-blue-600'; ?>">
+                                                <?php echo $job['status']; ?></span></p>
+                                    </div>
+                                    <?php if ($job['status'] === 'IN_PROGRESS'): ?>
+                                        <button onclick="deliverWork(<?php echo $job['job_id']; ?>)"
+                                            class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                                            Deliver Work
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <script>
+            function deliverWork(jobId) {
+                if (!confirm('Are you sure you want to deliver this work?')) {
+                    return;
+                }
+
+                $.post('components/job_actions.php', {
+                    action: 'deliver',
+                    job_id: jobId
+                }).done(function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert(response.message || 'An error occurred');
+                    }
+                }).fail(function () {
+                    alert('Network error occurred');
+                });
+            }
+        </script>
+
         <!-- Works Management Section -->
         <div class="bg-white rounded-lg shadow">
             <div class="border-b border-gray-200">
@@ -619,7 +694,7 @@ if ($freelancer) {
                                                     <img src="/<?php echo htmlspecialchars($path); ?>" alt="Work image"
                                                         class="absolute inset-0 w-full h-full object-cover rounded">
                                                 </div>
-                                            <?php
+                                                <?php
                                             endif;
                                         endforeach;
 

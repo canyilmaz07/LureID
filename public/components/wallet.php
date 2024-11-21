@@ -338,6 +338,12 @@ $recentTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         echo "Transfer from {$transaction['sender_username']}";
                                     }
                                     break;
+                                case 'PAYMENT':  // Payment case'ini ekledik
+                                    echo $transaction['description']; // Veritabanındaki description'ı göster
+                                    break;
+                                default:
+                                    echo $transaction['description'];
+                                    break;
                             }
                             ?>
                         </p>

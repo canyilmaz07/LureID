@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Anamakine: 127.0.0.1
--- Üretim Zamanı: 21 Kas 2024, 17:45:42
+-- Üretim Zamanı: 21 Kas 2024, 23:40:11
 -- Sunucu sürümü: 10.4.32-MariaDB
 -- PHP Sürümü: 8.2.12
 
@@ -35,9 +35,9 @@ CREATE TABLE `follows` (
 
 INSERT INTO `follows` (`user_id`, `following`, `followers`, `created_at`, `updated_at`) VALUES
 (358057337, '[469349221,526705234,547623719,996326876]', '[]', '2024-11-21 10:24:46', '2024-11-21 10:27:16'),
-(469349221, '[547623719]', '[996326876,526705234,547623719,358057337]', '2024-11-20 21:48:30', '2024-11-21 10:27:13'),
+(469349221, '[547623719]', '[996326876,526705234,547623719,358057337]', '2024-11-20 21:48:30', '2024-11-21 21:35:43'),
 (526705234, '[547623719,469349221,996326876]', '[547623719,358057337]', '2024-11-21 08:36:55', '2024-11-21 10:27:15'),
-(547623719, '[996326876,469349221,526705234]', '[996326876,469349221,526705234,918982810,358057337]', '2024-11-20 21:46:20', '2024-11-21 10:27:15'),
+(547623719, '[996326876,469349221,526705234]', '[996326876,526705234,918982810,358057337,469349221]', '2024-11-20 21:46:20', '2024-11-21 21:35:43'),
 (918982810, '[547623719]', '[]', '2024-11-21 09:45:00', '2024-11-21 10:02:47'),
 (996326876, '[547623719,469349221]', '[547623719,526705234,358057337]', '2024-11-20 23:04:56', '2024-11-21 10:27:16');
 
@@ -132,7 +132,7 @@ INSERT INTO `invitations` (`invitation_id`, `inviter_id`, `invited_user_id`, `in
 
 CREATE TABLE `jobs` (
   `job_id` int(11) NOT NULL,
-  `client_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
   `freelancer_id` int(11) DEFAULT NULL,
   `title` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
@@ -140,10 +140,19 @@ CREATE TABLE `jobs` (
   `category` varchar(255) DEFAULT NULL,
   `budget` decimal(10,2) DEFAULT NULL,
   `deadline` date DEFAULT NULL,
-  `status` enum('OPEN','IN_PROGRESS','COMPLETED','CANCELLED') DEFAULT NULL,
+  `status` enum('OPEN','IN_PROGRESS','DELIVERED','COMPLETED','CANCELLED') DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `jobs`
+--
+
+INSERT INTO `jobs` (`job_id`, `user_id`, `freelancer_id`, `title`, `description`, `requirements`, `category`, `budget`, `deadline`, `status`, `created_at`, `updated_at`) VALUES
+(6, 469349221, 3, 'Yeni ilan', 'yeni ilan açıklaması', 'hiç', 'deneme', 150.00, NULL, 'COMPLETED', '2024-11-21 22:11:17', '2024-11-21 22:12:49'),
+(7, 469349221, 3, 'Ben, html css kodları yazarım', 'bla bla bla', 'html css', 'Web Tasarım', 500.00, NULL, 'COMPLETED', '2024-11-21 22:15:27', '2024-11-21 22:16:02'),
+(8, 469349221, 3, 'Yeni ilan', 'yeni ilan açıklaması', 'hiç', 'deneme', 150.00, NULL, 'COMPLETED', '2024-11-21 22:25:37', '2024-11-21 22:26:56');
 
 -- --------------------------------------------------------
 
@@ -196,7 +205,12 @@ INSERT INTO `login_attempts` (`attempt_id`, `user_id`, `ip_address`, `attempt_ti
 (51, 547623719, '5.27.27.52', '2024-11-21 10:28:19', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
 (52, 547623719, '5.27.27.52', '2024-11-21 10:28:30', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
 (53, 547623719, '5.27.27.52', '2024-11-21 10:55:13', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
-(54, 547623719, '5.27.27.52', '2024-11-21 11:29:48', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0);
+(54, 547623719, '5.27.27.52', '2024-11-21 11:29:48', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(55, 469349221, '5.27.17.13', '2024-11-21 21:28:01', 'SUCCESS', 'Turkey', 'Kartal', 'Istanbul', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(56, 547623719, '5.27.17.13', '2024-11-21 21:45:36', 'SUCCESS', 'Turkey', 'Kartal', 'Istanbul', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(57, 469349221, '5.27.17.13', '2024-11-21 22:10:11', 'SUCCESS', 'Turkey', 'Kartal', 'Istanbul', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(58, 547623719, '5.27.17.13', '2024-11-21 22:10:27', 'SUCCESS', 'Turkey', 'Kartal', 'Istanbul', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(59, 469349221, '5.27.17.13', '2024-11-21 22:10:41', 'SUCCESS', 'Turkey', 'Kartal', 'Istanbul', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '131.0.0.0', 'Windows', 0);
 
 -- --------------------------------------------------------
 
@@ -374,14 +388,9 @@ CREATE TABLE `transactions` (
 --
 
 INSERT INTO `transactions` (`transaction_id`, `sender_id`, `receiver_id`, `amount`, `transaction_type`, `status`, `description`, `created_at`) VALUES
-(13537610606, 469349221, 469349221, 100.00, 'DEPOSIT', 'COMPLETED', 'Credit card deposit to wallet', '2024-11-20 10:51:46'),
-(41574092911, 547623719, 547623719, 200.00, 'DEPOSIT', 'COMPLETED', 'Credit card deposit to wallet', '2024-11-21 09:42:51'),
-(43079215437, 358057337, 358057337, 200.00, 'DEPOSIT', 'COMPLETED', 'Credit card deposit to wallet', '2024-11-21 10:26:17'),
-(62348709953, 469349221, 547623719, 50.00, 'TRANSFER', 'COMPLETED', 'Transfer to canyilmaz', '2024-11-21 01:38:46'),
-(63588032091, 358057337, 469349221, 50.00, 'TRANSFER', 'COMPLETED', 'Transfer to tospaa1', '2024-11-21 10:26:45'),
-(66124406625, 547623719, 996326876, 200.00, 'TRANSFER', 'COMPLETED', 'Transfer to osman', '2024-11-21 09:43:18'),
-(68017650665, 358057337, 358057337, 100.00, 'WITHDRAWAL', 'COMPLETED', 'Withdrawal from wallet', '2024-11-21 10:26:29'),
-(81572491994, 469349221, 469349221, 50.00, 'WITHDRAWAL', 'COMPLETED', 'Withdrawal from wallet', '2024-11-20 10:51:15');
+(18891094533, 469349221, 547623719, 150.00, 'PAYMENT', 'COMPLETED', 'Payment for work: Yeni ilan', '2024-11-21 22:25:37'),
+(25552605428, 469349221, 547623719, 500.00, 'PAYMENT', 'COMPLETED', 'Payment for work: Ben, html css kodları yazarım', '2024-11-21 22:15:27'),
+(61382691019, 469349221, 547623719, 150.00, 'PAYMENT', 'COMPLETED', 'Payment for work: Yeni ilan', '2024-11-21 22:11:17');
 
 -- --------------------------------------------------------
 
@@ -488,8 +497,8 @@ CREATE TABLE `wallet` (
 --
 
 INSERT INTO `wallet` (`wallet_id`, `user_id`, `balance`, `coins`, `created_at`, `updated_at`, `last_transaction_date`) VALUES
-(35, 469349221, 100.00, 300, '2024-11-19 19:16:18', '2024-11-21 10:26:45', '2024-11-21 10:26:45'),
-(42, 547623719, 50.00, 125, '2024-11-20 19:53:58', '2024-11-21 10:24:44', '2024-11-21 10:24:44'),
+(35, 469349221, 400.00, 300, '2024-11-19 19:16:18', '2024-11-21 22:25:37', '2024-11-21 22:25:37'),
+(42, 547623719, 850.00, 125, '2024-11-20 19:53:58', '2024-11-21 22:26:56', '2024-11-21 22:26:56'),
 (43, 996326876, 200.00, 25, '2024-11-20 23:04:54', '2024-11-21 09:43:18', '2024-11-21 09:43:18'),
 (44, 526705234, 0.00, 25, '2024-11-21 08:36:53', NULL, '2024-11-21 08:36:53'),
 (45, 918982810, 0.00, 25, '2024-11-21 09:44:58', NULL, '2024-11-21 09:44:58'),
@@ -517,6 +526,14 @@ CREATE TABLE `works` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Tablo döküm verisi `works`
+--
+
+INSERT INTO `works` (`work_id`, `freelancer_id`, `title`, `description`, `category`, `requirements`, `daily_rate`, `fixed_price`, `tags`, `visibility`, `created_at`, `updated_at`) VALUES
+(12, 3, 'Ben, html css kodları yazarım', 'bla bla bla', 'Web Tasarım', 'html css', 200.00, 500.00, '[\"html\",\"css\"]', 1, '2024-11-21 21:09:36', NULL),
+(13, 3, 'Yeni ilan', 'yeni ilan açıklaması', 'deneme', 'hiç', 500.00, 150.00, '[\"de\",\"ne\",\"me\"]', 1, '2024-11-21 21:26:36', NULL);
+
+--
 -- Tetikleyiciler `works`
 --
 DELIMITER $$
@@ -538,6 +555,14 @@ CREATE TABLE `works_media` (
   `media_paths` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`media_paths`)),
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `works_media`
+--
+
+INSERT INTO `works_media` (`media_id`, `work_id`, `media_paths`, `created_at`) VALUES
+(1, 12, '{\"image_0\":\"public\\/uploads\\/photos\\/673fa190c8e7e_1732223376_images.jpg\"}', '2024-11-21 21:09:36'),
+(2, 13, '{\"image_0\":\"public\\/uploads\\/photos\\/673fa58c1a600_1732224396_images.jpg\"}', '2024-11-21 21:26:36');
 
 --
 -- Dökümü yapılmış tablolar için indeksler
@@ -570,7 +595,7 @@ ALTER TABLE `invitations`
 ALTER TABLE `jobs`
   ADD PRIMARY KEY (`job_id`),
   ADD KEY `freelancer_id` (`freelancer_id`),
-  ADD KEY `jobs_ibfk_1` (`client_id`);
+  ADD KEY `jobs_ibfk_1` (`user_id`);
 
 --
 -- Tablo için indeksler `login_attempts`
@@ -694,13 +719,13 @@ ALTER TABLE `invitations`
 -- Tablo için AUTO_INCREMENT değeri `jobs`
 --
 ALTER TABLE `jobs`
-  MODIFY `job_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `job_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `login_attempts`
 --
 ALTER TABLE `login_attempts`
-  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
+  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `referral_sources`
@@ -766,13 +791,13 @@ ALTER TABLE `wallet`
 -- Tablo için AUTO_INCREMENT değeri `works`
 --
 ALTER TABLE `works`
-  MODIFY `work_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `work_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `works_media`
 --
 ALTER TABLE `works_media`
-  MODIFY `media_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `media_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Dökümü yapılmış tablolar için kısıtlamalar
@@ -801,7 +826,7 @@ ALTER TABLE `invitations`
 -- Tablo kısıtlamaları `jobs`
 --
 ALTER TABLE `jobs`
-  ADD CONSTRAINT `jobs_ibfk_1` FOREIGN KEY (`client_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `jobs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `jobs_ibfk_2` FOREIGN KEY (`freelancer_id`) REFERENCES `freelancers` (`freelancer_id`) ON DELETE SET NULL;
 
 --

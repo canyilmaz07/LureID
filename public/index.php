@@ -296,7 +296,79 @@ if ($checkSocialLinksStmt->fetchColumn() == 0) {
                 <h2 class="text-xl font-semibold mb-4">
                     Welcome, <?php echo htmlspecialchars($_SESSION['user_data']['username']); ?>!
                 </h2>
-                <!-- Dashboard content here -->
+                <!-- Client Works Section in index.php after welcome message -->
+                <div class="mt-6">
+                    <h3 class="text-lg font-medium mb-4">Your Active Works</h3>
+                    <?php
+                    // Get works where user is client
+                    $stmt = $db->prepare("
+        SELECT j.*, u.username as freelancer_username, u.full_name as freelancer_name,
+               w.title as work_title
+        FROM jobs j
+        JOIN freelancers f ON j.freelancer_id = f.freelancer_id
+        JOIN users u ON f.user_id = u.user_id
+        JOIN works w ON j.title = w.title
+        WHERE j.user_id = :user_id 
+        AND j.status IN ('IN_PROGRESS', 'DELIVERED')
+        ORDER BY j.created_at DESC
+    ");
+                    $stmt->execute([':user_id' => $_SESSION['user_id']]);
+                    $clientJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                    if (!empty($clientJobs)): ?>
+                        <div class="space-y-4">
+                            <?php foreach ($clientJobs as $job): ?>
+                                <div class="bg-white rounded-lg shadow p-4">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h4 class="font-medium"><?php echo htmlspecialchars($job['work_title']); ?></h4>
+                                            <p class="text-sm text-gray-600">Freelancer:
+                                                <?php echo htmlspecialchars($job['freelancer_name']); ?>
+                                                (@<?php echo htmlspecialchars($job['freelancer_username']); ?>)
+                                            </p>
+                                            <p class="text-sm text-gray-600">Budget:
+                                                ₺<?php echo number_format($job['budget'], 2); ?></p>
+                                            <p
+                                                class="text-sm <?php echo $job['status'] === 'DELIVERED' ? 'text-yellow-600' : 'text-blue-600'; ?>">
+                                                Status: <?php echo $job['status']; ?>
+                                            </p>
+                                        </div>
+                                        <?php if ($job['status'] === 'DELIVERED'): ?>
+                                            <button onclick="acceptDelivery(<?php echo $job['job_id']; ?>)"
+                                                class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                                                Accept Delivery
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-gray-500">No active works found.</p>
+                    <?php endif; ?>
+                </div>
+
+                <script>
+                    function acceptDelivery(jobId) {
+                        if (!confirm('Are you sure you want to accept this delivery? This will complete the work and release the payment.')) {
+                            return;
+                        }
+
+                        $.post('components/job_actions.php', {
+                            action: 'complete',
+                            job_id: jobId
+                        }).done(function (response) {
+                            if (response.success) {
+                                alert(response.message);
+                                location.reload();
+                            } else {
+                                alert(response.message || 'An error occurred');
+                            }
+                        }).fail(function () {
+                            alert('Network error occurred');
+                        });
+                    }
+                </script>
             </div>
         </main>
     </div>
