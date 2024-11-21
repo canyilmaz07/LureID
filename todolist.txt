@@ -1,0 +1,61 @@
++ freelancer: 
+    > işveren ve işçi rolleri 
+    > ücret karşılığı proje yaptırma veya proje yardımı
+    > puanlama ve yorum sistemi 
+    > randevu sistemi
+    > milestone sistemi
+
++ github:
+    > proje versiyon kontrolü
+    > json tabanında proje depolama
+
++ pinterest:
+    > kodların ui çıktılarının paylaşıldığı sosyal platform
+    > beğeni, yorum, görüntüleme, takdir sistemleri
+
++ udemy:
+    > öğrenci, öğretmen rolleri
+    > discord gibi ders grupları
+    > quiz, puan sistemleri
+    > soru sorma gibi sistemleri
+    > ücretli ders içerikleri
+
++ stackoverflow:
+    > kod blokları ve projeler için topluluk sistemi
+
++ codepen:
+    > hazır kod şablonu üzerine kod blokları yapıp paylaşabilme / satabilme
+    > paylaşılmış kod bloklarını redesign edip paylaşabilme (canva tarzı)
+
++ behance:
+    > cv gibi duran detaylı profiller
+    > kullanıcının LureID üzerinde ki tüm verilerini paylaşabilme özgürlüğü
+    > profil sayfalarını özelleştirebilme
+    > profilden elle tutulur cv'ye çevirme hizmeti
+
++ visual studio:
+    > erken erişimde html, css, javascript, php kodları yazabilme
+    > syntax hata yönetimi ve renklendirne sistemi
+    > desteklenen dillerin kütüphanelerini mağazadan yükleyebilme sistemi (ajax, jquery, bootstrap vb.)
+    > projeyi json'dan zip haline çevirip indirebilme veya final sürümü oluşturabilme
+    > projenin site içinde localhostunu görüp domainde görüntüleme
+
++ envato elements:
+    > kişiye özel satış imkanının tersine hazır projeyi birden fazla kişiye satabilme
+    > aylık veya yıllık satın alım yapan müşterilere update sunma özelliği
+
+yukarıda belirtilen sitelerin özellikleri alınarak LureID bir isveç çakısı haline getirilecek ve web teknolojileri adına her kullanıcıya hitap ederek kitleleri birleştirecek.
+temelden başlanarak her özelliğe sürüm eklenecek ve düzenli olarak site içinden sürüm sürüm güncellenecek.
+veritabanında kullanıcıların yazdığı kodlar json'a kaydedilerek ilerideki sürümlerde yapay zeka yardımıyla bu kodlar derlenecek.
+Derlenen kodlar, toplulukta konuşulanlar, feedbackler birleştirilerek LureID sürekli optimize, kullanıcı dostu ve birleştirici özelliği korunacak kendini güncelleyecek.
+Birleştirici özelliğini oluşturan uygulamalara yenileri eklenerek LureID bir çatı haline gelecek, Meta mantığında yürüyen bu sistem yazılım ve tasarım konusunda kullanıcıları doyuracak. 
+Sitenin dosyaları ve veritabanı, admin panelinde anlık olarak düzenlenebilip sürümler halinde güncellemeler sunulabilecek. 
+
+menü: 
+    > ana sayfa
+    > işler
+    > projeler 
+    > market
+    > topluluk
+    > eğitim
+    > profil

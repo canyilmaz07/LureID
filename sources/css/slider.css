@@ -1,0 +1,68 @@
+.hero-slider {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.slide {
+    width: 0%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.5;
+    visibility: hidden;
+}
+
+.slide.active {
+    width: 100%;
+    opacity: 1;
+    visibility: visible;
+}
+
+.slide-content {
+    position: absolute;
+    bottom: 70px;
+    left: 40px;
+    max-width: 80%;
+    z-index: 2;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.slide.active .slide-content {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.slide-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4));
+}
+
+.progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    z-index: 3;
+}
+
+.progress {
+    width: 0;
+    height: 100%;
+    background: #4F46E5;
+    transform-origin: left center;
+}

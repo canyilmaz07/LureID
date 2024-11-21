@@ -1,0 +1,684 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Anamakine: 127.0.0.1
+-- Üretim Zamanı: 21 Kas 2024, 04:11:05
+-- Sunucu sürümü: 10.4.32-MariaDB
+-- PHP Sürümü: 8.2.12
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+--
+-- Veritabanı: `lureid`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `follows`
+--
+
+CREATE TABLE `follows` (
+  `user_id` int(11) NOT NULL,
+  `following` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`following`)),
+  `followers` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`followers`)),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `follows`
+--
+
+INSERT INTO `follows` (`user_id`, `following`, `followers`, `created_at`, `updated_at`) VALUES
+(469349221, '[547623719]', '[547623719]', '2024-11-21 00:48:30', '2024-11-21 02:45:58'),
+(547623719, '[469349221]', '[469349221,996326876]', '2024-11-21 00:46:20', '2024-11-21 02:46:47'),
+(996326876, '[547623719]', '[]', '2024-11-21 02:04:56', '2024-11-21 02:46:47');
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `freelancers`
+--
+
+CREATE TABLE `freelancers` (
+  `freelancer_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `account_holder` varchar(255) DEFAULT NULL,
+  `bank_name` varchar(255) DEFAULT NULL,
+  `iban` varchar(255) DEFAULT NULL,
+  `tax_number` varchar(255) DEFAULT NULL,
+  `hourly_rate` decimal(10,2) DEFAULT NULL,
+  `experience_years` int(11) DEFAULT NULL,
+  `availability_status` enum('AVAILABLE','UNAVAILABLE') DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `invitations`
+--
+
+CREATE TABLE `invitations` (
+  `invitation_id` int(11) NOT NULL,
+  `inviter_id` int(11) NOT NULL,
+  `invited_user_id` int(11) NOT NULL,
+  `invitation_code` varchar(255) DEFAULT NULL,
+  `used_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `invitations`
+--
+
+INSERT INTO `invitations` (`invitation_id`, `inviter_id`, `invited_user_id`, `invitation_code`, `used_at`) VALUES
+(8, 469349221, 547623719, '673D0E081', NULL),
+(9, 469349221, 996326876, '673D0E081', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `jobs`
+--
+
+CREATE TABLE `jobs` (
+  `job_id` int(11) NOT NULL,
+  `client_id` int(11) NOT NULL,
+  `freelancer_id` int(11) DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `requirements` text DEFAULT NULL,
+  `category` varchar(255) DEFAULT NULL,
+  `budget` decimal(10,2) DEFAULT NULL,
+  `deadline` date DEFAULT NULL,
+  `status` enum('OPEN','IN_PROGRESS','COMPLETED','CANCELLED') DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `login_attempts`
+--
+
+CREATE TABLE `login_attempts` (
+  `attempt_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `attempt_time` timestamp NOT NULL DEFAULT current_timestamp(),
+  `status` enum('SUCCESS','FAILED') NOT NULL,
+  `country` varchar(100) DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `region` varchar(100) DEFAULT NULL,
+  `isp` varchar(255) DEFAULT NULL,
+  `timezone` varchar(100) DEFAULT NULL,
+  `browser` varchar(255) DEFAULT NULL,
+  `browser_version` varchar(50) DEFAULT NULL,
+  `os` varchar(100) DEFAULT NULL,
+  `verified` tinyint(4) DEFAULT 0 COMMENT '0: Doğrulanmadı, 1: Giriş işlemi doğrulandı'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `login_attempts`
+--
+
+INSERT INTO `login_attempts` (`attempt_id`, `user_id`, `ip_address`, `attempt_time`, `status`, `country`, `city`, `region`, `isp`, `timezone`, `browser`, `browser_version`, `os`, `verified`) VALUES
+(26, 469349221, '5.25.167.186', '2024-11-20 12:16:21', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(32, 547623719, '5.27.27.52', '2024-11-20 23:33:50', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(33, 469349221, '5.27.27.52', '2024-11-20 23:59:10', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(34, 547623719, '5.27.27.52', '2024-11-20 23:59:52', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(35, 469349221, '5.27.27.52', '2024-11-21 00:48:30', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(36, 547623719, '5.27.27.52', '2024-11-21 01:31:20', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(37, 469349221, '5.27.27.52', '2024-11-21 01:49:14', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(38, 547623719, '5.27.27.52', '2024-11-21 01:51:45', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(39, 469349221, '5.27.27.52', '2024-11-21 01:56:32', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `referral_sources`
+--
+
+CREATE TABLE `referral_sources` (
+  `source_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `source_type` enum('ORGANIC','REFERRAL','ADVERTISEMENT','SOCIAL_MEDIA') DEFAULT NULL,
+  `specific_source` varchar(255) DEFAULT NULL,
+  `is_referral_signup` tinyint(4) DEFAULT NULL,
+  `join_date` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `referral_sources`
+--
+
+INSERT INTO `referral_sources` (`source_id`, `user_id`, `source_type`, `specific_source`, `is_referral_signup`, `join_date`) VALUES
+(27, 469349221, 'ORGANIC', '673D0E081', 0, '2024-11-19 22:16:18'),
+(32, 547623719, 'ORGANIC', '673E68726', 1, '2024-11-20 22:53:58'),
+(33, 996326876, 'ORGANIC', '673E952F7', 1, '2024-11-21 02:04:54');
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `skills`
+--
+
+CREATE TABLE `skills` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `skills` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`skills`)),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `social_links`
+--
+
+CREATE TABLE `social_links` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `social_links` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`social_links`)),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `social_links`
+--
+
+INSERT INTO `social_links` (`id`, `user_id`, `social_links`, `created_at`, `updated_at`) VALUES
+(2, 469349221, '[]', '2024-11-20 00:51:45', '2024-11-20 01:00:45'),
+(6, 547623719, '[{\"platform\":\"youtube\",\"url\":\"https:\\/\\/youtube.com\\/can\"}]', '2024-11-20 22:53:58', '2024-11-21 01:51:58'),
+(7, 996326876, '[]', '2024-11-21 02:04:54', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `staff`
+--
+
+CREATE TABLE `staff` (
+  `staff_id` int(11) NOT NULL,
+  `username` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `role` enum('ADMIN','MODERATOR','SUPPORT') NOT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `last_login` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `staff`
+--
+
+INSERT INTO `staff` (`staff_id`, `username`, `password`, `email`, `role`, `is_active`, `created_at`, `last_login`) VALUES
+(6, 'admin', '$2y$10$0QqrVX5J7GbVHbgcvRx7fOI/FcfeR3e4MxSBGdlIxKtTMItLhWavS', 'admin@lureid.com', 'ADMIN', 1, '2024-11-19 15:29:38', '2024-11-19 18:52:41'),
+(7, 'mod', '$2y$10$.JgApAzxzLdgmlTe1WQxiOZj0bG2A8FHocG6gyCMRwNrabpABlCaS', 'moderator@lureid.com', 'MODERATOR', 1, '2024-11-19 15:29:38', '2024-11-19 15:33:39'),
+(8, 'sup', '$2y$10$R0QQciU4BasDU.T54J.Brep6koZiGzBKEzUt94jEwd5Ov88zsmUq2', 'support@lureid.com', 'SUPPORT', 1, '2024-11-19 15:29:38', '2024-11-19 18:54:20');
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `staff_login_attempts`
+--
+
+CREATE TABLE `staff_login_attempts` (
+  `attempt_id` int(11) NOT NULL,
+  `staff_id` int(11) NOT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `attempt_time` timestamp NOT NULL DEFAULT current_timestamp(),
+  `status` enum('SUCCESS','FAILED') NOT NULL,
+  `country` varchar(100) DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `region` varchar(100) DEFAULT NULL,
+  `isp` varchar(255) DEFAULT NULL,
+  `timezone` varchar(100) DEFAULT NULL,
+  `browser` varchar(255) DEFAULT NULL,
+  `browser_version` varchar(50) DEFAULT NULL,
+  `os` varchar(100) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `temp_users`
+--
+
+CREATE TABLE `temp_users` (
+  `temp_id` int(11) NOT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `username` varchar(255) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL,
+  `full_name` varchar(255) DEFAULT NULL,
+  `google_id` varchar(255) DEFAULT NULL,
+  `verification_code` varchar(255) DEFAULT NULL,
+  `invite_code` varchar(255) DEFAULT NULL,
+  `referral_code` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `expires_at` timestamp NOT NULL DEFAULT (current_timestamp() + interval 24 hour)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `transactions`
+--
+
+CREATE TABLE `transactions` (
+  `transaction_id` bigint(20) NOT NULL,
+  `sender_id` int(11) NOT NULL,
+  `receiver_id` int(11) NOT NULL,
+  `amount` decimal(10,2) DEFAULT NULL,
+  `transaction_type` enum('DEPOSIT','WITHDRAWAL','TRANSFER','PAYMENT') DEFAULT NULL,
+  `status` enum('PENDING','COMPLETED','FAILED','CANCELLED') DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `transactions`
+--
+
+INSERT INTO `transactions` (`transaction_id`, `sender_id`, `receiver_id`, `amount`, `transaction_type`, `status`, `description`, `created_at`) VALUES
+(13537610606, 469349221, 469349221, 100.00, 'DEPOSIT', 'COMPLETED', 'Credit card deposit to wallet', '2024-11-20 13:51:46'),
+(81572491994, 469349221, 469349221, 50.00, 'WITHDRAWAL', 'COMPLETED', 'Withdrawal from wallet', '2024-11-20 13:51:15');
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `users`
+--
+
+CREATE TABLE `users` (
+  `user_id` int(11) NOT NULL,
+  `username` varchar(255) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL,
+  `full_name` varchar(255) DEFAULT NULL,
+  `google_id` varchar(255) DEFAULT NULL,
+  `is_verified` tinyint(4) DEFAULT NULL,
+  `remember_token` varchar(255) DEFAULT NULL,
+  `two_factor_auth` tinyint(4) DEFAULT 0,
+  `user_type` enum('user') DEFAULT 'user',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `remember_token_expires_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `users`
+--
+
+INSERT INTO `users` (`user_id`, `username`, `email`, `password`, `full_name`, `google_id`, `is_verified`, `remember_token`, `two_factor_auth`, `user_type`, `created_at`, `remember_token_expires_at`) VALUES
+(469349221, 'tospaa1', 'osmananlatici@gmail.com', '$2y$10$lTnWj4AJ2AEqnlgj2EJTnuqkNLIjOyFkAjsl8ktojyyH/pwJSVdqy', 'Osman Taha Anlatıcı', NULL, 1, NULL, 0, 'user', '2024-11-19 22:16:18', NULL),
+(547623719, 'canyilmaz', 'cnylmz735@gmail.com', '$2y$10$eCUzu0GL8mK736ucA/zt1eYUJKCQ1iWXew33mpw4N/pjjWK/sd.qC', 'Can Yılmaz', NULL, 1, NULL, 0, 'user', '2024-11-20 22:53:58', NULL),
+(996326876, 'yeni', 'yeni@a.a', '$2y$10$tSOqe7Zt81ZJKrrdW0YJyO7SPba5/HyX3SEAYojnUMfXKpLCrAiT6', 'yeni', NULL, 1, NULL, 0, 'user', '2024-11-21 02:04:54', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `user_profiles`
+--
+
+CREATE TABLE `user_profiles` (
+  `profile_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `age` int(11) DEFAULT NULL,
+  `biography` text DEFAULT NULL,
+  `city` varchar(255) DEFAULT NULL,
+  `country` varchar(255) DEFAULT NULL,
+  `profile_photo_url` varchar(255) DEFAULT 'undefined',
+  `website` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `user_profiles`
+--
+
+INSERT INTO `user_profiles` (`profile_id`, `user_id`, `age`, `biography`, `city`, `country`, `profile_photo_url`, `website`) VALUES
+(27, 469349221, 20, 'Osman gültekin senmisin', 'Bursa', 'Türkiye', 'profile/avatars/469349221.jpg', 'http://www.osmangultekin.com'),
+(30, 547623719, 20, 'LureID Founder', 'Antalya', 'Türkiye', 'profile/avatars/547623719.jpg', 'http://lure.id'),
+(31, 996326876, NULL, NULL, NULL, NULL, 'profile/avatars/996326876.jpg', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `verification`
+--
+
+CREATE TABLE `verification` (
+  `verification_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `code` varchar(255) DEFAULT NULL,
+  `remember_token` varchar(255) DEFAULT NULL,
+  `expiry_date` timestamp NULL DEFAULT NULL,
+  `expires_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `wallet`
+--
+
+CREATE TABLE `wallet` (
+  `wallet_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `balance` decimal(10,2) DEFAULT 0.00,
+  `coins` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `last_transaction_date` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `wallet`
+--
+
+INSERT INTO `wallet` (`wallet_id`, `user_id`, `balance`, `coins`, `created_at`, `updated_at`, `last_transaction_date`) VALUES
+(35, 469349221, 100.00, 250, '2024-11-19 22:16:18', '2024-11-21 02:04:54', '2024-11-21 02:04:54'),
+(42, 547623719, 0.00, 25, '2024-11-20 22:53:58', NULL, '2024-11-20 22:53:58'),
+(43, 996326876, 0.00, 25, '2024-11-21 02:04:54', NULL, '2024-11-21 02:04:54');
+
+--
+-- Dökümü yapılmış tablolar için indeksler
+--
+
+--
+-- Tablo için indeksler `follows`
+--
+ALTER TABLE `follows`
+  ADD PRIMARY KEY (`user_id`);
+
+--
+-- Tablo için indeksler `freelancers`
+--
+ALTER TABLE `freelancers`
+  ADD PRIMARY KEY (`freelancer_id`),
+  ADD KEY `freelancers_ibfk_1` (`user_id`);
+
+--
+-- Tablo için indeksler `invitations`
+--
+ALTER TABLE `invitations`
+  ADD PRIMARY KEY (`invitation_id`),
+  ADD KEY `invitations_ibfk_1` (`inviter_id`),
+  ADD KEY `invitations_ibfk_2` (`invited_user_id`);
+
+--
+-- Tablo için indeksler `jobs`
+--
+ALTER TABLE `jobs`
+  ADD PRIMARY KEY (`job_id`),
+  ADD KEY `freelancer_id` (`freelancer_id`),
+  ADD KEY `jobs_ibfk_1` (`client_id`);
+
+--
+-- Tablo için indeksler `login_attempts`
+--
+ALTER TABLE `login_attempts`
+  ADD PRIMARY KEY (`attempt_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Tablo için indeksler `referral_sources`
+--
+ALTER TABLE `referral_sources`
+  ADD PRIMARY KEY (`source_id`),
+  ADD KEY `referral_sources_ibfk_1` (`user_id`);
+
+--
+-- Tablo için indeksler `skills`
+--
+ALTER TABLE `skills`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_user_id` (`user_id`);
+
+--
+-- Tablo için indeksler `social_links`
+--
+ALTER TABLE `social_links`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_user_id` (`user_id`);
+
+--
+-- Tablo için indeksler `staff`
+--
+ALTER TABLE `staff`
+  ADD PRIMARY KEY (`staff_id`),
+  ADD UNIQUE KEY `username` (`username`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Tablo için indeksler `staff_login_attempts`
+--
+ALTER TABLE `staff_login_attempts`
+  ADD PRIMARY KEY (`attempt_id`),
+  ADD KEY `staff_id` (`staff_id`);
+
+--
+-- Tablo için indeksler `temp_users`
+--
+ALTER TABLE `temp_users`
+  ADD PRIMARY KEY (`temp_id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Tablo için indeksler `transactions`
+--
+ALTER TABLE `transactions`
+  ADD PRIMARY KEY (`transaction_id`),
+  ADD KEY `transactions_ibfk_1` (`sender_id`),
+  ADD KEY `transactions_ibfk_2` (`receiver_id`);
+
+--
+-- Tablo için indeksler `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`user_id`),
+  ADD UNIQUE KEY `username` (`username`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `google_id` (`google_id`);
+
+--
+-- Tablo için indeksler `user_profiles`
+--
+ALTER TABLE `user_profiles`
+  ADD PRIMARY KEY (`profile_id`),
+  ADD KEY `user_profiles_ibfk_1` (`user_id`);
+
+--
+-- Tablo için indeksler `verification`
+--
+ALTER TABLE `verification`
+  ADD PRIMARY KEY (`verification_id`),
+  ADD KEY `verification_ibfk_1` (`user_id`);
+
+--
+-- Tablo için indeksler `wallet`
+--
+ALTER TABLE `wallet`
+  ADD PRIMARY KEY (`wallet_id`),
+  ADD KEY `wallet_ibfk_1` (`user_id`);
+
+--
+-- Dökümü yapılmış tablolar için AUTO_INCREMENT değeri
+--
+
+--
+-- Tablo için AUTO_INCREMENT değeri `freelancers`
+--
+ALTER TABLE `freelancers`
+  MODIFY `freelancer_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `invitations`
+--
+ALTER TABLE `invitations`
+  MODIFY `invitation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `jobs`
+--
+ALTER TABLE `jobs`
+  MODIFY `job_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `login_attempts`
+--
+ALTER TABLE `login_attempts`
+  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `referral_sources`
+--
+ALTER TABLE `referral_sources`
+  MODIFY `source_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `skills`
+--
+ALTER TABLE `skills`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `social_links`
+--
+ALTER TABLE `social_links`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `staff`
+--
+ALTER TABLE `staff`
+  MODIFY `staff_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `staff_login_attempts`
+--
+ALTER TABLE `staff_login_attempts`
+  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `temp_users`
+--
+ALTER TABLE `temp_users`
+  MODIFY `temp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `users`
+--
+ALTER TABLE `users`
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=996326877;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `user_profiles`
+--
+ALTER TABLE `user_profiles`
+  MODIFY `profile_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `verification`
+--
+ALTER TABLE `verification`
+  MODIFY `verification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `wallet`
+--
+ALTER TABLE `wallet`
+  MODIFY `wallet_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+
+--
+-- Dökümü yapılmış tablolar için kısıtlamalar
+--
+
+--
+-- Tablo kısıtlamaları `follows`
+--
+ALTER TABLE `follows`
+  ADD CONSTRAINT `follows_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `freelancers`
+--
+ALTER TABLE `freelancers`
+  ADD CONSTRAINT `freelancers_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `invitations`
+--
+ALTER TABLE `invitations`
+  ADD CONSTRAINT `invitations_ibfk_1` FOREIGN KEY (`inviter_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `invitations_ibfk_2` FOREIGN KEY (`invited_user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `jobs`
+--
+ALTER TABLE `jobs`
+  ADD CONSTRAINT `jobs_ibfk_1` FOREIGN KEY (`client_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `jobs_ibfk_2` FOREIGN KEY (`freelancer_id`) REFERENCES `freelancers` (`freelancer_id`);
+
+--
+-- Tablo kısıtlamaları `login_attempts`
+--
+ALTER TABLE `login_attempts`
+  ADD CONSTRAINT `login_attempts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `referral_sources`
+--
+ALTER TABLE `referral_sources`
+  ADD CONSTRAINT `referral_sources_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `skills`
+--
+ALTER TABLE `skills`
+  ADD CONSTRAINT `fk_skills_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `social_links`
+--
+ALTER TABLE `social_links`
+  ADD CONSTRAINT `fk_social_links_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `staff_login_attempts`
+--
+ALTER TABLE `staff_login_attempts`
+  ADD CONSTRAINT `staff_login_attempts_ibfk_1` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `transactions`
+--
+ALTER TABLE `transactions`
+  ADD CONSTRAINT `transactions_ibfk_1` FOREIGN KEY (`sender_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `transactions_ibfk_2` FOREIGN KEY (`receiver_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `user_profiles`
+--
+ALTER TABLE `user_profiles`
+  ADD CONSTRAINT `user_profiles_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `verification`
+--
+ALTER TABLE `verification`
+  ADD CONSTRAINT `verification_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `wallet`
+--
+ALTER TABLE `wallet`
+  ADD CONSTRAINT `wallet_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+COMMIT;
