@@ -17,6 +17,64 @@ $db = new PDO(
     $dbConfig['options']
 );
 
+// Kullanıcının mevcut ayarlarını çek
+$stmt = $db->prepare("SELECT * FROM user_settings WHERE user_id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$userSettings = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Desteklenen diller
+$languages = [
+    'tr' => 'Türkçe',
+    'en' => 'English',
+    'de' => 'Deutsch',
+    'fr' => 'Français',
+    'es' => 'Español',
+    'ru' => 'Русский'
+];
+
+// Saat dilimleri listesi
+$timezones = DateTimeZone::listIdentifiers();
+
+// Bölgeler listesi
+$regions = [
+    'TR' => 'Türkiye',
+    'US' => 'United States',
+    'GB' => 'United Kingdom',
+    'DE' => 'Germany',
+    'FR' => 'France',
+    'ES' => 'Spain',
+    'IT' => 'Italy',
+    'RU' => 'Russia'
+];
+
+// Eğer kullanıcının ayarları yoksa varsayılan değerleri kullan
+if (!$userSettings) {
+    $userSettings = [
+        'language' => 'tr',
+        'timezone' => 'Europe/Istanbul',
+        'region' => 'TR',
+        'date_format' => 'DD.MM.YYYY',
+        'time_format' => '24h'
+    ];
+
+    // Varsayılan ayarları veritabanına ekle
+    $stmt = $db->prepare("
+        INSERT INTO user_settings 
+            (user_id, language, timezone, region, date_format, time_format) 
+        VALUES 
+            (?, ?, ?, ?, ?, ?)
+    ");
+
+    $stmt->execute([
+        $_SESSION['user_id'],
+        $userSettings['language'],
+        $userSettings['timezone'],
+        $userSettings['region'],
+        $userSettings['date_format'],
+        $userSettings['time_format']
+    ]);
+}
+
 // Get active tab from URL parameter
 $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
 ?>
@@ -28,6 +86,9 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LUREID - Settings</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto:wght@400;500;600&family=Open+Sans:wght@400;500;600&family=Montserrat:wght@400;500;600&family=Poppins:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -43,9 +104,9 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
-                        Ana Sayfaya Dön
+                        Back to Homepage
                     </a>
-                    <h1 class="text-xl font-semibold">Hesap Ayarları</h1>
+                    <h1 class="text-xl font-semibold">Account Settings</h1>
                     <div></div>
                 </div>
             </div>
@@ -60,35 +121,35 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                         <nav class="space-y-1">
                             <a href="?tab=profile"
                                 class="block px-4 py-3 hover:bg-gray-50 transition-colors <?php echo $activeTab === 'profile' ? 'bg-gray-50' : ''; ?>">
-                                Profil Ayarları
+                                Profile Settings
                             </a>
                             <a href="?tab=security"
                                 class="block px-4 py-3 hover:bg-gray-50 transition-colors <?php echo $activeTab === 'security' ? 'bg-gray-50' : ''; ?>">
-                                Güvenlik Merkezi
+                                Security Center
                             </a>
                             <a href="?tab=notifications"
                                 class="block px-4 py-3 hover:bg-gray-50 transition-colors <?php echo $activeTab === 'notifications' ? 'bg-gray-50' : ''; ?>">
-                                Bildirim Ayarları
+                                Notification Settings
                             </a>
                             <a href="?tab=payment"
                                 class="block px-4 py-3 hover:bg-gray-50 transition-colors <?php echo $activeTab === 'payment' ? 'bg-gray-50' : ''; ?>">
-                                Ödeme & Finansal İşlemler
+                                Payment & Financial Transactions
                             </a>
                             <a href="?tab=privacy"
                                 class="block px-4 py-3 hover:bg-gray-50 transition-colors <?php echo $activeTab === 'privacy' ? 'bg-gray-50' : ''; ?>">
-                                Gizlilik Ayarları
+                                Privacy Settings
                             </a>
                             <a href="?tab=account"
                                 class="block px-4 py-3 hover:bg-gray-50 transition-colors <?php echo $activeTab === 'account' ? 'bg-gray-50' : ''; ?>">
-                                Hesap ve Veriler
+                                Account and Data
                             </a>
                             <a href="?tab=language"
                                 class="block px-4 py-3 hover:bg-gray-50 transition-colors <?php echo $activeTab === 'language' ? 'bg-gray-50' : ''; ?>">
-                                Dil ve Bölge
+                                Language and Region
                             </a>
                             <a href="?tab=appearance"
                                 class="block px-4 py-3 hover:bg-gray-50 transition-colors <?php echo $activeTab === 'appearance' ? 'bg-gray-50' : ''; ?>">
-                                Görünüm ve Tema
+                                Appearance and Theme
                             </a>
                         </nav>
                     </div>
@@ -930,20 +991,20 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
 
                                             $('#saveChangesBar').addClass('translate-y-full');
 
-                                            $('input, textarea, select').on('change', function() {
-        formChanged = true;
-        showSaveBar();
-        // Değişiklik olduğunda Save butonunu aktif et
-        $('#saveAllChanges').removeClass('opacity-50 cursor-not-allowed').prop('disabled', false);
-    });
+                                            $('input, textarea, select').on('change', function () {
+                                                formChanged = true;
+                                                showSaveBar();
+                                                // Değişiklik olduğunda Save butonunu aktif et
+                                                $('#saveAllChanges').removeClass('opacity-50 cursor-not-allowed').prop('disabled', false);
+                                            });
 
-    function showSaveBar() {
-        $('#saveChangesBar').removeClass('translate-y-full');
-    }
+                                            function showSaveBar() {
+                                                $('#saveChangesBar').removeClass('translate-y-full');
+                                            }
 
-    function hideSaveBar() {
-        $('#saveChangesBar').addClass('translate-y-full');
-    }
+                                            function hideSaveBar() {
+                                                $('#saveChangesBar').addClass('translate-y-full');
+                                            }
 
                                             // Profile Photo Handling
                                             $('#profilePhotoInput').change(function () {
@@ -1044,42 +1105,42 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                             $('#addEducation').click(function () {
                                                 const index = $('.education-entry').length;
                                                 const template = `
-                                                                                                                                                                                                                    <div class="education-entry bg-gray-50 p-4 rounded-lg">
-                                                                                                                                                                                                                        <div class="grid grid-cols-2 gap-4">
-                                                                                                                                                                                                                            <div>
-                                                                                                                                                                                                                                <label class="block text-sm font-medium text-gray-700">Okul Seviyesi</label>
-                                                                                                                                                                                                                                <select name="education[${index}][level]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                                    <option value="high_school">Lise</option>
-                                                                                                                                                                                                                                    <option value="university">Üniversite</option>
-                                                                                                                                                                                                                                    <option value="second_university">İkinci Üniversite</option>
-                                                                                                                                                                                                                                    <option value="masters">Yüksek Lisans</option>
-                                                                                                                                                                                                                                    <option value="phd">Doktora</option>
-                                                                                                                                                                                                                                </select>
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                            <div>
-                                                                                                                                                                                                                                <label class="block text-sm font-medium text-gray-700">Kurum Adı</label>
-                                                                                                                                                                                                                                <input type="text" name="education[${index}][institution]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                            <div>
-                                                                                                                                                                                                                                <label class="block text-sm font-medium text-gray-700">Bölüm/Alan</label>
-                                                                                                                                                                                                                                <input type="text" name="education[${index}][degree]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                            <div>
-                                                                                                                                                                                                                                <label class="block text-sm font-medium text-gray-700">Not Ortalaması</label>
-                                                                                                                                                                                                                                <input type="number" step="0.01" min="0" max="4" name="education[${index}][gpa]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                            <div>
-                                                                                                                                                                                                                                <label class="block text-sm font-medium text-gray-700">Başlangıç Tarihi</label>
-                                                                                                                                                                                                                                <input type="month" name="education[${index}][start_date]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                            <div>
-                                                                                                                                                                                                                                <label class="block text-sm font-medium text-gray-700">Bitiş Tarihi</label>
-                                                                                                                                                                                                                                <input type="month" name="education[${index}][end_date]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                        <button type="button" class="remove-education mt-4 text-red-600 hover:text-red-800">Eğitimi Kaldır</button>
-                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                `;
+                                                                                                                                                                                                                                                                                                    <div class="education-entry bg-gray-50 p-4 rounded-lg">
+                                                                                                                                                                                                                                                                                                        <div class="grid grid-cols-2 gap-4">
+                                                                                                                                                                                                                                                                                                            <div>
+                                                                                                                                                                                                                                                                                                                <label class="block text-sm font-medium text-gray-700">Okul Seviyesi</label>
+                                                                                                                                                                                                                                                                                                                <select name="education[${index}][level]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                                                    <option value="high_school">Lise</option>
+                                                                                                                                                                                                                                                                                                                    <option value="university">Üniversite</option>
+                                                                                                                                                                                                                                                                                                                    <option value="second_university">İkinci Üniversite</option>
+                                                                                                                                                                                                                                                                                                                    <option value="masters">Yüksek Lisans</option>
+                                                                                                                                                                                                                                                                                                                    <option value="phd">Doktora</option>
+                                                                                                                                                                                                                                                                                                                </select>
+                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                            <div>
+                                                                                                                                                                                                                                                                                                                <label class="block text-sm font-medium text-gray-700">Kurum Adı</label>
+                                                                                                                                                                                                                                                                                                                <input type="text" name="education[${index}][institution]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                            <div>
+                                                                                                                                                                                                                                                                                                                <label class="block text-sm font-medium text-gray-700">Bölüm/Alan</label>
+                                                                                                                                                                                                                                                                                                                <input type="text" name="education[${index}][degree]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                            <div>
+                                                                                                                                                                                                                                                                                                                <label class="block text-sm font-medium text-gray-700">Not Ortalaması</label>
+                                                                                                                                                                                                                                                                                                                <input type="number" step="0.01" min="0" max="4" name="education[${index}][gpa]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                            <div>
+                                                                                                                                                                                                                                                                                                                <label class="block text-sm font-medium text-gray-700">Başlangıç Tarihi</label>
+                                                                                                                                                                                                                                                                                                                <input type="month" name="education[${index}][start_date]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                            <div>
+                                                                                                                                                                                                                                                                                                                <label class="block text-sm font-medium text-gray-700">Bitiş Tarihi</label>
+                                                                                                                                                                                                                                                                                                                <input type="month" name="education[${index}][end_date]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                                                                        <button type="button" class="remove-education mt-4 text-red-600 hover:text-red-800">Eğitimi Kaldır</button>
+                                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                                `;
                                                 $('#educationList').append(template);
                                                 formChanged = true;
                                                 $('#saveAllChanges').removeClass('opacity-50 cursor-not-allowed').prop('disabled', false);
@@ -1095,45 +1156,45 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                             $('#addWork').click(function () {
                                                 const index = $('.work-entry').length;
                                                 const template = `
-                                                                                                                                                                                                                        <div class="work-entry bg-gray-50 p-4 rounded-lg">
-                                                                                                                                                                                                                            <div class="grid grid-cols-2 gap-4">
-                                                                                                                                                                                                                                <div>
-                                                                                                                                                                                                                                    <label class="block text-sm font-medium text-gray-700">Şirket Adı</label>
-                                                                                                                                                                                                                                    <input type="text" name="work[${index}][company]"
-                                                                                                                                                                                                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div>
-                                                                                                                                                                                                                                    <label class="block text-sm font-medium text-gray-700">Pozisyon</label>
-                                                                                                                                                                                                                                    <input type="text" name="work[${index}][position]"
-                                                                                                                                                                                                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div>
-                                                                                                                                                                                                                                    <label class="block text-sm font-medium text-gray-700">Başlangıç Tarihi</label>
-                                                                                                                                                                                                                                    <input type="month" name="work[${index}][start_date]"
-                                                                                                                                                                                                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div>
-                                                                                                                                                                                                                                    <label class="block text-sm font-medium text-gray-700">Bitiş Tarihi</label>
-                                                                                                                                                                                                                                    <input type="month" name="work[${index}][end_date]"
-                                                                                                                                                                                                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                                    <div class="mt-1">
-                                                                                                                                                                                                                                        <label class="inline-flex items-center">
-                                                                                                                                                                                                                                            <input type="checkbox" class="current-job-checkbox form-checkbox"
-                                                                                                                                                                                                                                                data-index="${index}"
-                                                                                                                                                                                                                                                class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                                            <span class="ml-2 text-sm text-gray-600">Şu an burada çalışıyorum</span>
-                                                                                                                                                                                                                                        </label>
-                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div class="col-span-2">
-                                                                                                                                                                                                                                    <label class="block text-sm font-medium text-gray-700">İş Tanımı</label>
-                                                                                                                                                                                                                                    <textarea name="work[${index}][description]" rows="3"
-                                                                                                                                                                                                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                            <button type="button" class="remove-work mt-4 text-red-600 hover:text-red-800">İş Deneyimini Kaldır</button>
-                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                    `;
+                                                                                                                                                                                                                                                                                                        <div class="work-entry bg-gray-50 p-4 rounded-lg">
+                                                                                                                                                                                                                                                                                                            <div class="grid grid-cols-2 gap-4">
+                                                                                                                                                                                                                                                                                                                <div>
+                                                                                                                                                                                                                                                                                                                    <label class="block text-sm font-medium text-gray-700">Şirket Adı</label>
+                                                                                                                                                                                                                                                                                                                    <input type="text" name="work[${index}][company]"
+                                                                                                                                                                                                                                                                                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                <div>
+                                                                                                                                                                                                                                                                                                                    <label class="block text-sm font-medium text-gray-700">Pozisyon</label>
+                                                                                                                                                                                                                                                                                                                    <input type="text" name="work[${index}][position]"
+                                                                                                                                                                                                                                                                                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                <div>
+                                                                                                                                                                                                                                                                                                                    <label class="block text-sm font-medium text-gray-700">Başlangıç Tarihi</label>
+                                                                                                                                                                                                                                                                                                                    <input type="month" name="work[${index}][start_date]"
+                                                                                                                                                                                                                                                                                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                <div>
+                                                                                                                                                                                                                                                                                                                    <label class="block text-sm font-medium text-gray-700">Bitiş Tarihi</label>
+                                                                                                                                                                                                                                                                                                                    <input type="month" name="work[${index}][end_date]"
+                                                                                                                                                                                                                                                                                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                                                    <div class="mt-1">
+                                                                                                                                                                                                                                                                                                                        <label class="inline-flex items-center">
+                                                                                                                                                                                                                                                                                                                            <input type="checkbox" class="current-job-checkbox form-checkbox"
+                                                                                                                                                                                                                                                                                                                                data-index="${index}"
+                                                                                                                                                                                                                                                                                                                                class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                                                            <span class="ml-2 text-sm text-gray-600">Şu an burada çalışıyorum</span>
+                                                                                                                                                                                                                                                                                                                        </label>
+                                                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                <div class="col-span-2">
+                                                                                                                                                                                                                                                                                                                    <label class="block text-sm font-medium text-gray-700">İş Tanımı</label>
+                                                                                                                                                                                                                                                                                                                    <textarea name="work[${index}][description]" rows="3"
+                                                                                                                                                                                                                                                                                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                            <button type="button" class="remove-work mt-4 text-red-600 hover:text-red-800">İş Deneyimini Kaldır</button>
+                                                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                                                                    `;
                                                 $('#workExperienceList').append(template);
                                                 formChanged = true;
                                                 $('#saveAllChanges').removeClass('opacity-50 cursor-not-allowed').prop('disabled', false);
@@ -1190,17 +1251,17 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                                 if (!skill) return;
 
                                                 const skillHtml = `
-                                                                                                                                                    <div class="flex items-center gap-2">
-                                                                                                                                                        <input type="text" value="${skill}" 
-                                                                                                                                                            class="${currentCategory}-skill flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                                                                                                                                            readonly>
-                                                                                                                                                        <button type="button" class="remove-skill text-red-600 hover:text-red-800">
-                                                                                                                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                                                                                                                            </svg>
-                                                                                                                                                        </button>
-                                                                                                                                                    </div>
-                                                                                                                                                `;
+                                                                                                                                                                                                                                    <div class="flex items-center gap-2">
+                                                                                                                                                                                                                                        <input type="text" value="${skill}" 
+                                                                                                                                                                                                                                            class="${currentCategory}-skill flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                                                                                                                                                                                                                            readonly>
+                                                                                                                                                                                                                                        <button type="button" class="remove-skill text-red-600 hover:text-red-800">
+                                                                                                                                                                                                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                                                                                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                                                                                                                                                                            </svg>
+                                                                                                                                                                                                                                        </button>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                `;
 
                                                 $(`#${currentListId}`).append(skillHtml);
 
@@ -1244,32 +1305,32 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                                 if (index >= 3) return;
 
                                                 const template = `
-                                                                                            <div class="achievement-entry bg-gray-50 p-4 rounded-lg">
-                                                                                                <div class="grid grid-cols-2 gap-4">
-                                                                                                    <div>
-                                                                                                        <label class="block text-sm font-medium text-gray-700">Başlık</label>
-                                                                                                        <input type="text" name="achievement[${index}][title]"
-                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                    </div>
-                                                                                                    <div>
-                                                                                                        <label class="block text-sm font-medium text-gray-700">Veren Kurum</label>
-                                                                                                        <input type="text" name="achievement[${index}][issuer]"
-                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                    </div>
-                                                                                                    <div>
-                                                                                                        <label class="block text-sm font-medium text-gray-700">Tarih</label>
-                                                                                                        <input type="month" name="achievement[${index}][date]"
-                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                    </div>
-                                                                                                    <div class="col-span-2">
-                                                                                                        <label class="block text-sm font-medium text-gray-700">Açıklama</label>
-                                                                                                        <textarea name="achievement[${index}][description]" rows="2"
-                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <button type="button" class="remove-achievement mt-4 text-red-600 hover:text-red-800">Başarıyı Kaldır</button>
-                                                                                            </div>
-                                                                                        `;
+                                                                                                                                                                            <div class="achievement-entry bg-gray-50 p-4 rounded-lg">
+                                                                                                                                                                                <div class="grid grid-cols-2 gap-4">
+                                                                                                                                                                                    <div>
+                                                                                                                                                                                        <label class="block text-sm font-medium text-gray-700">Başlık</label>
+                                                                                                                                                                                        <input type="text" name="achievement[${index}][title]"
+                                                                                                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                    <div>
+                                                                                                                                                                                        <label class="block text-sm font-medium text-gray-700">Veren Kurum</label>
+                                                                                                                                                                                        <input type="text" name="achievement[${index}][issuer]"
+                                                                                                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                    <div>
+                                                                                                                                                                                        <label class="block text-sm font-medium text-gray-700">Tarih</label>
+                                                                                                                                                                                        <input type="month" name="achievement[${index}][date]"
+                                                                                                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                    <div class="col-span-2">
+                                                                                                                                                                                        <label class="block text-sm font-medium text-gray-700">Açıklama</label>
+                                                                                                                                                                                        <textarea name="achievement[${index}][description]" rows="2"
+                                                                                                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                </div>
+                                                                                                                                                                                <button type="button" class="remove-achievement mt-4 text-red-600 hover:text-red-800">Başarıyı Kaldır</button>
+                                                                                                                                                                            </div>
+                                                                                                                                                                        `;
 
                                                 $('#achievementsList').append(template);
                                                 updateAchievementCount();
@@ -1288,12 +1349,12 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                                 for (const platform in platforms) {
                                                     if (!$(`.network-link-entry[data-platform="${platform}"]`).length) {
                                                         platformListHtml += `
-                                                <button type="button" 
-                                                    class="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-md platform-option"
-                                                    data-platform="${platform}">
-                                                    ${platform.charAt(0).toUpperCase() + platform.slice(1)}
-                                                </button>
-                                            `;
+                                                                                                                                <button type="button" 
+                                                                                                                                    class="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-md platform-option"
+                                                                                                                                    data-platform="${platform}">
+                                                                                                                                    ${platform.charAt(0).toUpperCase() + platform.slice(1)}
+                                                                                                                                </button>
+                                                                                                                            `;
                                                     }
                                                 }
 
@@ -1305,15 +1366,15 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                                 if ($('#certificationList .certification').length >= 2) return;
 
                                                 const template = `
-                                                                                            <div class="flex items-center gap-2">
-                                                                                                <input type="text" class="certification flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                <button type="button" class="remove-certification text-red-600 hover:text-red-800">
-                                                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                                                                    </svg>
-                                                                                                </button>
-                                                                                            </div>
-                                                                                        `;
+                                                                                                                                                                            <div class="flex items-center gap-2">
+                                                                                                                                                                                <input type="text" class="certification flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                <button type="button" class="remove-certification text-red-600 hover:text-red-800">
+                                                                                                                                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                                                                                                                    </svg>
+                                                                                                                                                                                </button>
+                                                                                                                                                                            </div>
+                                                                                                                                                                        `;
 
                                                 $('#certificationList').append(template);
                                                 updateCertificationCount();
@@ -1323,15 +1384,15 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                                 if ($('#expertiseList .expertise-area').length >= 2) return;
 
                                                 const template = `
-                                                                                            <div class="flex items-center gap-2">
-                                                                                                <input type="text" class="expertise-area flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                <button type="button" class="remove-expertise text-red-600 hover:text-red-800">
-                                                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                                                                    </svg>
-                                                                                                </button>
-                                                                                            </div>
-                                                                                        `;
+                                                                                                                                                                            <div class="flex items-center gap-2">
+                                                                                                                                                                                <input type="text" class="expertise-area flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                <button type="button" class="remove-expertise text-red-600 hover:text-red-800">
+                                                                                                                                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                                                                                                                    </svg>
+                                                                                                                                                                                </button>
+                                                                                                                                                                            </div>
+                                                                                                                                                                        `;
 
                                                 $('#expertiseList').append(template);
                                                 updateExpertiseCount();
@@ -1342,27 +1403,27 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                                 if (index >= 3) return;
 
                                                 const template = `
-                                                                                            <div class="portfolio-entry bg-gray-50 p-4 rounded-lg">
-                                                                                                <div class="grid grid-cols-1 gap-4">
-                                                                                                    <div>
-                                                                                                        <label class="block text-sm font-medium text-gray-700">Proje Başlığı</label>
-                                                                                                        <input type="text" name="portfolio[${index}][title]"
-                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                    </div>
-                                                                                                    <div>
-                                                                                                        <label class="block text-sm font-medium text-gray-700">Proje Açıklaması</label>
-                                                                                                        <textarea name="portfolio[${index}][description]" rows="2"
-                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
-                                                                                                    </div>
-                                                                                                    <div>
-                                                                                                        <label class="block text-sm font-medium text-gray-700">Proje URL</label>
-                                                                                                        <input type="url" name="portfolio[${index}][url]"
-                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <button type="button" class="remove-portfolio mt-4 text-red-600 hover:text-red-800">Projeyi Kaldır</button>
-                                                                                            </div>
-                                                                                        `;
+                                                                                                                                                                            <div class="portfolio-entry bg-gray-50 p-4 rounded-lg">
+                                                                                                                                                                                <div class="grid grid-cols-1 gap-4">
+                                                                                                                                                                                    <div>
+                                                                                                                                                                                        <label class="block text-sm font-medium text-gray-700">Proje Başlığı</label>
+                                                                                                                                                                                        <input type="text" name="portfolio[${index}][title]"
+                                                                                                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                    <div>
+                                                                                                                                                                                        <label class="block text-sm font-medium text-gray-700">Proje Açıklaması</label>
+                                                                                                                                                                                        <textarea name="portfolio[${index}][description]" rows="2"
+                                                                                                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                    <div>
+                                                                                                                                                                                        <label class="block text-sm font-medium text-gray-700">Proje URL</label>
+                                                                                                                                                                                        <input type="url" name="portfolio[${index}][url]"
+                                                                                                                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                </div>
+                                                                                                                                                                                <button type="button" class="remove-portfolio mt-4 text-red-600 hover:text-red-800">Projeyi Kaldır</button>
+                                                                                                                                                                            </div>
+                                                                                                                                                                        `;
 
                                                 $('#portfolioList').append(template);
                                                 updatePortfolioCount();
@@ -1448,26 +1509,26 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                                 const config = platformConfigs[currentNetworkCategory][platform];
 
                                                 const template = `
-                                                                                            <div class="network-link-entry" data-platform="${platform}">
-                            <label class="block text-sm font-medium text-gray-700">${platform.charAt(0).toUpperCase() + platform.slice(1)}</label>
-                            <div class="flex items-center gap-2 mt-1">
-                                <div class="flex-1 flex items-center bg-white rounded-md border border-gray-300">
-                                    <span class="px-3 py-2 text-gray-500 bg-gray-50 border-r border-gray-300 rounded-l-md whitespace-nowrap">
-                                        ${config.base}
-                                    </span>
-                                    <input type="text" 
-                                        class="w-full p-2 block rounded-r-md border-0 focus:ring-2 focus:ring-blue-500 min-w-[200px]"
-                                        data-platform="${platform}"
-                                        data-category="${currentNetworkCategory}">
-                                </div>
-                                <button type="button" class="remove-network-link text-red-600 hover:text-red-800 shrink-0">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                                                                                        `;
+                                                                                                                                                                            <div class="network-link-entry" data-platform="${platform}">
+                                                                                                            <label class="block text-sm font-medium text-gray-700">${platform.charAt(0).toUpperCase() + platform.slice(1)}</label>
+                                                                                                            <div class="flex items-center gap-2 mt-1">
+                                                                                                                <div class="flex-1 flex items-center bg-white rounded-md border border-gray-300">
+                                                                                                                    <span class="px-3 py-2 text-gray-500 bg-gray-50 border-r border-gray-300 rounded-l-md whitespace-nowrap">
+                                                                                                                        ${config.base}
+                                                                                                                    </span>
+                                                                                                                    <input type="text" 
+                                                                                                                        class="w-full p-2 block rounded-r-md border-0 focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+                                                                                                                        data-platform="${platform}"
+                                                                                                                        data-category="${currentNetworkCategory}">
+                                                                                                                </div>
+                                                                                                                <button type="button" class="remove-network-link text-red-600 hover:text-red-800 shrink-0">
+                                                                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                                                    </svg>
+                                                                                                                </button>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                                                                                        `;
 
                                                 $(`#${currentNetworkCategory}LinksList`).append(template);
                                                 $('#platformModal').addClass('hidden');
@@ -1477,23 +1538,23 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
 
                                             function addPortfolioSite() {
                                                 const template = `
-                                                                                            <div class="network-link-entry">
-                                                                                                <div class="flex items-center gap-2 mt-1">
-                                                                                                    <input type="text" 
-                                                                                                        placeholder="Site Adı"
-                                                                                                        class="flex-1 p-2 rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                                                                                        data-category="portfolio_sites">
-                                                                                                    <input type="url" 
-                                                                                                        placeholder="URL"
-                                                                                                        class="flex-1 p-2 rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500">
-                                                                                                    <button type="button" class="remove-network-link text-red-600 hover:text-red-800">
-                                                                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                                                                        </svg>
-                                                                                                    </button>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        `;
+                                                                                                                                                                            <div class="network-link-entry">
+                                                                                                                                                                                <div class="flex items-center gap-2 mt-1">
+                                                                                                                                                                                    <input type="text" 
+                                                                                                                                                                                        placeholder="Site Adı"
+                                                                                                                                                                                        class="flex-1 p-2 rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500"
+                                                                                                                                                                                        data-category="portfolio_sites">
+                                                                                                                                                                                    <input type="url" 
+                                                                                                                                                                                        placeholder="URL"
+                                                                                                                                                                                        class="flex-1 p-2 rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500">
+                                                                                                                                                                                    <button type="button" class="remove-network-link text-red-600 hover:text-red-800">
+                                                                                                                                                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                                                                                                                        </svg>
+                                                                                                                                                                                    </button>
+                                                                                                                                                                                </div>
+                                                                                                                                                                            </div>
+                                                                                                                                                                        `;
 
                                                 $('#portfolioSitesList').append(template);
                                                 updateNetworkLinksCount('portfolio_sites');
@@ -1708,145 +1769,260 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                     </script>
                                     <?php
                                     break;
-                                    case 'security':
-                                        // Mevcut kullanıcı bilgilerini çek
-                                        $stmt = $db->prepare("SELECT username, email, two_factor_auth FROM users WHERE user_id = ?");
-                                        $stmt->execute([$_SESSION['user_id']]);
-                                        $userData = $stmt->fetch(PDO::FETCH_ASSOC);
-                                    ?>
-                                        <h2 class="text-xl font-semibold mb-6">Güvenlik Merkezi</h2>
-                                        
-                                        <div class="space-y-8">
-                                            <!-- Hesap Bilgileri -->
-                                            <div class="bg-white p-6 rounded-lg shadow space-y-6">
-                                                <h3 class="text-lg font-medium">Hesap Bilgileri</h3>
-                                                <form id="accountInfoForm" class="space-y-4">
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700">Kullanıcı Adı</label>
-                                                        <input type="text" name="username" value="<?php echo htmlspecialchars($userData['username']); ?>"
-                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                    </div>
-                                                    
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700">E-posta Adresi</label>
-                                                        <input type="email" name="email" value="<?php echo htmlspecialchars($userData['email']); ?>"
-                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                    </div>
-                                                </form>
-                                            </div>
-                                    
-                                            <!-- Şifre Değiştirme -->
-                                            <div class="bg-white p-6 rounded-lg shadow space-y-6">
-                                                <h3 class="text-lg font-medium">Şifre Değiştirme</h3>
-                                                <form id="passwordChangeForm" class="space-y-4">
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700">Mevcut Şifre</label>
-                                                        <input type="password" name="current_password"
-                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                    </div>
-                                                    
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700">Yeni Şifre</label>
-                                                        <input type="password" name="new_password"
-                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                    </div>
-                                                    
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700">Yeni Şifre Tekrar</label>
-                                                        <input type="password" name="new_password_confirmation"
-                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                    </div>
-                                                </form>
-                                            </div>
-                                    
-                                            <!-- İki Faktörlü Doğrulama -->
-                                            <div class="bg-white p-6 rounded-lg shadow space-y-6">
-                                                <div class="flex items-center justify-between">
-                                                    <div>
-                                                        <h3 class="text-lg font-medium">İki Faktörlü Doğrulama</h3>
-                                                        <p class="text-sm text-gray-500">Hesabınızı daha güvenli hale getirmek için iki faktörlü doğrulamayı etkinleştirin.</p>
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <label class="relative inline-flex items-center cursor-pointer">
-                                                            <input type="checkbox" id="twoFactorToggle" class="sr-only peer" <?php echo $userData['two_factor_auth'] ? 'checked' : ''; ?>>
-                                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                                        </label>
-                                                    </div>
+                            case 'security':
+                                // Mevcut kullanıcı bilgilerini çek
+                                $stmt = $db->prepare("SELECT username, email, two_factor_auth FROM users WHERE user_id = ?");
+                                $stmt->execute([$_SESSION['user_id']]);
+                                $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+                                ?>
+                                    <h2 class="text-xl font-semibold mb-6">Güvenlik Merkezi</h2>
+
+                                    <div class="space-y-8">
+                                        <!-- Hesap Bilgileri -->
+                                        <div class="bg-white p-6 rounded-lg shadow space-y-6">
+                                            <h3 class="text-lg font-medium">Hesap Bilgileri</h3>
+                                            <form id="accountInfoForm" class="space-y-4">
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700">Kullanıcı Adı</label>
+                                                    <input type="text" name="username"
+                                                        value="<?php echo htmlspecialchars($userData['username']); ?>"
+                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                </div>
+
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700">E-posta
+                                                        Adresi</label>
+                                                    <input type="email" name="email"
+                                                        value="<?php echo htmlspecialchars($userData['email']); ?>"
+                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                        <!-- Şifre Değiştirme -->
+                                        <div class="bg-white p-6 rounded-lg shadow space-y-6">
+                                            <h3 class="text-lg font-medium">Şifre Değiştirme</h3>
+                                            <form id="passwordChangeForm" class="space-y-4">
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700">Mevcut Şifre</label>
+                                                    <input type="password" name="current_password"
+                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                </div>
+
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700">Yeni Şifre</label>
+                                                    <input type="password" name="new_password"
+                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                </div>
+
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700">Yeni Şifre
+                                                        Tekrar</label>
+                                                    <input type="password" name="new_password_confirmation"
+                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                        <!-- İki Faktörlü Doğrulama -->
+                                        <div class="bg-white p-6 rounded-lg shadow space-y-6">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <h3 class="text-lg font-medium">İki Faktörlü Doğrulama</h3>
+                                                    <p class="text-sm text-gray-500">Hesabınızı daha güvenli hale getirmek için
+                                                        iki faktörlü doğrulamayı etkinleştirin.</p>
+                                                </div>
+                                                <div class="flex items-center">
+                                                    <label class="relative inline-flex items-center cursor-pointer">
+                                                        <input type="checkbox" id="twoFactorToggle" class="sr-only peer" <?php echo $userData['two_factor_auth'] ? 'checked' : ''; ?>>
+                                                        <div
+                                                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                                                        </div>
+                                                    </label>
                                                 </div>
                                             </div>
-                                    
-                                            <!-- Kaydet Butonu -->
-                                            <div class="flex justify-end">
-                                                <button type="button" id="saveSecurityChanges"
-                                                    class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                                                    Değişiklikleri Kaydet
-                                                </button>
-                                            </div>
                                         </div>
-                                    
-                                        <script>
-                                            $(document).ready(function() {
-                                                // Form değişikliklerini takip et
-                                                let formChanged = false;
-                                    
-                                                $('input').on('change', function() {
-                                                    formChanged = true;
-                                                });
-                                    
-                                                // İki faktörlü doğrulama toggle
-                                                $('#twoFactorToggle').on('change', function() {
-                                                    formChanged = true;
-                                                });
-                                    
-                                                // Değişiklikleri kaydet
-                                                $('#saveSecurityChanges').click(function() {
-                                                    if (!formChanged) return;
-                                    
-                                                    // Şifre kontrolü
-                                                    const newPassword = $('[name="new_password"]').val();
-                                                    const confirmPassword = $('[name="new_password_confirmation"]').val();
-                                    
-                                                    if (newPassword && newPassword !== confirmPassword) {
-                                                        alert('Yeni şifreler eşleşmiyor!');
-                                                        return;
-                                                    }
-                                    
-                                                    // Form verilerini topla
-                                                    const formData = {
-                                                        username: $('[name="username"]').val(),
-                                                        email: $('[name="email"]').val(),
-                                                        current_password: $('[name="current_password"]').val(),
-                                                        new_password: newPassword,
-                                                        two_factor_auth: $('#twoFactorToggle').is(':checked') ? 1 : 0
-                                                    };
-                                    
-                                                    // API'ye gönder
+
+                                        <!-- Kaydet Butonu -->
+                                        <div class="flex justify-end">
+                                            <button type="button" id="saveSecurityChanges"
+                                                class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                                Değişiklikleri Kaydet
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <script>
+                                        $(document).ready(function () {
+                                            // Form değişikliklerini takip et
+                                            let formChanged = false;
+                                            let usernameTimer, emailTimer;
+                                            let originalUsername = $('[name="username"]').val();
+                                            let originalEmail = $('[name="email"]').val();
+
+                                            $('input').on('change', function () {
+                                                formChanged = true;
+                                            });
+
+                                            $('[name="username"]').after('<div class="validation-feedback username-feedback mt-1 text-sm"></div>');
+                                            $('[name="email"]').after('<div class="validation-feedback email-feedback mt-1 text-sm"></div>');
+
+                                            // İki faktörlü doğrulama toggle
+                                            $('#twoFactorToggle').on('change', function () {
+                                                formChanged = true;
+                                            });
+
+                                            $('[name="username"]').on('input', function () {
+                                                const username = $(this).val().trim();
+                                                const feedbackElement = $('.username-feedback');
+
+                                                // Orijinal değerse kontrol etme
+                                                if (username === originalUsername) {
+                                                    feedbackElement.empty();
+                                                    return;
+                                                }
+
+                                                // Minimum uzunluk kontrolü
+                                                if (username.length < 3) {
+                                                    feedbackElement.html('<span class="text-yellow-600">Kullanıcı adı en az 3 karakter olmalıdır</span>');
+                                                    return;
+                                                }
+
+                                                // Geçerli karakter kontrolü
+                                                if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                                                    feedbackElement.html('<span class="text-red-600">Sadece harf, rakam ve alt çizgi kullanılabilir</span>');
+                                                    return;
+                                                }
+
+                                                // Önceki zamanlayıcıyı temizle
+                                                clearTimeout(usernameTimer);
+
+                                                // Loading göster
+                                                feedbackElement.html('<span class="text-blue-600">Kontrol ediliyor...</span>');
+
+                                                // Yeni zamanlayıcı başlat
+                                                usernameTimer = setTimeout(() => {
                                                     $.ajax({
-                                                        url: 'update_account.php',
+                                                        url: 'check_availability.php',
                                                         type: 'POST',
-                                                        data: formData,
-                                                        success: function(response) {
+                                                        data: { type: 'username', value: username },
+                                                        success: function (response) {
                                                             response = JSON.parse(response);
-                                                            if (response.success) {
-                                                                alert('Güvenlik ayarlarınız başarıyla güncellendi');
-                                                                formChanged = false;
-                                                                // Şifre alanlarını temizle
-                                                                $('[name="current_password"]').val('');
-                                                                $('[name="new_password"]').val('');
-                                                                $('[name="new_password_confirmation"]').val('');
+                                                            if (response.available) {
+                                                                feedbackElement.html('<span class="text-green-600">✓ Bu kullanıcı adı kullanılabilir</span>');
                                                             } else {
-                                                                alert(response.message || 'Bir hata oluştu');
+                                                                feedbackElement.html('<span class="text-red-600">✗ Bu kullanıcı adı zaten kullanımda</span>');
                                                             }
                                                         },
-                                                        error: function() {
-                                                            alert('Bir hata oluştu');
+                                                        error: function () {
+                                                            feedbackElement.html('<span class="text-red-600">Bir hata oluştu</span>');
                                                         }
                                                     });
+                                                }, 500);
+                                            });
+
+                                            // Email değişikliklerini kontrol et
+                                            $('[name="email"]').on('input', function () {
+                                                const email = $(this).val().trim();
+                                                const feedbackElement = $('.email-feedback');
+
+                                                // Orijinal değerse kontrol etme
+                                                if (email === originalEmail) {
+                                                    feedbackElement.empty();
+                                                    return;
+                                                }
+
+                                                // Email format kontrolü
+                                                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                                                    feedbackElement.html('<span class="text-red-600">Geçerli bir email adresi giriniz</span>');
+                                                    return;
+                                                }
+
+                                                // Önceki zamanlayıcıyı temizle
+                                                clearTimeout(emailTimer);
+
+                                                // Loading göster
+                                                feedbackElement.html('<span class="text-blue-600">Kontrol ediliyor...</span>');
+
+                                                // Yeni zamanlayıcı başlat
+                                                emailTimer = setTimeout(() => {
+                                                    $.ajax({
+                                                        url: 'check_availability.php',
+                                                        type: 'POST',
+                                                        data: { type: 'email', value: email },
+                                                        success: function (response) {
+                                                            response = JSON.parse(response);
+                                                            if (response.available) {
+                                                                feedbackElement.html('<span class="text-green-600">✓ Bu email kullanılabilir</span>');
+                                                            } else {
+                                                                feedbackElement.html('<span class="text-red-600">✗ Bu email zaten kullanımda</span>');
+                                                            }
+                                                        },
+                                                        error: function () {
+                                                            feedbackElement.html('<span class="text-red-600">Bir hata oluştu</span>');
+                                                        }
+                                                    });
+                                                }, 500);
+                                            });
+
+                                            // Değişiklikleri kaydet
+                                            $('#saveSecurityChanges').click(function () {
+                                                if (!formChanged) return;
+
+                                                // Şifre kontrolü
+                                                const newPassword = $('[name="new_password"]').val();
+                                                const confirmPassword = $('[name="new_password_confirmation"]').val();
+
+                                                if (newPassword && newPassword !== confirmPassword) {
+                                                    alert('Yeni şifreler eşleşmiyor!');
+                                                    return;
+                                                }
+
+                                                // Form verilerini topla
+                                                const formData = {
+                                                    username: $('[name="username"]').val(),
+                                                    email: $('[name="email"]').val(),
+                                                    current_password: $('[name="current_password"]').val(),
+                                                    new_password: newPassword,
+                                                    two_factor_auth: $('#twoFactorToggle').is(':checked') ? 1 : 0
+                                                };
+
+                                                $('#accountInfoForm').on('submit', function (e) {
+                                                    e.preventDefault();
+                                                    const hasError = $('.validation-feedback').text().includes('✗');
+                                                    if (hasError) {
+                                                        alert('Lütfen geçerli değerler giriniz');
+                                                        return false;
+                                                    }
+                                                });
+
+                                                // API'ye gönder
+                                                $.ajax({
+                                                    url: 'update_account.php',
+                                                    type: 'POST',
+                                                    data: formData,
+                                                    success: function (response) {
+                                                        response = JSON.parse(response);
+                                                        if (response.success) {
+                                                            alert('Güvenlik ayarlarınız başarıyla güncellendi');
+                                                            formChanged = false;
+                                                            // Şifre alanlarını temizle
+                                                            $('[name="current_password"]').val('');
+                                                            $('[name="new_password"]').val('');
+                                                            $('[name="new_password_confirmation"]').val('');
+                                                        } else {
+                                                            alert(response.message || 'Bir hata oluştu');
+                                                        }
+                                                    },
+                                                    error: function () {
+                                                        alert('Bir hata oluştu');
+                                                    }
                                                 });
                                             });
-                                        </script>
+                                        });
+                                    </script>
                                     <?php
-                                        break;
+                                    break;
                             case 'notifications':
                                 echo '<h2 class="text-xl font-semibold mb-4">Bildirim Ayarları</h2>';
                                 echo '<p>E-posta, web ve mobil bildirim tercihlerinizi buradan özelleştirebilirsiniz.</p>';
@@ -1860,27 +2036,961 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                 echo '<p>Profil görünürlüğü ve gizlilik tercihlerinizi buradan düzenleyebilirsiniz.</p>';
                                 break;
                             case 'account':
-                                echo '<h2 class="text-xl font-semibold mb-4">Hesap ve Veriler</h2>';
-                                echo '<p>Hesap verilerinizi görüntüleyebilir ve yönetebilirsiniz.</p>';
-                                break;
+                                // Önce kullanıcının Google ile giriş yapıp yapmadığını ve şifresi olup olmadığını kontrol edelim
+                                $stmt = $db->prepare("SELECT google_id, password FROM users WHERE user_id = ?");
+                                $stmt->execute([$_SESSION['user_id']]);
+                                $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                                $isGoogleUser = !empty($userData['google_id']);
+                                $hasPassword = !empty($userData['password']);
+
+                                // Giriş denemelerini çek
+                                $stmt = $db->prepare("
+                                        SELECT * FROM login_attempts 
+                                        WHERE user_id = ? AND verified = 0 
+                                        ORDER BY attempt_time DESC"
+                                );
+                                $stmt->execute([$_SESSION['user_id']]);
+                                $unverifiedAttempts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                                // Onaylanmış giriş denemelerini çek
+                                $stmt = $db->prepare("
+                                        SELECT * FROM login_attempts 
+                                        WHERE user_id = ? AND verified = 1 
+                                        ORDER BY attempt_time DESC"
+                                );
+                                $stmt->execute([$_SESSION['user_id']]);
+                                $verifiedAttempts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                ?>
+                                    <h2 class="text-xl font-semibold mb-4">Hesap ve Veriler</h2>
+                                    <p class="mb-6">Hesap verilerinizi görüntüleyebilir ve yönetebilirsiniz.</p>
+
+                                    <!-- Giriş Denemeleri -->
+                                    <div class="space-y-6">
+                                        <!-- Onaylanmamış Giriş Denemeleri -->
+                                        <div class="bg-white p-6 rounded-lg shadow">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <h3 class="text-lg font-medium">Onaylanmamış Giriş Denemeleri</h3>
+                                                <?php if (count($unverifiedAttempts) > 0): ?>
+                                                    <button id="deleteAllUnverified"
+                                                        class="text-red-600 hover:text-red-800 text-sm">
+                                                        Tümünü Sil
+                                                    </button>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <div class="overflow-x-auto">
+                                                <table class="min-w-full divide-y divide-gray-200">
+                                                    <thead>
+                                                        <tr class="bg-gray-50">
+                                                            <th
+                                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                                Tarih</th>
+                                                            <th
+                                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                                IP</th>
+                                                            <th
+                                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                                Konum</th>
+                                                            <th
+                                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                                Tarayıcı</th>
+                                                            <th
+                                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                                İşlemler</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="bg-white divide-y divide-gray-200">
+                                                        <?php if (count($unverifiedAttempts) > 0): ?>
+                                                            <?php foreach ($unverifiedAttempts as $attempt): ?>
+                                                                <tr>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                                        <?php echo date('d.m.Y H:i:s', strtotime($attempt['attempt_time'])); ?>
+                                                                    </td>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                                        <?php echo $attempt['ip_address']; ?>
+                                                                    </td>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                                        <?php echo $attempt['city'] . ', ' . $attempt['country']; ?>
+                                                                    </td>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                                        <?php echo $attempt['browser'] . ' ' . $attempt['browser_version']; ?>
+                                                                    </td>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                                        <button
+                                                                            class="verify-attempt text-green-600 hover:text-green-800 mr-3"
+                                                                            data-id="<?php echo $attempt['attempt_id']; ?>">
+                                                                            Bu Bendim
+                                                                        </button>
+                                                                        <button class="delete-attempt text-red-600 hover:text-red-800"
+                                                                            data-id="<?php echo $attempt['attempt_id']; ?>">
+                                                                            Sil
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            <?php endforeach; ?>
+                                                        <?php else: ?>
+                                                            <tr>
+                                                                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                                    Onaylanmamış giriş denemesi bulunmuyor
+                                                                </td>
+                                                            </tr>
+                                                        <?php endif; ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <!-- Onaylanmış Giriş Denemeleri -->
+                                        <div class="bg-white p-6 rounded-lg shadow">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <h3 class="text-lg font-medium">Onaylanmış Giriş Denemeleri</h3>
+                                                <?php if (count($verifiedAttempts) > 0): ?>
+                                                    <button id="deleteAllVerified" class="text-red-600 hover:text-red-800 text-sm">
+                                                        Tümünü Sil
+                                                    </button>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <div class="overflow-x-auto">
+                                                <table class="min-w-full divide-y divide-gray-200">
+                                                    <thead>
+                                                        <tr class="bg-gray-50">
+                                                            <th
+                                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                                Tarih</th>
+                                                            <th
+                                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                                IP</th>
+                                                            <th
+                                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                                Konum</th>
+                                                            <th
+                                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                                Tarayıcı</th>
+                                                            <th
+                                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                                İşlemler</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="bg-white divide-y divide-gray-200">
+                                                        <?php if (count($verifiedAttempts) > 0): ?>
+                                                            <?php foreach ($verifiedAttempts as $attempt): ?>
+                                                                <tr>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                                        <?php echo date('d.m.Y H:i:s', strtotime($attempt['attempt_time'])); ?>
+                                                                    </td>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                                        <?php echo $attempt['ip_address']; ?>
+                                                                    </td>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                                        <?php echo $attempt['city'] . ', ' . $attempt['country']; ?>
+                                                                    </td>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                                        <?php echo $attempt['browser'] . ' ' . $attempt['browser_version']; ?>
+                                                                    </td>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                                        <button
+                                                                            class="delete-verified-attempt text-red-600 hover:text-red-800"
+                                                                            data-id="<?php echo $attempt['attempt_id']; ?>">
+                                                                            Sil
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            <?php endforeach; ?>
+                                                        <?php else: ?>
+                                                            <tr>
+                                                                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                                    Onaylanmış giriş denemesi bulunmuyor
+                                                                </td>
+                                                            </tr>
+                                                        <?php endif; ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <?php if ($isGoogleUser && !$hasPassword): ?>
+                                            <!-- Google kullanıcısı için şifre oluşturma bölümü -->
+                                            <div class="bg-white p-6 rounded-lg shadow mb-6">
+                                                <h3 class="text-lg font-medium text-blue-600 mb-4">Şifre Oluşturma</h3>
+                                                <p class="text-sm text-gray-600 mb-4">
+                                                    Hesabınızı Google ile oluşturdunuz ve henüz bir şifre belirlemediniz.
+                                                    Hesabınızı silebilmek için önce bir şifre oluşturmanız gerekmektedir.
+                                                </p>
+                                                <form id="createPasswordForm" class="space-y-4">
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700">Yeni Şifre</label>
+                                                        <input type="password" name="new_password" id="newPassword"
+                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                        <div class="text-xs text-gray-500 mt-1">
+                                                            En az 8 karakter, 1 büyük harf, 1 küçük harf içermelidir.
+                                                        </div>
+                                                        <div id="passwordValidation" class="mt-2 text-xs space-y-1">
+                                                            <div id="lengthCheck" class="text-red-600">✗ En az 8 karakter</div>
+                                                            <div id="uppercaseCheck" class="text-red-600">✗ En az 1 büyük harf</div>
+                                                            <div id="lowercaseCheck" class="text-red-600">✗ En az 1 küçük harf</div>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700">Şifre Tekrar</label>
+                                                        <input type="password" name="confirm_password" id="confirmPassword"
+                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                        <div id="passwordMatch" class="text-xs mt-1"></div>
+                                                    </div>
+                                                    <button type="submit" id="createPasswordBtn"
+                                                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                                        Şifre Oluştur
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <!-- Hesap Silme -->
+                                        <div class="bg-white p-6 rounded-lg shadow">
+                                            <h3 class="text-lg font-medium text-red-600 mb-4">Tehlikeli Bölge</h3>
+                                            <p class="text-sm text-gray-600 mb-4">
+                                                Hesabınızı silmek geri alınamaz bir işlemdir. Tüm verileriniz kalıcı olarak
+                                                silinecektir.
+                                            </p>
+                                            <button id="deleteAccountBtn"
+                                                class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 <?php echo ($isGoogleUser && !$hasPassword) ? 'opacity-50 cursor-not-allowed' : ''; ?>"
+                                                <?php echo ($isGoogleUser && !$hasPassword) ? 'disabled' : ''; ?>>
+                                                Hesabı Sil
+                                            </button>
+                                            <?php if ($isGoogleUser && !$hasPassword): ?>
+                                                <p class="mt-2 text-sm text-red-600">
+                                                    Hesabınızı silebilmek için önce bir şifre oluşturmanız gerekmektedir.
+                                                </p>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+
+                                    <!-- Hesap Silme Modalı -->
+                                    <div id="deleteAccountModal"
+                                        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+                                        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                                            <div class="mt-3 text-center">
+                                                <h3 class="text-lg leading-6 font-medium text-gray-900">Hesap Silme</h3>
+                                                <div class="mt-2 px-7 py-3">
+                                                    <input type="password" id="deleteAccountPassword"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                                                        placeholder="Şifrenizi girin">
+                                                </div>
+                                                <div class="items-center px-4 py-3">
+                                                    <button id="confirmDeleteAccount"
+                                                        class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                                                        Hesabı Sil
+                                                    </button>
+                                                    <button id="cancelDeleteAccount"
+                                                        class="mt-3 px-4 py-2 bg-gray-100 text-gray-700 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                                                        İptal
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Son Uyarı Modalı -->
+                                    <div id="finalWarningModal"
+                                        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+                                        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                                            <div class="mt-3 text-center">
+                                                <div
+                                                    class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                                                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                    </svg>
+                                                </div>
+                                                <h3 class="text-lg leading-6 font-medium text-gray-900 mt-4">Son Uyarı!</h3>
+                                                <div class="mt-2 px-7 py-3">
+                                                    <p class="text-sm text-gray-500">
+                                                        Hesabınızın tüm verileri kalıcı olarak silinecektir. Mevcut bakiyeniz ve
+                                                        diğer tüm verileriniz geri getirilemeyecektir.
+                                                    </p>
+                                                </div>
+                                                <div class="items-center px-4 py-3">
+                                                    <button id="finalConfirmDelete"
+                                                        class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                                                        Evet, Hesabımı Sil
+                                                    </button>
+                                                    <button id="finalCancelDelete"
+                                                        class="mt-3 px-4 py-2 bg-gray-100 text-gray-700 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                                                        Vazgeç
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <script>
+                                        // Şifre validasyonu için regex patterns
+                                        const patterns = {
+                                            length: /.{8,}/,
+                                            uppercase: /[A-Z]/,
+                                            lowercase: /[a-z]/
+                                        };
+
+                                        let validPassword = false;
+                                        let passwordsMatch = false;
+
+                                        function updateValidationUI(input) {
+                                            const password = input.value;
+
+                                            // Her bir kriteri kontrol et ve UI'ı güncelle
+                                            for (const [key, pattern] of Object.entries(patterns)) {
+                                                const element = document.getElementById(`${key}Check`);
+                                                const isValid = pattern.test(password);
+                                                element.className = isValid ? 'text-green-600' : 'text-red-600';
+                                                element.innerHTML = `${isValid ? '✓' : '✗'} ${element.innerHTML.split(' ').slice(1).join(' ')}`;
+                                            }
+
+                                            // Tüm kriterler geçildi mi kontrol et
+                                            validPassword = Object.values(patterns).every(pattern => pattern.test(password));
+                                            updateSubmitButton();
+                                        }
+
+                                        function checkPasswordMatch() {
+                                            const password = document.getElementById('newPassword').value;
+                                            const confirm = document.getElementById('confirmPassword').value;
+                                            const matchDiv = document.getElementById('passwordMatch');
+
+                                            if (confirm) {
+                                                passwordsMatch = password === confirm;
+                                                matchDiv.className = `text-xs mt-1 ${passwordsMatch ? 'text-green-600' : 'text-red-600'}`;
+                                                matchDiv.textContent = passwordsMatch ? '✓ Şifreler eşleşiyor' : '✗ Şifreler eşleşmiyor';
+                                            } else {
+                                                passwordsMatch = false;
+                                                matchDiv.textContent = '';
+                                            }
+
+                                            updateSubmitButton();
+                                        }
+
+                                        function updateSubmitButton() {
+                                            const submitBtn = document.getElementById('createPasswordBtn');
+                                            submitBtn.disabled = !(validPassword && passwordsMatch);
+                                        }
+
+                                        $(document).ready(function () {
+                                            if (document.getElementById('newPassword')) {
+                                                $('#newPassword').on('input', function () {
+                                                    updateValidationUI(this);
+                                                });
+
+                                                $('#confirmPassword').on('input', function () {
+                                                    checkPasswordMatch();
+                                                });
+
+                                                $('#createPasswordForm').on('submit', function (e) {
+                                                    e.preventDefault();
+
+                                                    const password = $('#newPassword').val();
+
+                                                    $.ajax({
+                                                        url: 'update_critical.php',
+                                                        type: 'POST',
+                                                        data: {
+                                                            action: 'create_password',
+                                                            password: password
+                                                        },
+                                                        success: function (response) {
+                                                            response = JSON.parse(response);
+                                                            if (response.success) {
+                                                                alert('Şifre başarıyla oluşturuldu. Artık hesabınızı silebilirsiniz.');
+                                                                location.reload();
+                                                            } else {
+                                                                alert(response.message || 'Bir hata oluştu');
+                                                            }
+                                                        },
+                                                        error: function () {
+                                                            alert('Bir hata oluştu');
+                                                        }
+                                                    });
+                                                });
+                                            }
+                                        });
+
+                                        $(document).ready(function () {
+                                            let accountPassword = '';
+
+                                            // Tekil giriş denemesi doğrulama
+                                            $('.verify-attempt').click(function () {
+                                                const attemptId = $(this).data('id');
+                                                const row = $(this).closest('tr');
+
+                                                $.ajax({
+                                                    url: 'update_critical.php',
+                                                    type: 'POST',
+                                                    data: {
+                                                        action: 'verify_attempt',
+                                                        attempt_id: attemptId
+                                                    },
+                                                    success: function (response) {
+                                                        response = JSON.parse(response);
+                                                        if (response.success) {
+                                                            row.fadeOut(400, function () {
+                                                                location.reload();
+                                                            });
+                                                        } else {
+                                                            alert('Bir hata oluştu');
+                                                        }
+                                                    }
+                                                });
+                                            });
+
+                                            // Tekil giriş denemesi silme
+                                            $('.delete-attempt, .delete-verified-attempt').click(function () {
+                                                const attemptId = $(this).data('id');
+                                                const row = $(this).closest('tr');
+
+                                                if (confirm('Bu giriş denemesini silmek istediğinizden emin misiniz?')) {
+                                                    $.ajax({
+                                                        url: 'update_critical.php',
+                                                        type: 'POST',
+                                                        data: {
+                                                            action: 'delete_attempt',
+                                                            attempt_id: attemptId
+                                                        },
+                                                        success: function (response) {
+                                                            response = JSON.parse(response);
+                                                            if (response.success) {
+                                                                row.fadeOut();
+                                                            } else {
+                                                                alert('Bir hata oluştu');
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            });
+
+                                            // Tüm onaylanmamış denemeleri silme
+                                            $('#deleteAllUnverified').click(function () {
+                                                if (confirm('Tüm onaylanmamış giriş denemelerini silmek istediğinizden emin misiniz?')) {
+                                                    $.ajax({
+                                                        url: 'update_critical.php',
+                                                        type: 'POST',
+                                                        data: {
+                                                            action: 'delete_all_unverified'
+                                                        },
+                                                        success: function (response) {
+                                                            response = JSON.parse(response);
+                                                            if (response.success) {
+                                                                location.reload();
+                                                            } else {
+                                                                alert('Bir hata oluştu');
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            });
+
+                                            // Tüm onaylanmış denemeleri silme
+                                            $('#deleteAllVerified').click(function () {
+                                                if (confirm('Tüm onaylanmış giriş denemelerini silmek istediğinizden emin misiniz?')) {
+                                                    $.ajax({
+                                                        url: 'update_critical.php',
+                                                        type: 'POST',
+                                                        data: {
+                                                            action: 'delete_all_verified'
+                                                        },
+                                                        success: function (response) {
+                                                            response = JSON.parse(response);
+                                                            if (response.success) {
+                                                                location.reload();
+                                                            } else {
+                                                                alert('Bir hata oluştu');
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            });
+
+                                            // Hesap silme modalı kontrolü
+                                            $('#deleteAccountBtn').click(function () {
+                                                $('#deleteAccountModal').removeClass('hidden');
+                                            });
+
+                                            $('#cancelDeleteAccount').click(function () {
+                                                $('#deleteAccountModal').addClass('hidden');
+                                                $('#deleteAccountPassword').val('');
+                                            });
+
+                                            // İlk modal onayı ve şifre kontrolü
+                                            $('#confirmDeleteAccount').click(function () {
+                                                const password = $('#deleteAccountPassword').val();
+
+                                                if (!password) {
+                                                    alert('Lütfen şifrenizi girin');
+                                                    return;
+                                                }
+
+                                                // Şifreyi global değişkene kaydet
+                                                accountPassword = password;
+
+                                                $.ajax({
+                                                    url: 'update_critical.php',
+                                                    type: 'POST',
+                                                    data: {
+                                                        action: 'verify_password',
+                                                        password: password
+                                                    },
+                                                    success: function (response) {
+                                                        response = JSON.parse(response);
+                                                        if (response.success) {
+                                                            // Şifre doğruysa ilk modalı kapat ve son uyarı modalını göster
+                                                            $('#deleteAccountModal').addClass('hidden');
+                                                            $('#finalWarningModal').removeClass('hidden');
+                                                        } else {
+                                                            alert('Şifre yanlış');
+                                                        }
+                                                    }
+                                                });
+                                            });
+
+
+                                            // Son uyarı modalı kontrolleri
+                                            $('#cancelDeleteAccount, #finalCancelDelete').click(function () {
+                                                accountPassword = '';
+                                                $('#deleteAccountPassword').val('');
+                                                $('#deleteAccountModal, #finalWarningModal').addClass('hidden');
+                                            });
+
+                                            // Hesap silme işlemi
+                                            $('#finalConfirmDelete').click(function () {
+                                                $.ajax({
+                                                    url: 'update_critical.php',
+                                                    type: 'POST',
+                                                    data: {
+                                                        action: 'delete_account',
+                                                        password: accountPassword // Kaydedilmiş şifreyi kullan
+                                                    },
+                                                    success: function (response) {
+                                                        response = JSON.parse(response);
+                                                        if (response.success) {
+                                                            window.location.href = '/auth/logout.php';
+                                                        } else {
+                                                            alert(response.message || 'Bir hata oluştu');
+                                                        }
+                                                    },
+                                                    error: function (xhr, status, error) {
+                                                        console.error('Error:', error);
+                                                        alert('Bir hata oluştu: ' + error);
+                                                    }
+                                                });
+                                            });
+                                        });
+                                    </script>
+                                    <?php
+                                    break;
                             case 'language':
-                                echo '<h2 class="text-xl font-semibold mb-4">Dil ve Bölge</h2>';
-                                echo '<p>Dil, saat dilimi ve bölge ayarlarınızı buradan değiştirebilirsiniz.</p>';
-                                break;
+                                ?>
+                                    <div class="space-y-6">
+                                        <div class="bg-white p-6 rounded-lg shadow">
+                                            <h2 class="text-xl font-semibold mb-6">Dil ve Bölge Ayarları</h2>
+
+                                            <!-- Dil Seçimi -->
+                                            <div class="mb-8">
+                                                <h3 class="text-lg font-medium mb-4">Arayüz Dili</h3>
+                                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                                    <?php foreach ($languages as $code => $name): ?>
+                                                        <label
+                                                            class="relative flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50 <?php echo ($userSettings['language'] === $code) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
+                                                            <div class="flex items-center">
+                                                                <input type="radio" name="language" value="<?php echo $code; ?>"
+                                                                    class="hidden" <?php echo ($userSettings['language'] === $code) ? 'checked' : ''; ?>>
+                                                                <span class="text-sm font-medium"><?php echo $name; ?></span>
+                                                            </div>
+                                                            <?php if ($userSettings['language'] === $code): ?>
+                                                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor"
+                                                                    viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                                </svg>
+                                                            <?php endif; ?>
+                                                        </label>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            </div>
+
+                                            <!-- Saat Dilimi -->
+                                            <div class="mb-8">
+                                                <h3 class="text-lg font-medium mb-4">Saat Dilimi</h3>
+                                                <div class="max-w-xl">
+                                                    <select name="timezone"
+                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                        <?php foreach ($timezones as $tz): ?>
+                                                            <option value="<?php echo $tz; ?>" <?php echo ($userSettings['timezone'] === $tz) ? 'selected' : ''; ?>>
+                                                                <?php echo $tz; ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+
+                                                    <p class="mt-2 text-sm text-gray-500">Yerel saatiniz: <span
+                                                            id="localTime"></span></p>
+                                                </div>
+                                            </div>
+
+                                            <!-- Bölge Seçimi -->
+                                            <div class="mb-8">
+                                                <h3 class="text-lg font-medium mb-4">Bölge</h3>
+                                                <div class="max-w-xl">
+                                                    <select name="region"
+                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                        <?php foreach ($regions as $code => $name): ?>
+                                                            <option value="<?php echo $code; ?>" <?php echo ($userSettings['region'] === $code) ? 'selected' : ''; ?>>
+                                                                <?php echo $name; ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <!-- Tarih ve Saat Formatı -->
+                                            <div class="mb-8">
+                                                <h3 class="text-lg font-medium mb-4">Tarih ve Saat Formatı</h3>
+                                                <div class="space-y-4">
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700">Tarih
+                                                            Formatı</label>
+                                                        <select name="date_format"
+                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                            <option value="DD.MM.YYYY" <?php echo ($userSettings['date_format'] === 'DD.MM.YYYY') ? 'selected' : ''; ?>>DD.MM.YYYY</option>
+                                                            <option value="MM/DD/YYYY" <?php echo ($userSettings['date_format'] === 'MM/DD/YYYY') ? 'selected' : ''; ?>>MM/DD/YYYY</option>
+                                                            <option value="YYYY-MM-DD" <?php echo ($userSettings['date_format'] === 'YYYY-MM-DD') ? 'selected' : ''; ?>>YYYY-MM-DD</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700">Saat
+                                                            Formatı</label>
+                                                        <div class="mt-1 space-x-4">
+                                                            <label class="inline-flex items-center">
+                                                                <input type="radio" name="time_format" value="24h" <?php echo ($userSettings['time_format'] === '24h') ? 'checked' : ''; ?>
+                                                                    class="form-radio h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                                                <span class="ml-2 text-sm text-gray-700">24 saat</span>
+                                                            </label>
+                                                            <label class="inline-flex items-center">
+                                                                <input type="radio" name="time_format" value="12h" <?php echo ($userSettings['time_format'] === '12h') ? 'checked' : ''; ?>
+                                                                    class="form-radio h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                                                <span class="ml-2 text-sm text-gray-700">12 saat (AM/PM)</span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Kaydet Butonu -->
+                                                <div class="flex justify-end">
+                                                    <button type="button" id="saveRegionSettings"
+                                                        class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
+                                                        Değişiklikleri Kaydet
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <script>
+                                            $(document).ready(function () {
+                                                // Yerel saati güncelleme fonksiyonu
+                                                function updateLocalTime() {
+                                                    const timezone = $('select[name="timezone"]').val();
+                                                    const now = new Date();
+                                                    const options = {
+                                                        timeZone: timezone,
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                        second: '2-digit',
+                                                        hour12: $('input[name="time_format"]:checked').val() === '12h'
+                                                    };
+                                                    $('#localTime').text(now.toLocaleTimeString(undefined, options));
+                                                }
+
+                                                // Her saniye saati güncelle
+                                                setInterval(updateLocalTime, 1000);
+                                                updateLocalTime();
+
+                                                // Ayarları kaydet
+                                                $('#saveRegionSettings').click(function () {
+                                                    const settings = {
+                                                        language: $('input[name="language"]:checked').val(),
+                                                        timezone: $('select[name="timezone"]').val(),
+                                                        region: $('select[name="region"]').val(),
+                                                        date_format: $('select[name="date_format"]').val(),
+                                                        time_format: $('input[name="time_format"]:checked').val()
+                                                    };
+
+                                                    $.ajax({
+                                                        url: 'update_region.php',
+                                                        type: 'POST',
+                                                        data: settings,
+                                                        success: function (response) {
+                                                            response = JSON.parse(response);
+                                                            if (response.success) {
+                                                                alert('Ayarlarınız başarıyla güncellendi');
+                                                                if (settings.language !== '<?php echo $userSettings['language']; ?>') {
+                                                                    // Dil değiştiyse sayfayı yenile
+                                                                    location.reload();
+                                                                }
+                                                            } else {
+                                                                alert(response.message || 'Bir hata oluştu');
+                                                            }
+                                                        },
+                                                        error: function () {
+                                                            alert('Bir hata oluştu');
+                                                        }
+                                                    });
+                                                });
+
+                                                // Dil seçimi
+                                                $('label input[name="language"]').change(function () {
+                                                    $('label').removeClass('border-blue-500 bg-blue-50').addClass('border-gray-200');
+                                                    $('label svg').remove();
+
+                                                    const selectedLabel = $(this).closest('label');
+                                                    selectedLabel.removeClass('border-gray-200').addClass('border-blue-500 bg-blue-50');
+                                                    selectedLabel.append(`
+                                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        `);
+                                                });
+                                            });
+                                        </script>
+                                        <?php
+                                        break;
                             case 'appearance':
-                                echo '<h2 class="text-xl font-semibold mb-4">Görünüm ve Tema</h2>';
-                                echo '<p>Arayüz teması ve görünüm tercihlerinizi buradan özelleştirebilirsiniz.</p>';
-                                break;
+                                // Kullanıcı ayarlarını çek
+                                $stmt = $db->prepare("SELECT theme, font_family FROM user_settings WHERE user_id = ?");
+                                $stmt->execute([$_SESSION['user_id']]);
+                                $appearanceSettings = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                                // Eğer ayarlar yoksa varsayılan değerleri kullan
+                                if (!$appearanceSettings) {
+                                    $appearanceSettings = [
+                                        'theme' => 'light',
+                                        'font_family' => 'Inter'
+                                    ];
+                                }
+
+                                // Kullanılabilir fontlar
+                                $availableFonts = [
+                                    'Inter' => 'Inter',
+                                    'Roboto' => 'Roboto',
+                                    'Open Sans' => 'Open Sans',
+                                    'Montserrat' => 'Montserrat',
+                                    'Poppins' => 'Poppins',
+                                ];
+                                ?>
+                                        <div class="space-y-6">
+                                            <div class="bg-white p-6 rounded-lg shadow">
+                                                <h2 class="text-xl font-semibold mb-6">Görünüm ve Tema</h2>
+
+                                                <!-- Tema Seçimi -->
+                                                <div class="mb-8">
+                                                    <h3 class="text-lg font-medium mb-4">Tema</h3>
+                                                    <div class="grid grid-cols-2 gap-4">
+                                                        <!-- Aydınlık Tema -->
+                                                        <label
+                                                            class="relative flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50 <?php echo $appearanceSettings['theme'] === 'light' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
+                                                            <div class="flex items-center">
+                                                                <input type="radio" name="theme" value="light" class="hidden"
+                                                                    <?php echo $appearanceSettings['theme'] === 'light' ? 'checked' : ''; ?>>
+                                                                <div class="flex items-center space-x-3">
+                                                                    <div
+                                                                        class="w-10 h-10 bg-white border rounded-lg shadow-sm flex items-center justify-center">
+                                                                        <svg class="w-6 h-6 text-yellow-500" fill="currentColor"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path fill-rule="evenodd"
+                                                                                d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                                                                                clip-rule="evenodd" />
+                                                                        </svg>
+                                                                    </div>
+                                                                    <div>
+                                                                        <div class="font-medium">Aydınlık Tema</div>
+                                                                        <div class="text-sm text-gray-500">Beyaz arka plan</div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <?php if ($appearanceSettings['theme'] === 'light'): ?>
+                                                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor"
+                                                                    viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                                </svg>
+
+                                                            <?php endif; ?>
+                                                        </label>
+
+                                                        <!-- Karanlık Tema -->
+                                                        <label
+                                                            class="relative flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50 <?php echo $appearanceSettings['theme'] === 'dark' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
+                                                            <div class="flex items-center">
+                                                                <input type="radio" name="theme" value="dark" class="hidden"
+                                                                    <?php echo $appearanceSettings['theme'] === 'dark' ? 'checked' : ''; ?>>
+                                                                <div class="flex items-center space-x-3">
+                                                                    <div
+                                                                        class="w-10 h-10 bg-gray-900 border border-gray-700 rounded-lg shadow-sm flex items-center justify-center">
+                                                                        <svg class="w-6 h-6 text-gray-300" fill="currentColor"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path
+                                                                                d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                                                                        </svg>
+                                                                    </div>
+                                                                    <div>
+                                                                        <div class="font-medium">Karanlık Tema</div>
+                                                                        <div class="text-sm text-gray-500">Koyu arka plan</div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <?php if ($appearanceSettings['theme'] === 'dark'): ?>
+                                                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor"
+                                                                    viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                                </svg>
+
+                                                            <?php endif; ?>
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Font Seçimi -->
+                                                <div class="mb-8">
+                                                    <h3 class="text-lg font-medium mb-4">Yazı Tipi</h3>
+                                                    <div class="max-w-xl">
+                                                        <div class="grid grid-cols-2 gap-4">
+                                                            <?php foreach ($availableFonts as $fontKey => $fontName): ?>
+                                                                <label
+                                                                    class="relative flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50 <?php echo $appearanceSettings['font_family'] === $fontKey ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
+                                                                    <div class="flex items-center">
+                                                                        <input type="radio" name="font_family"
+                                                                            value="<?php echo $fontKey; ?>" class="hidden" <?php echo $appearanceSettings['font_family'] === $fontKey ? 'checked' : ''; ?>>
+                                                                        <div class="flex flex-col">
+                                                                            <span class="font-medium"
+                                                                                style="font-family: <?php echo $fontKey; ?>">
+                                                                                <?php echo $fontName; ?>
+                                                                            </span>
+                                                                            <span class="text-sm text-gray-500" style=" font-family:
+                                                                    <?php echo $fontKey; ?>">AaBbCcDdEeFf</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <?php if ($appearanceSettings['font_family'] === $fontKey): ?>
+                                                                        <svg class="w-5 h-5 text-blue-500" fill="none"
+                                                                            stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                                        </svg>
+
+                                                                    <?php endif; ?>
+                                                                </label>
+
+                                                            <?php endforeach; ?>
+                                                        </div>
+                                                        <p class="mt-2 text-sm text-gray-500">
+                                                            Seçtiğiniz yazı tipi tüm arayüzde kullanılacaktır.
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Kaydet Butonu -->
+                                                <div class="flex justify-end">
+                                                    <button type="button" id="saveAppearanceSettings"
+                                                        class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
+                                                        Değişiklikleri Kaydet
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <script>
+                                            $(document).ready(function () {
+                                                // Tema değişikliğini canlı olarak göster
+                                                $('input[name="theme"]').change(function () {
+                                                    const theme = $(this).val();
+
+                                                    // Tüm tema labellerinin stilini sıfırla
+                                                    $('input[name="theme"]').closest('label').removeClass('border-blue-500 bg-blue-50').addClass('border-gray-200');
+
+                                                    // Seçilen temanın labelini güncelle
+                                                    $(this).closest('label').removeClass('border-gray-200').addClass('border-blue-500 bg-blue-50');
+
+                                                    // Tik işaretlerini kaldır
+                                                    $('input[name="theme"]').closest('label').find('svg').remove();
+
+                                                    // Seçilen temaya tik işareti ekle
+                                                    $(this).closest('label').append(`
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                `);
+
+                                                    // Tema değişikliği için gerekli işlemler
+                                                    $('body').toggleClass('dark-mode', theme === 'dark');
+                                                });
+
+                                                // Font değişikliğini canlı olarak göster
+                                                $('input[name="font_family"]').change(function () {
+                                                    const font = $(this).val();
+
+                                                    // Tüm font labellerinin stilini sıfırla
+                                                    $('input[name="font_family"]').closest('label').removeClass('border-blue-500 bg-blue-50').addClass('border-gray-200');
+
+                                                    // Seçilen fontun labelini güncelle
+                                                    $(this).closest('label').removeClass('border-gray-200').addClass('border-blue-500 bg-blue-50');
+
+                                                    // Tik işaretlerini kaldır
+                                                    $('input[name="font_family"]').closest('label').find('svg').remove();
+
+                                                    // Seçilen fonta tik işareti ekle
+                                                    $(this).closest('label').append(`
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                `);
+
+                                                    // Font değişikliği için gerekli işlemler
+                                                    $('body').css('font-family', font);
+                                                });
+
+                                                // Ayarları kaydet
+                                                $('#saveAppearanceSettings').click(function () {
+                                                    const settings = {
+                                                        theme: $('input[name="theme"]:checked').val(),
+                                                        font_family: $('input[name="font_family"]:checked').val()
+                                                    };
+
+                                                    $.ajax({
+                                                        url: 'update_appearance.php',
+                                                        type: 'POST',
+                                                        data: settings,
+                                                        success: function (response) {
+                                                            response = JSON.parse(response);
+                                                            if (response.success) {
+                                                                alert('Görünüm ayarlarınız başarıyla güncellendi');
+                                                            } else {
+                                                                alert(response.message || 'Bir hata oluştu');
+                                                            }
+                                                        },
+                                                        error: function () {
+                                                            alert('Bir hata oluştu');
+                                                        }
+                                                    });
+                                                });
+                                            });
+                                        </script>
+                                        <?php
+                                        break;
                             default:
-                                echo '<h2 class="text-xl font-semibold mb-4">Profil Ayarları</h2>';
-                                echo '<p>Profil fotoğrafı, kapak fotoğrafı, kullanıcı adı ve diğer profil bilgilerini buradan düzenleyebilirsiniz.</p>';
+                                echo '<h2 class="text-xl font-semibold mb-4">Oops!</h2>';
+                                echo '<p>Sanırım yanlış yere geldiniz, lütfen bir sekme seçin!</p>';
                         }
                         ?>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 </body>
 
 </html>

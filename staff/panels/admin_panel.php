@@ -1,33 +1,70 @@
-<?php
-function getAdminPanel() {
-    return '
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">User Management</h2>
-            <div class="space-y-3">
-                <a href="#" class="block text-blue-600 hover:text-blue-800">View All Users</a>
-                <a href="#" class="block text-blue-600 hover:text-blue-800">Manage Staff</a>
-                <a href="#" class="block text-blue-600 hover:text-blue-800">User Reports</a>
-            </div>
-        </div>
-        
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">System Settings</h2>
-            <div class="space-y-3">
-                <a href="#" class="block text-blue-600 hover:text-blue-800">General Settings</a>
-                <a href="#" class="block text-blue-600 hover:text-blue-800">Security Settings</a>
-                <a href="#" class="block text-blue-600 hover:text-blue-800">Maintenance Mode</a>
-            </div>
-        </div>
-        
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">Analytics</h2>
-            <div class="space-y-3">
-                <a href="#" class="block text-blue-600 hover:text-blue-800">User Statistics</a>
-                <a href="#" class="block text-blue-600 hover:text-blue-800">System Logs</a>
-                <a href="#" class="block text-blue-600 hover:text-blue-800">Performance Metrics</a>
-            </div>
-        </div>
-    </div>';
-}
-?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Metinleri Çek</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .form-container {
+            margin-bottom: 20px;
+        }
+        .result {
+            background: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <form method="post">
+            <label for="filepath">HTML Dosya Dizini:</label><br>
+            <input type="text" name="filepath" id="filepath" style="width: 300px;" required>
+            <button type="submit">Metinleri Getir</button>
+        </form>
+    </div>
+
+    <?php
+    function getTextFromHTML($filePath) {
+        if (!file_exists($filePath)) {
+            return "Dosya bulunamadı.";
+        }
+
+        $doc = new DOMDocument();
+        @$doc->loadHTML(file_get_contents($filePath));
+        $xpath = new DOMXPath($doc);
+        $textNodes = $xpath->query("//text()[normalize-space()]");
+
+        $texts = [];
+        foreach ($textNodes as $textNode) {
+            $texts[] = trim($textNode->nodeValue);
+        }
+
+        return $texts;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['filepath'])) {
+        $filePath = $_POST['filepath'];
+        $metinler = getTextFromHTML($filePath);
+
+        echo '<div class="result">';
+        if (is_array($metinler)) {
+            echo '<h3>Metin İçerikleri:</h3>';
+            echo '<ul>';
+            foreach ($metinler as $metin) {
+                echo '<li>' . htmlspecialchars($metin) . '</li>';
+            }
+            echo '</ul>';
+        } else {
+            echo '<p>' . htmlspecialchars($metinler) . '</p>';
+        }
+        echo '</div>';
+    }
+    ?>
+</body>
+</html>

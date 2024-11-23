@@ -45,25 +45,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Validate current password if trying to change password or sensitive info
-    if ($currentPassword) {
-        if (!password_verify($currentPassword, $currentUser['password'])) {
-            exit(json_encode(['success' => false, 'message' => 'Mevcut şifreniz yanlış']));
+    // Only validate current password if trying to change password
+    if ($newPassword) {
+        // Google hesabı ve şifresi olmayan kullanıcı ilk kez şifre oluşturuyor
+        if (!empty($currentUser['google_id']) && empty($currentUser['password'])) {
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        } 
+        // Normal şifre değişikliği
+        else {
+            if (!$currentPassword || !password_verify($currentPassword, $currentUser['password'])) {
+                exit(json_encode(['success' => false, 'message' => 'Şifre değişikliği için mevcut şifrenizi doğru girmelisiniz']));
+            }
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
         }
-    } elseif ($username !== $currentUser['username'] || $email !== $currentUser['email']) {
-        exit(json_encode(['success' => false, 'message' => 'Bilgilerinizi güncellemek için mevcut şifrenizi girmelisiniz']));
     }
 
     try {
         $db->beginTransaction();
-
+    
         // Update password if provided
         if ($newPassword) {
-            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
             $stmt = $db->prepare("UPDATE users SET password = ? WHERE user_id = ?");
             $stmt->execute([$hashedPassword, $_SESSION['user_id']]);
         }
-
+    
         // Update other information
         $stmt = $db->prepare("
             UPDATE users 
@@ -78,14 +83,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $twoFactorAuth,
             $_SESSION['user_id']
         ]);
-
+    
         $db->commit();
         exit(json_encode(['success' => true]));
     } catch (Exception $e) {
         $db->rollBack();
         error_log($e->getMessage());
         exit(json_encode(['success' => false, 'message' => 'Bir hata oluştu']));
-    }
+    }    
 }
 
 exit(json_encode(['success' => false, 'message' => 'Invalid request method']));

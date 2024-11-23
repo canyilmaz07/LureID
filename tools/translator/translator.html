@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Translation Helper Pro</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-8">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Input Section -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-semibold mb-4">Input HTML</h2>
+            <div class="flex gap-4 mb-4">
+                <button id="clearInput" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Clear</button>
+            </div>
+            <textarea id="htmlInput" class="w-full h-64 p-4 border rounded-lg font-mono text-sm"
+                placeholder="Paste your HTML here"></textarea>
+            <div class="mt-4 flex gap-4">
+                <button id="convertBtn"
+                    class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600">Convert</button>
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="ignoreScripts" checked class="rounded">
+                    <label for="ignoreScripts">Ignore Script Tags</label>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="ignoreStyles" checked class="rounded">
+                    <label for="ignoreStyles">Ignore Style Tags</label>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="ignoreComments" checked class="rounded">
+                    <label for="ignoreComments">Ignore Comments</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Sections -->
+        <div class="grid grid-cols-2 gap-6">
+            <!-- Converted HTML -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">Converted HTML</h2>
+                    <div class="flex gap-2">
+                        <button onclick="copyToClipboard('htmlOutput')"
+                            class="bg-gray-100 px-3 py-1 rounded text-sm hover:bg-gray-200">Copy</button>
+                        <button onclick="downloadFile('htmlOutput', 'converted.php')"
+                            class="bg-gray-100 px-3 py-1 rounded text-sm hover:bg-gray-200">Download</button>
+                    </div>
+                </div>
+                <pre><code class="language-php" id="htmlOutput"></code></pre>
+            </div>
+
+            <!-- Language File -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">Language File (en.php)</h2>
+                    <div class="flex gap-2">
+                        <button onclick="copyToClipboard('langOutput')"
+                            class="bg-gray-100 px-3 py-1 rounded text-sm hover:bg-gray-200">Copy</button>
+                        <button onclick="downloadFile('langOutput', 'en.php')"
+                            class="bg-gray-100 px-3 py-1 rounded text-sm hover:bg-gray-200">Download</button>
+                    </div>
+                </div>
+                <pre><code class="language-php" id="langOutput"></code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(elementId) {
+            const el = document.getElementById(elementId);
+            const text = el.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            });
+        }
+
+        function downloadFile(elementId, filename) {
+            const el = document.getElementById(elementId);
+            const text = el.textContent;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        $(document).ready(function () {
+            $('#convertBtn').click(function () {
+                const html = $('#htmlInput').val();
+                const options = {
+                    ignoreScripts: $('#ignoreScripts').is(':checked'),
+                    ignoreStyles: $('#ignoreStyles').is(':checked'),
+                    ignoreComments: $('#ignoreComments').is(':checked')
+                };
+
+                $.ajax({
+                    url: 'convert_pro.php',
+                    method: 'POST',
+                    data: {
+                        html: html,
+                        options: JSON.stringify(options)
+                    },
+                    success: function (response) {
+                        $('#htmlOutput').text(response.convertedHtml);
+                        $('#langOutput').text(response.langFile);
+                        Prism.highlightAll();
+                    },
+                    error: function () {
+                        alert('An error occurred');
+                    }
+                });
+            });
+
+            $('#clearInput').click(function () {
+                $('#htmlInput').val('');
+                $('#htmlOutput').text('');
+                $('#langOutput').text('');
+                Prism.highlightAll();
+            });
+
+            $('#pasteExample').click(function () {
+                $('#htmlInput').val(
+                    '<div class="header">' +
+                    '<h1>Welcome to Our Site</h1>' +
+                    '<p class="subtitle">Best platform for developers</p>' +
+                    '</div>'
+                );
+            });
+
+        });
+    </script>
+</body>
+
+</html>
