@@ -1,4 +1,5 @@
 <?php
+// freelancer_subs.php
 session_start();
 require_once '../../config/database.php';
 require_once '../../config/logger.php';
@@ -106,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         switch ($action) {
             case 'register':
-                $accountHolder = $_SESSION['user_data']['full_name'];
+                $accountHolder = $_SESSION['user_data']['full_name'];  // users tablosundan gelen full_name'i kullan
                 $bankName = $_POST['bank_name'];
                 $iban = $_POST['iban'];
                 $taxNumber = $_POST['tax_number'];
@@ -129,12 +130,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     // Insert freelancer record
                     $stmt = $db->prepare("
-                    INSERT INTO freelancers (
-                        user_id, account_holder, bank_name, iban,
-                        tax_number, daily_rate, experience_time,
-                        availability_status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'AVAILABLE')
-                ");
+                        INSERT INTO freelancers (
+                            user_id, account_holder, bank_name, iban,
+                            tax_number, daily_rate, experience_time,
+                            availability_status
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'AVAILABLE')
+                    ");
 
                     $stmt->execute([
                         $_SESSION['user_id'],
@@ -359,6 +360,7 @@ $stmt = $db->prepare("
     SELECT 
         f.*,
         u.created_at,
+        u.full_name,
         DATEDIFF(CURRENT_DATE, u.created_at) as total_days
     FROM users u 
     LEFT JOIN freelancers f ON f.user_id = u.user_id 
@@ -414,14 +416,16 @@ if ($freelancer) {
                 <div>
                     <label class="block text-sm font-medium">IBAN</label>
                     <input type="text" name="iban" required class="mt-1 block w-full rounded border p-2"
-                        pattern="TR[0-9]{2}\s?[0-9]{4}\s?[0-9]{4}\s?[0-9]{4}\s?[0-9]{4}\s?[0-9]{4}\s?[0-9]{2}"
-                        title="Please enter a valid Turkish IBAN (e.g., TR12 0006 1005 1978 6457 8413 01)"
-                        placeholder="TR__ ____ ____ ____ ____ ____ __" maxlength="32">
+                        pattern="TR\d{2}(\s\d{4}){5}\s\d{2}" maxlength="32"
+                        oninput="this.value = this.value.replace(/[^0-9TR]/g, '').toUpperCase();"
+                        placeholder="TR12 1234 1234 1234 1234 1234 12">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium">Tax Number</label>
-                    <input type="text" name="tax_number" required class="mt-1 block w-full rounded border p-2">
+                    <input type="text" name="tax_number" required class="mt-1 block w-full rounded border p-2"
+                        pattern="[0-9]{10}" maxlength="10"
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 10);">
                 </div>
 
                 <div>
@@ -741,8 +745,38 @@ if ($freelancer) {
     }
 
     $(document).ready(function () {
-        // Sayfa yüklendiğinde varsayılan tab'ı göster
-        showTab('createWork');
+
+        const hasFreelancerDashboard = document.getElementById('createWork') !== null;
+
+        function showTab(tabId) {
+            // Freelancer dashboard varsa tab işlemlerini yap
+            if (hasFreelancerDashboard) {
+                // Tüm tab içeriklerini gizle
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+
+                // Tüm tab butonlarından active class'ı kaldır
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('border-blue-500', 'text-blue-600');
+                    btn.classList.add('border-transparent', 'text-gray-500');
+                });
+
+                // Seçili tab'ı göster
+                document.getElementById(tabId).classList.remove('hidden');
+
+                // Seçili tab butonunu active yap
+                document.querySelector(`[data-tab="${tabId}"]`).classList.add('border-blue-500', 'text-blue-600');
+                document.querySelector(`[data-tab="${tabId}"]`).classList.remove('border-transparent', 'text-gray-500');
+            }
+        }
+
+        // Sayfa yüklendiğinde, freelancer dashboard varsa varsayılan tab'ı göster
+        if (hasFreelancerDashboard) {
+            showTab('createWork');
+        }
+
+        window.showTab = showTab;
 
         $('#freelancerForm').submit(function (e) {
             e.preventDefault();
@@ -760,9 +794,9 @@ if ($freelancer) {
             }
 
             // Tax number kontrolü (10 haneli olmalı)
-            const taxNumber = $('input[name="tax_number"]').val().replace(/\s/g, '');
-            if (!/^\d{10}$/.test(taxNumber)) {
-                alert('Tax number must be 10 digits');
+            const taxNumber = $('input[name="tax_number"]').val().trim();
+            if (taxNumber.length !== 10 || !/^\d{10}$/.test(taxNumber)) {
+                alert('Tax number must be exactly 10 digits');
                 return false;
             }
 
@@ -780,10 +814,15 @@ if ($freelancer) {
                 return false;
             }
 
-            const formData = new FormData(this);
-            formData.append('action', 'register');
+            // Form verilerini manuel olarak objede topluyoruz
+            const formData = {
+                action: 'register',
+                bank_name: bankName,
+                iban: iban,
+                tax_number: taxNumber,
+                daily_rate: dailyRate
+            };
 
-            // Loading durumunu göster
             const submitButton = $(this).find('button[type="submit"]');
             const originalButtonText = submitButton.html();
             submitButton.html('<span class="spinner">Processing...</span>').prop('disabled', true);
@@ -791,7 +830,7 @@ if ($freelancer) {
             $.ajax({
                 url: 'components/freelancer_subs.php',
                 type: 'POST',
-                data: Object.fromEntries(formData),
+                data: formData,
                 success: function (response) {
                     try {
                         response = JSON.parse(response);
@@ -815,49 +854,77 @@ if ($freelancer) {
         });
 
         // Input maskeleri
-        $('input[name="tax_number"]').on('input', function () {
-            let value = this.value.replace(/\D/g, ''); // Sadece rakamlar
-            value = value.slice(0, 10); // Maximum 10 karakter
-            this.value = value;
+        $('input[name="tax_number"]').on('keypress input', function (e) {
+            // Sadece sayılara izin ver
+            if (!/^\d*$/.test(e.key) && e.type === 'keypress') {
+                e.preventDefault();
+                return false;
+            }
+
+            // 10 karakterle sınırla
+            if (this.value.length >= 10 && e.type === 'keypress') {
+                e.preventDefault();
+                return false;
+            }
+
+            // Input event için temizleme
+            this.value = this.value.replace(/[^0-9]/g, '').substring(0, 10);
         });
 
         $('input[name="bank_name"]').on('input', function () {
-            let value = this.value.replace(/[^a-zA-Z\s]/g, ''); // Sadece harfler ve boşluk
+            let value = this.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, ''); // Türkçe karakterleri de ekledik
             this.value = value;
         });
 
         $('input[name="daily_rate"]').on('input', function () {
-            let value = this.value.replace(/[^\d.]/g, ''); // Sadece rakamlar ve nokta
-
-            // Birden fazla nokta kullanımını engelle
+            let value = this.value.replace(/[^\d.]/g, '');
             const dots = value.match(/\./g);
             if (dots && dots.length > 1) {
                 value = value.slice(0, value.lastIndexOf('.'));
             }
-
             this.value = value;
         });
 
         // Format IBAN input
-        $('input[name="iban"]').on('input', function () {
-            let value = this.value.toUpperCase();
+        $('input[name="iban"]').on('keypress input', function (e) {
+            if (e.type === 'keypress' && !/^[0-9TR]$/i.test(e.key)) {
+                e.preventDefault();
+                return false;
+            }
 
-            // Sadece TR ve rakamları kabul et
-            value = value.replace(/[^TR0-9]/g, '');
+            let value = this.value.replace(/[^0-9TR]/g, '').toUpperCase();
 
-            // TR prefix'i kontrol et ve ekle
+            // TR ile başlamasını sağla
             if (!value.startsWith('TR')) {
                 if (value.length > 0) {
                     value = 'TR' + value;
                 }
             }
 
-            // Maximum 26 karakter (TR dahil)
+            // 26 karakterle sınırla (TR dahil)
             value = value.slice(0, 26);
 
-            // 4'er gruplar halinde formatla
+            // IBAN formatlaması
             if (value.length > 2) {
-                value = value.match(/.{1,4}/g).join(' ');
+                let formattedValue = '';
+                const numbers = value.slice(2); // TR'den sonraki sayıları al
+
+                // İlk 2 rakam (TR'den hemen sonra)
+                formattedValue = value.slice(0, 2) + numbers.slice(0, 2);
+
+                // Ortadaki 20 rakam (4'erli gruplar)
+                for (let i = 2; i < 22; i += 4) {
+                    if (numbers.length > i) {
+                        formattedValue += ' ' + numbers.slice(i, i + 4);
+                    }
+                }
+
+                // Son 2 rakam (ayrı grup)
+                if (numbers.length > 22) {
+                    formattedValue += ' ' + numbers.slice(22, 24);
+                }
+
+                value = formattedValue;
             }
 
             this.value = value;

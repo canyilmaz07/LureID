@@ -41,11 +41,8 @@ function getRandomColorPair() {
 }
 
 function calculateFontSize($text, $width, $height) {
-    // Önceden %60'tı, şimdi %90 yapıyoruz (%60 * 1.5 = %90)
     $targetSize = min($width, $height) * 0.9;
-    
-    // Her karakter için azaltma oranını da biraz azaltalım
-    return $targetSize / (strlen($text) * 1.1);  // 1.2'den 1.1'e düşürdük
+    return $targetSize / (strlen($text) * 1.1);
 }
 
 if(isset($_POST['check_avatar'])) {
@@ -58,7 +55,7 @@ if(isset($_POST['check_avatar'])) {
             $dbConfig['options']
         );
 
-        $stmt = $db->prepare("SELECT profile_photo_url FROM user_profiles WHERE user_id = ?");
+        $stmt = $db->prepare("SELECT profile_photo_url FROM user_extended_details WHERE user_id = ?");
         $stmt->execute([$_POST['user_id']]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         
@@ -89,18 +86,14 @@ if(isset($_POST['create_avatar'])) {
         $height = 400;
         $image = imagecreatetruecolor($width, $height);
         
-        // Enable alpha blending
         imagealphablending($image, true);
         imagesavealpha($image, true);
         
-        // Rastgele renk çifti seç
         list($color1, $color2) = getRandomColorPair();
         
-        // HEX'ten RGB'ye dönüştür
         list($r1, $g1, $b1) = sscanf($color1, "#%02x%02x%02x");
         list($r2, $g2, $b2) = sscanf($color2, "#%02x%02x%02x");
         
-        // Gradient oluştur
         for($i = 0; $i < $height; $i++) {
             $ratio = $i / $height;
             $r = $r1 * (1 - $ratio) + $r2 * $ratio;
@@ -110,29 +103,23 @@ if(isset($_POST['create_avatar'])) {
             imageline($image, 0, $i, $width, $i, $color);
         }
         
-        // İnitialleri ekle
         $initials = getInitials($_POST['full_name']);
         $white = imagecolorallocate($image, 255, 255, 255);
         
-        // Font dosyasının yolunu belirle
         $fontPath = __DIR__ . '/../../public/components/fonts/Anton.ttf';
         if (!file_exists($fontPath)) {
             throw new Exception("Font file not found: " . $fontPath);
         }
         
-        // Font boyutunu hesapla
         $fontSize = calculateFontSize($initials, $width, $height);
         
-        // Text boyutlarını hesapla
         $bbox = imagettfbbox($fontSize, 0, $fontPath, $initials);
         $textWidth = $bbox[2] - $bbox[0];
         $textHeight = $bbox[1] - $bbox[7];
         
-        // Text pozisyonunu merkeze al
         $x = ($width - $textWidth) / 2;
         $y = ($height + $textHeight) / 2;
         
-        // Text'i ekle
         imagettftext(
             $image,
             $fontSize,
@@ -148,7 +135,6 @@ if(isset($_POST['create_avatar'])) {
         imagejpeg($image, $filename, 90);
         imagedestroy($image);
         
-        // Veritabanını güncelle
         $dbConfig = require '../../config/database.php';
         $db = new PDO(
             "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}",
@@ -157,7 +143,8 @@ if(isset($_POST['create_avatar'])) {
             $dbConfig['options']
         );
         
-        $stmt = $db->prepare("UPDATE user_profiles SET profile_photo_url = ? WHERE user_id = ?");
+        // user_extended_details tablosunu güncelle
+        $stmt = $db->prepare("UPDATE user_extended_details SET profile_photo_url = ? WHERE user_id = ?");
         $avatarPath = 'profile/avatars/' . $_POST['user_id'] . '.jpg';
         
         if (!$stmt->execute([$avatarPath, $_POST['user_id']])) {

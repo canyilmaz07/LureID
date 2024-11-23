@@ -171,9 +171,8 @@ $stmt = $db->prepare("
         f.experience_time,
         u.username,
         u.full_name,
-        up.profile_photo_url,
-        up.city,
-        up.country,
+        ued.profile_photo_url,
+        ued.basic_info,
         CASE 
             WHEN :logged_in_user IS NOT NULL THEN (
                 SELECT balance 
@@ -186,14 +185,14 @@ $stmt = $db->prepare("
     LEFT JOIN works_media wm ON w.work_id = wm.work_id
     LEFT JOIN freelancers f ON w.freelancer_id = f.freelancer_id
     LEFT JOIN users u ON f.user_id = u.user_id
-    LEFT JOIN user_profiles up ON u.user_id = up.user_id
+    LEFT JOIN user_extended_details ued ON u.user_id = ued.user_id
     WHERE w.work_id = :work_id AND w.visibility = 1
 ");
 
 $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 $stmt->bindParam(':work_id', $workId);
 $stmt->bindParam(':logged_in_user', $userId);
-$stmt->bindParam(':logged_in_user_balance', $userId); // Added this line
+$stmt->bindParam(':logged_in_user_balance', $userId);
 $stmt->execute();
 $work = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -202,7 +201,10 @@ if (!$work) {
     exit;
 }
 
-// Freelancer'ın diğer işlerini getir
+// Parse basic_info JSON
+$basicInfo = json_decode($work['basic_info'], true) ?? [];
+
+// Freelancer'ın diğer işlerini getir - Bu sorgu aynı kalabilir
 $stmt = $db->prepare("
     SELECT w.*, wm.media_paths
     FROM works w
@@ -213,6 +215,7 @@ $stmt = $db->prepare("
 ");
 $stmt->execute([$work['freelancer_id'], $workId]);
 $otherWorks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
 <!DOCTYPE html>
@@ -235,7 +238,7 @@ $otherWorks = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <a href="/public/index.php"
                         class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Dashboard</a>
-                    <a href="/views/auth/logout.php"
+                    <a href="/auth/logout.php"
                         class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Logout</a>
                 <?php else: ?>
                     <a href="/views/auth/login.php"
@@ -369,7 +372,7 @@ $otherWorks = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div>
                             <h3 class="font-bold text-lg">
                                 <a href="/<?php echo htmlspecialchars($work['username']); ?>" class="hover:underline">
-                                    <?php echo htmlspecialchars($work['full_name']); ?>
+                                    <?php echo htmlspecialchars($basicInfo['full_name'] ?? $work['full_name']); ?>
                                 </a>
                             </h3>
                             <p class="text-gray-600">@<?php echo htmlspecialchars($work['username']); ?></p>
@@ -377,24 +380,62 @@ $otherWorks = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
 
                     <div class="space-y-2 text-sm text-gray-600 mb-4">
-                        <?php if ($work['city'] || $work['country']): ?>
+                        <?php if (isset($basicInfo['location'])): ?>
                             <p>📍 <?php
                             echo htmlspecialchars(
-                                implode(', ', array_filter([$work['city'], $work['country']]))
+                                implode(', ', array_filter([
+                                    $basicInfo['location']['city'] ?? '',
+                                    $basicInfo['location']['country'] ?? ''
+                                ]))
                             );
                             ?></p>
                         <?php endif; ?>
+                        
                         <p>⭐ <?php echo formatExperienceTime($work['experience_time']); ?> experience</p>
                         <p>💰 Base rate: ₺<?php echo number_format($work['freelancer_rate'], 2); ?>/day</p>
+
+                        <?php if (isset($basicInfo['biography'])): ?>
+                            <p class="text-gray-700 mt-3"><?php echo htmlspecialchars($basicInfo['biography']); ?></p>
+                        <?php endif; ?>
                     </div>
 
-                    <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] !== $work['freelancer_user_id']): ?>
-                        <a href="mailto:contact@example.com"
-                            class="block w-full bg-blue-500 text-white text-center px-4 py-2 rounded hover:bg-blue-600">
-                            Contact Freelancer
-                        </a>
+                    <?php if (isset($basicInfo['contact']) && isset($basicInfo['contact']['email'])): ?>
+                        <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] !== $work['freelancer_user_id']): ?>
+                            <a href="mailto:<?php echo htmlspecialchars($basicInfo['contact']['email']); ?>"
+                               class="block w-full bg-blue-500 text-white text-center px-4 py-2 rounded hover:bg-blue-600">
+                                Contact Freelancer
+                            </a>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
+
+                <!-- Professional Info Section -->
+                <?php
+                $professionalProfile = json_decode($work['professional_profile'] ?? '{}', true);
+                if (!empty($professionalProfile)):
+                ?>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="font-bold text-lg mb-4">Professional Profile</h3>
+                    <?php if (isset($professionalProfile['expertise_areas'])): ?>
+                        <div class="mb-4">
+                            <h4 class="font-medium text-gray-700 mb-2">Expertise</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <?php foreach ($professionalProfile['expertise_areas'] as $area): ?>
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                                        <?php echo htmlspecialchars($area); ?>
+                                    </span>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (isset($professionalProfile['summary'])): ?>
+                        <p class="text-gray-600 text-sm">
+                            <?php echo htmlspecialchars($professionalProfile['summary']); ?>
+                        </p>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
 
                 <!-- Diğer İşler -->
                 <?php if (!empty($otherWorks)): ?>

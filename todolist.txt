@@ -60,7 +60,133 @@ menü:
     > eğitim
     > profil
 
-buglar:
-    > profil ayarlarında hesap silme çalışmıyor
-    > davet edilen kişi 1970 tarihinde katılmış gözüküyor
-    > index.php de sayfaya href # gelince search çalışmıyor
+
+    ayarlara eklenecekler :
+
+TAMAMLANDI  ++      Profil Ayarları
+TAMAMLANDI  ++  
+TAMAMLANDI  ++  
+TAMAMLANDI  ++  Profil fotoğrafı değiştirme
+TAMAMLANDI  ++  Kapak fotoğrafı ekleme/değiştirme
+TAMAMLANDI  ++  Kullanıcı adı değiştirme
+TAMAMLANDI  ++  Biyografi güncelleme
+TAMAMLANDI  ++  Konum bilgisi (şehir/ülke)
+TAMAMLANDI  ++  Website linki
+TAMAMLANDI  ++  Dil tercihleri
+TAMAMLANDI  ++  İletişim tercihleri
+
+Güvenlik Merkezi
+
+
+Şifre değiştirme
+İki faktörlü doğrulama
+Bağlı cihazlar listesi
+Giriş geçmişi
+IP adresi kısıtlamaları
+Oturum açık kalma süresi ayarı
+Güvenlik soruları
+Bağlı sosyal medya hesapları yönetimi
+
+
+Bildirim Ayarları
+
+
+E-posta bildirimleri
+Web bildirimleri
+Mobil bildirimler
+SMS bildirimleri
+Takipçi bildirimleri
+İş teklifleri bildirimleri
+Özel mesaj bildirimleri
+Sistem bildirimleri tercihleri
+
+
+Ödeme & Finansal İşlemler
+
+
+Banka hesabı yönetimi
+IBAN bilgileri
+Kredi kartı yönetimi
+Ödeme geçmişi
+Vergi bilgileri
+Para çekme limitleri ayarı
+Otomatik ödeme tercihleri
+Fatura adresi yönetimi
+
+
+Gizlilik Ayarları
+
+
+Profil görünürlüğü ayarları
+Kim mesaj gönderebilir
+Kim profilimi görebilir
+İş tekliflerini kimler gönderebilir
+Portföy görünürlük ayarları
+Konum paylaşım tercihleri
+Online durum gösterimi
+Arama motorlarında görünürlük
+
+
+Freelancer Ayarları
+
+
+Saatlik/günlük ücret ayarı
+Çalışma durumu (Müsait/Meşgul)
+Uzmanlık alanları
+Beceri seti yönetimi
+İş tercihleri
+Portföy yönetimi
+Referanslar
+Sertifikalar ve belgeler
+
+
+Hesap ve Veriler
+
+
+Veri indirme
+Hesap silme
+Hesap dondurma
+Yedekleme tercihleri
+Veri paylaşım tercihleri
+Bağlı uygulamalar
+API erişimi yönetimi
+Veri kullanım geçmişi
+
+
+Dil ve Bölge
+
+
+Arayüz dili
+Para birimi tercihi
+Saat dilimi ayarı
+Tarih formatı
+Sayı formatı
+Ölçü birimi tercihleri
+Klavye kısayolları
+Yerel ayarlar
+
+
+Görünüm ve Tema
+
+
+Karanlık/Aydınlık mod
+Renk teması
+Font boyutu
+Panel düzeni tercihleri
+Menü yerleşimi
+Bildirim gösterimi stili
+Animasyon tercihleri
+Erişilebilirlik ayarları
+
+
+Destek ve Yardım
+
+
+Destek talebi oluşturma
+SSS
+Kullanım kılavuzu
+Topluluk kuralları
+İletişim tercihleri
+Geri bildirim
+Sorun bildirme
+Öneri sunma

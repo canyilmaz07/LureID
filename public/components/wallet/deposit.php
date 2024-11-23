@@ -208,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if (response.success) {
                                 alert(response.message);
                                 setTimeout(function() {
-                                    window.location.href = '../../index.php';
+                                    window.location.href = 'wallet.php';
                                 }, 3000);
                             } else {
                                 alert(response.message);

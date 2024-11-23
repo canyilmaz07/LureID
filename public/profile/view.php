@@ -1,9 +1,8 @@
 <?php
-// view.php
 session_start();
 require_once '../../config/database.php';
 
-// Veritabanı bağlantısı
+// Database connection
 try {
     $dbConfig = require '../../config/database.php';
     $db = new PDO(
@@ -17,7 +16,7 @@ try {
     exit('Database connection failed');
 }
 
-// URL'den kullanıcı adını al
+// Get username from URL
 $username = isset($_GET['username']) ? $_GET['username'] : null;
 
 if (!$username) {
@@ -25,20 +24,19 @@ if (!$username) {
     exit;
 }
 
-// Profil bilgilerini getir - Move this BEFORE accessing $profile
+// Get profile information with extended details
 $stmt = $db->prepare("
     SELECT 
         u.*,
-        up.*,
+        ued.*,
         w.balance,
         w.coins,
-        s.skills,
-        sl.social_links
+        f.following,
+        f.followers
     FROM users u
-    LEFT JOIN user_profiles up ON u.user_id = up.user_id
+    LEFT JOIN user_extended_details ued ON u.user_id = ued.user_id
     LEFT JOIN wallet w ON u.user_id = w.user_id
-    LEFT JOIN skills s ON u.user_id = s.user_id
-    LEFT JOIN social_links sl ON u.user_id = sl.user_id
+    LEFT JOIN follows f ON u.user_id = f.user_id
     WHERE u.username = ?
 ");
 $stmt->execute([$username]);
@@ -49,11 +47,23 @@ if (!$profile) {
     exit;
 }
 
+// Parse JSON fields
+$basicInfo = json_decode($profile['basic_info'], true) ?? [];
+$educationHistory = json_decode($profile['education_history'], true) ?? [];
+$workExperience = json_decode($profile['work_experience'], true) ?? [];
+$skillsMatrix = json_decode($profile['skills_matrix'], true) ?? [];
+$portfolioShowcase = json_decode($profile['portfolio_showcase'], true) ?? [];
+$professionalProfile = json_decode($profile['professional_profile'], true) ?? [];
+$networkLinks = json_decode($profile['network_links'], true) ?? [];
+$achievements = json_decode($profile['achievements'], true) ?? [];
+$communityEngagement = json_decode($profile['community_engagement'], true) ?? [];
+$performanceMetrics = json_decode($profile['performance_metrics'], true) ?? [];
+
+// Check if user is freelancer
 $isFreelancer = false;
 $freelancerData = null;
 $works = [];
 
-// Now we can safely use $profile['user_id']
 $stmt = $db->prepare("SELECT * FROM freelancers WHERE user_id = ?");
 $stmt->execute([$profile['user_id']]);
 $freelancerData = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -61,7 +71,7 @@ $freelancerData = $stmt->fetch(PDO::FETCH_ASSOC);
 if ($freelancerData) {
     $isFreelancer = true;
 
-    // İlanları getir
+    // Get works
     $stmt = $db->prepare("
         SELECT w.*, wm.media_paths
         FROM works w
@@ -74,34 +84,21 @@ if ($freelancerData) {
     $works = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Avatar yolu kontrolü
-$avatarPath = 'profile/avatars/' . $profile['user_id'] . '.jpg';
-$avatarFullPath = $_SERVER['DOCUMENT_ROOT'] . '/public/' . $avatarPath;
-$defaultAvatarPath = 'profile/avatars/default.jpg';
+// Check avatar
+$avatarPath = $profile['profile_photo_url'] ?? 'profile/avatars/default.jpg';
+$avatarUrl = '/public/' . $avatarPath;
 
-// Profil fotoğrafı var mı kontrol et
-if (file_exists($avatarFullPath)) {
-    $avatarUrl = '/public/' . $avatarPath;
-} else {
-    $avatarUrl = '/public/' . $defaultAvatarPath;
-}
-
-// Kullanıcının kendi profili mi kontrol et
+// Check if own profile
 $isOwnProfile = isset($_SESSION['user_id']) && $_SESSION['user_id'] == $profile['user_id'];
 
-// Takipçi ve takip bilgilerini getir
-$followsStmt = $db->prepare("SELECT following, followers FROM follows WHERE user_id = ?");
-$followsStmt->execute([$profile['user_id']]);
-$followsData = $followsStmt->fetch(PDO::FETCH_ASSOC);
-
-// JSON'ları parse et
-$following = json_decode($followsData['following'] ?? '[]', true);
-$followers = json_decode($followsData['followers'] ?? '[]', true);
+// Parse followers/following
+$following = json_decode($profile['following'] ?? '[]', true);
+$followers = json_decode($profile['followers'] ?? '[]', true);
 
 $followersCount = count($followers);
 $followingCount = count($following);
 
-// Takip durumunu kontrol et (eğer giriş yapmış bir kullanıcı varsa)
+// Check if current user is following
 $isFollowing = false;
 if (isset($_SESSION['user_id'])) {
     $isFollowing = in_array($_SESSION['user_id'], $followers);
@@ -139,9 +136,11 @@ if (isset($_SESSION['user_id'])) {
         }
     </style>
 </head>
-<div id="toast" class="toast-alert"></div>
 
 <body class="bg-gray-100">
+    <div id="toast" class="toast-alert"></div>
+
+    <!-- Header -->
     <header class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <h1 class="text-xl font-bold">LUREID</h1>
@@ -164,13 +163,14 @@ if (isset($_SESSION['user_id'])) {
                     </a>
                 </div>
             <?php else: ?>
-                <a href="/public/views/auth/login.php" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                <a href="/views/auth/login.php" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
                     Login
                 </a>
             <?php endif; ?>
         </div>
     </header>
 
+    <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="bg-white rounded-lg shadow p-6">
             <!-- Profile Header -->
@@ -183,12 +183,14 @@ if (isset($_SESSION['user_id'])) {
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-2xl font-bold"><?php echo htmlspecialchars($profile['username']); ?></h2>
                         <?php if ($isOwnProfile): ?>
-                            <button id="editProfile" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                            <a href="/public/components/settings/settings.php"
+                                class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 inline-block">
                                 Edit Profile
-                            </button>
+                            </a>
                         <?php endif; ?>
                     </div>
 
+                    <!-- Follow Stats -->
                     <div class="flex gap-6 mb-4">
                         <div class="followersCount cursor-pointer">
                             <span class="font-bold"><?php echo $followersCount; ?></span> followers
@@ -212,363 +214,354 @@ if (isset($_SESSION['user_id'])) {
                         <?php endif; ?>
                     </div>
 
+                    <!-- Basic Info -->
                     <div class="mb-4">
-                        <h3 class="font-bold"><?php echo htmlspecialchars($profile['full_name']); ?></h3>
-                        <!-- Yaş, Şehir ve Ülke bilgileri -->
+                        <h3 class="font-bold">
+                            <?php echo htmlspecialchars($basicInfo['full_name'] ?? $profile['full_name']); ?>
+                        </h3>
                         <div class="flex items-center gap-2 text-gray-600 mt-1 mb-2">
-                            <?php if ($profile['age']): ?>
-                                <span><?php echo htmlspecialchars($profile['age']); ?> years old</span>
-                                <?php if ($profile['city'] || $profile['country']): ?>
+                            <?php if (isset($basicInfo['age'])): ?>
+                                <span><?php echo htmlspecialchars($basicInfo['age']); ?> years old</span>
+                                <?php if (isset($basicInfo['location'])): ?>
                                     <span>•</span>
                                 <?php endif; ?>
                             <?php endif; ?>
-                            <?php if ($profile['city']): ?>
-                                <span><?php echo htmlspecialchars($profile['city']); ?></span>
-                                <?php if ($profile['country']): ?>
+                            <?php if (isset($basicInfo['location'])): ?>
+                                <span><?php echo htmlspecialchars($basicInfo['location']['city'] ?? ''); ?></span>
+                                <?php if (isset($basicInfo['location']['country'])): ?>
                                     <span>•</span>
+                                    <span><?php echo htmlspecialchars($basicInfo['location']['country']); ?></span>
                                 <?php endif; ?>
-                            <?php endif; ?>
-                            <?php if ($profile['country']): ?>
-                                <span><?php echo htmlspecialchars($profile['country']); ?></span>
                             <?php endif; ?>
                         </div>
-                        <!-- Biography ve Website -->
-                        <p><?php echo nl2br(htmlspecialchars($profile['biography'])); ?></p>
-                        <?php if ($profile['website']): ?>
-                            <a href="<?php echo htmlspecialchars($profile['website']); ?>" target="_blank"
+                        <?php if (isset($basicInfo['biography'])): ?>
+                            <p class="mb-2"><?php echo nl2br(htmlspecialchars($basicInfo['biography'])); ?></p>
+                        <?php endif; ?>
+                        <?php if (isset($basicInfo['contact']['website'])): ?>
+                            <a href="<?php echo htmlspecialchars($basicInfo['contact']['website']); ?>" target="_blank"
                                 class="text-blue-500 hover:underline">
-                                <?php echo htmlspecialchars($profile['website']); ?>
+                                <?php echo htmlspecialchars($basicInfo['contact']['website']); ?>
                             </a>
                         <?php endif; ?>
-                        <?php if ($isFreelancer): ?>
-                            <div class="mt-2 flex items-center">
-                                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">Freelancer</span>
-                                <span class="mx-2 text-gray-400">•</span>
-                                <span
-                                    class="text-gray-600">₺<?php echo number_format($freelancerData['daily_rate'], 2); ?>/day</span>
-                            </div>
-                        <?php endif; ?>
                     </div>
+
+                    <!-- Professional Status -->
+                    <?php if ($isFreelancer): ?>
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">Freelancer</span>
+                            <span class="mx-2 text-gray-400">•</span>
+                            <span
+                                class="text-gray-600">₺<?php echo number_format($freelancerData['daily_rate'], 2); ?>/day</span>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
             <!-- Skills Section -->
-            <?php
-            $skills = json_decode($profile['skills'] ?? '[]', true);
-            if (!empty($skills)):
-                ?>
+            <?php if (!empty($skillsMatrix)): ?>
                 <div class="mb-8">
                     <h3 class="text-xl font-bold mb-4">Skills</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <?php foreach ($skills as $skill): ?>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <?php if (!empty($skillsMatrix['technical_skills'])): ?>
                             <div class="bg-gray-50 p-4 rounded">
-                                <div class="font-semibold"><?php echo htmlspecialchars($skill['name']); ?></div>
-                                <div class="w-full bg-gray-200 rounded h-2 mt-2">
-                                    <div class="bg-blue-500 h-2 rounded" style="width: <?php echo ($skill['level'] * 20); ?>%">
-                                    </div>
+                                <h4 class="font-semibold mb-2">Technical Skills</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <?php foreach ($skillsMatrix['technical_skills'] as $skill): ?>
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                                            <?php echo htmlspecialchars($skill); ?>
+                                        </span>
+                                    <?php endforeach; ?>
                                 </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($skillsMatrix['soft_skills'])): ?>
+                            <div class="bg-gray-50 p-4 rounded">
+                                <h4 class="font-semibold mb-2">Soft Skills</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <?php foreach ($skillsMatrix['soft_skills'] as $skill): ?>
+                                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+                                            <?php echo htmlspecialchars($skill); ?>
+                                        </span>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($skillsMatrix['tools'])): ?>
+                            <div class="bg-gray-50 p-4 rounded">
+                                <h4 class="font-semibold mb-2">Tools</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <?php foreach ($skillsMatrix['tools'] as $tool): ?>
+                                        <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">
+                                            <?php echo htmlspecialchars($tool); ?>
+                                        </span>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Work Experience Section -->
+            <?php if (!empty($workExperience)): ?>
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold mb-4">Work Experience</h3>
+                    <div class="space-y-4">
+                        <?php foreach ($workExperience as $work): ?>
+                            <div class="bg-gray-50 p-4 rounded">
+                                <h4 class="font-semibold"><?php echo htmlspecialchars($work['position']); ?></h4>
+                                <div class="text-gray-600">
+                                    <?php echo htmlspecialchars($work['company']); ?> •
+                                    <?php echo htmlspecialchars($work['start_date']); ?> -
+                                    <?php echo $work['end_date'] ? htmlspecialchars($work['end_date']) : 'Present'; ?>
+                                </div>
+                                <?php if (isset($work['description'])): ?>
+                                    <p class="mt-2 text-gray-700"><?php echo htmlspecialchars($work['description']); ?></p>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
                 </div>
             <?php endif; ?>
 
-            <!-- Social Links -->
-            <?php
-            $socialLinks = json_decode($profile['social_links'], true);
-            if (!empty($socialLinks)):
-                ?>
+            <!-- Education History Section -->
+            <?php if (!empty($educationHistory)): ?>
                 <div class="mb-8">
-                    <h3 class="text-xl font-bold mb-4">Social Links</h3>
-                    <div class="flex gap-4">
-                        <?php foreach ($socialLinks as $link): ?>
-                            <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank"
-                                class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                                <?php echo htmlspecialchars($link['platform']); ?>
-                            </a>
+                    <h3 class="text-xl font-bold mb-4">Education</h3>
+                    <div class="space-y-4">
+                        <?php foreach ($educationHistory as $education): ?>
+                            <div class="bg-gray-50 p-4 rounded">
+                                <h4 class="font-semibold"><?php echo htmlspecialchars($education['institution']); ?></h4>
+                                <div class="text-gray-600">
+                                    <?php echo htmlspecialchars($education['degree']); ?> •
+                                    <?php echo htmlspecialchars($education['start_date']); ?> -
+                                    <?php echo $education['end_date'] ? htmlspecialchars($education['end_date']) : 'Present'; ?>
+                                </div>
+                                <?php if (isset($education['gpa'])): ?>
+                                    <div class="mt-1 text-gray-600">
+                                        GPA: <?php echo htmlspecialchars($education['gpa']); ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         <?php endforeach; ?>
                     </div>
                 </div>
             <?php endif; ?>
-        </div>
-        <!-- İlanlar Bölümü - sosyal linklerden sonra -->
-        <?php if ($isFreelancer && !empty($works)): ?>
-            <div class="mb-8">
-                <h3 class="text-xl font-bold mb-4">Works</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <?php foreach ($works as $work): ?>
-                        <div class="bg-white rounded-lg shadow overflow-hidden">
-                            <?php
-                            $mediaPaths = json_decode($work['media_paths'], true);
-                            $firstImage = null;
-                            if ($mediaPaths) {
-                                foreach ($mediaPaths as $type => $path) {
-                                    if (strpos($type, 'image_') !== false) {
-                                        $firstImage = $path;
-                                        break;
+
+            <!-- Portfolio Showcase Section -->
+            <?php if (!empty($portfolioShowcase)): ?>
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold mb-4">Portfolio</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <?php foreach ($portfolioShowcase as $portfolio): ?>
+                            <div class="bg-gray-50 p-4 rounded">
+                                <h4 class="font-semibold"><?php echo htmlspecialchars($portfolio['title']); ?></h4>
+                                <p class="text-gray-600 mt-1"><?php echo htmlspecialchars($portfolio['description']); ?></p>
+                                <?php if (isset($portfolio['url'])): ?>
+                                    <a href="<?php echo htmlspecialchars($portfolio['url']); ?>" target="_blank"
+                                        class="text-blue-500 hover:underline mt-2 inline-block">
+                                        View Project
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Professional Profile Section -->
+            <?php if (!empty($professionalProfile)): ?>
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold mb-4">Professional Profile</h3>
+                    <div class="bg-gray-50 p-4 rounded">
+                        <?php if (isset($professionalProfile['summary'])): ?>
+                            <p class="mb-4"><?php echo htmlspecialchars($professionalProfile['summary']); ?></p>
+                        <?php endif; ?>
+
+                        <?php if (!empty($professionalProfile['expertise_areas'])): ?>
+                            <div class="mb-4">
+                                <h4 class="font-semibold mb-2">Areas of Expertise</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <?php foreach ($professionalProfile['expertise_areas'] as $area): ?>
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                                            <?php echo htmlspecialchars($area); ?>
+                                        </span>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($professionalProfile['certifications'])): ?>
+                            <div>
+                                <h4 class="font-semibold mb-2">Certifications</h4>
+                                <ul class="list-disc list-inside space-y-1">
+                                    <?php foreach ($professionalProfile['certifications'] as $cert): ?>
+                                        <li class="text-gray-700"><?php echo htmlspecialchars($cert); ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Network Links Section -->
+            <?php if (!empty($networkLinks)): ?>
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold mb-4">Network Links</h3>
+                    <div class="flex flex-wrap gap-4">
+                        <?php if (!empty($networkLinks['professional'])): ?>
+                            <?php foreach ($networkLinks['professional'] as $platform => $username): ?>
+                                <a href="https://<?php echo htmlspecialchars($platform); ?>.com/<?php echo htmlspecialchars($username); ?>"
+                                    target="_blank" class="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                                    <span class="capitalize"><?php echo htmlspecialchars($platform); ?></span>
+                                </a>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+
+                        <?php if (!empty($networkLinks['social'])): ?>
+                            <?php foreach ($networkLinks['social'] as $platform => $username): ?>
+                                <a href="https://<?php echo htmlspecialchars($platform); ?>.com/<?php echo htmlspecialchars($username); ?>"
+                                    target="_blank" class="flex items-center gap-2 px-4 py-2 bg-blue-100 rounded hover:bg-blue-200">
+                                    <span class="capitalize"><?php echo htmlspecialchars($platform); ?></span>
+                                </a>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Achievements Section -->
+            <?php if (!empty($achievements)): ?>
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold mb-4">Achievements</h3>
+                    <div class="space-y-4">
+                        <?php foreach ($achievements as $achievement): ?>
+                            <div class="bg-gray-50 p-4 rounded">
+                                <h4 class="font-semibold"><?php echo htmlspecialchars($achievement['title']); ?></h4>
+                                <div class="text-gray-600">
+                                    <?php echo htmlspecialchars($achievement['issuer']); ?> •
+                                    <?php echo htmlspecialchars($achievement['date']); ?>
+                                </div>
+                                <?php if (isset($achievement['description'])): ?>
+                                    <p class="mt-2 text-gray-700"><?php echo htmlspecialchars($achievement['description']); ?></p>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Works Section -->
+            <?php if ($isFreelancer && !empty($works)): ?>
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold mb-4">Works</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <?php foreach ($works as $work): ?>
+                            <div class="bg-white rounded-lg shadow overflow-hidden">
+                                <?php
+                                $mediaPaths = json_decode($work['media_paths'], true);
+                                $firstImage = null;
+                                if ($mediaPaths) {
+                                    foreach ($mediaPaths as $type => $path) {
+                                        if (strpos($type, 'image_') !== false) {
+                                            $firstImage = $path;
+                                            break;
+                                        }
                                     }
                                 }
-                            }
-                            ?>
-                            <?php if ($firstImage): ?>
-                                <div class="relative pt-[56.25%]">
-                                    <img src="/<?php echo htmlspecialchars($firstImage); ?>"
-                                        alt="<?php echo htmlspecialchars($work['title']); ?>"
-                                        class="absolute inset-0 w-full h-full object-cover">
-                                </div>
-                            <?php endif; ?>
-                            <div class="p-4">
-                                <h4 class="font-semibold mb-2"><?php echo htmlspecialchars($work['title']); ?></h4>
-                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">
-                                    <?php echo htmlspecialchars($work['description']); ?>
-                                </p>
-                                <div class="flex items-center justify-between">
-                                    <div class="text-sm text-gray-500">
-                                        <?php echo date('M j, Y', strtotime($work['created_at'])); ?>
+                                ?>
+                                <?php if ($firstImage): ?>
+                                    <div class="relative pt-[56.25%]">
+                                        <img src="/<?php echo htmlspecialchars($firstImage); ?>"
+                                            alt="<?php echo htmlspecialchars($work['title']); ?>"
+                                            class="absolute inset-0 w-full h-full object-cover">
                                     </div>
-                                    <a href="/public/views/work.php?id=<?php echo $work['work_id']; ?>"
-                                        class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
-                                        View
-                                    </a>
-                                </div>
-                                <div class="mt-2 flex flex-wrap gap-2">
-                                    <?php if ($work['daily_rate']): ?>
-                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                                            ₺<?php echo number_format($work['daily_rate'], 2); ?>/day
-                                        </span>
-                                    <?php endif; ?>
-                                    <?php if ($work['fixed_price']): ?>
-                                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                                            ₺<?php echo number_format($work['fixed_price'], 2); ?>
-                                        </span>
-                                    <?php endif; ?>
-                                    <?php
-                                    $tags = json_decode($work['tags'], true);
-                                    if ($tags):
-                                        foreach (array_slice($tags, 0, 2) as $tag):
-                                            ?>
-                                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">
-                                                <?php echo htmlspecialchars($tag); ?>
+                                <?php endif; ?>
+                                <div class="p-4">
+                                    <h4 class="font-semibold mb-2"><?php echo htmlspecialchars($work['title']); ?></h4>
+                                    <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                        <?php echo htmlspecialchars($work['description']); ?>
+                                    </p>
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-sm text-gray-500">
+                                            <?php echo date('M j, Y', strtotime($work['created_at'])); ?>
+                                        </div>
+                                        <a href="/public/views/work.php?id=<?php echo $work['work_id']; ?>"
+                                            class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
+                                            View Details
+                                        </a>
+                                    </div>
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        <?php if ($work['daily_rate']): ?>
+                                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                                ₺<?php echo number_format($work['daily_rate'], 2); ?>/day
                                             </span>
-                                            <?php
-                                        endforeach;
-                                        if (count($tags) > 2):
-                                            ?>
-                                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">
-                                                +<?php echo count($tags) - 2; ?>
+                                        <?php endif; ?>
+                                        <?php if ($work['fixed_price']): ?>
+                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                                                ₺<?php echo number_format($work['fixed_price'], 2); ?>
                                             </span>
-                                            <?php
-                                        endif;
-                                    endif;
-                                    ?>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php if (count($works) >= 6): ?>
+                        <div class="text-center mt-4">
+                            <a href="/public/views/works.php?user=<?php echo htmlspecialchars($profile['username']); ?>"
+                                class="inline-block px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                                View All Works
+                            </a>
                         </div>
-                    <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
-                <?php if (count($works) >= 6): ?>
-                    <div class="text-center mt-4">
-                        <a href="/public/views/works.php?user=<?php echo htmlspecialchars($profile['username']); ?>"
-                            class="inline-block px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                            View All Works
-                        </a>
-                    </div>
-                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+        <!-- Followers Modal -->
+        <div id="followersModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+            <div
+                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg w-full max-w-md">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Followers</h3>
+                    <button class="closeModal text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-content max-h-96 overflow-y-auto">
+                    <div id="followersList"></div>
+                </div>
             </div>
-        <?php endif; ?>
+        </div>
+
+        <!-- Following Modal -->
+        <div id="followingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+            <div
+                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg w-full max-w-md">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Following</h3>
+                    <button class="closeModal text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-content max-h-96 overflow-y-auto">
+                    <div id="followingList"></div>
+                </div>
+            </div>
+        </div>
     </main>
-
-    <!-- Followers/Following Modals -->
-    <div id="followersModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 w-full max-w-md">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold">Followers</h3>
-                <button class="closeModal text-gray-500 hover:text-gray-700">&times;</button>
-            </div>
-            <div id="followersList" class="max-h-96 overflow-y-auto">
-                <!-- Followers will be loaded here -->
-            </div>
-        </div>
-    </div>
-
-    <div id="followingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 w-full max-w-md">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold">Following</h3>
-                <button class="closeModal text-gray-500 hover:text-gray-700">&times;</button>
-            </div>
-            <div id="followingList" class="max-h-96 overflow-y-auto">
-                <!-- Following users will be loaded here -->
-            </div>
-        </div>
-    </div>
-
-    <?php if ($isOwnProfile): ?>
-        <!-- Edit Profile Modal -->
-        <div id="editProfileModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div class="bg-white rounded-lg p-6 w-full max-w-2xl">
-                <h3 class="text-xl font-bold mb-4">Edit Profile</h3>
-                <form id="profileForm" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block mb-1">Username</label>
-                            <input type="text" name="username" value="<?php echo htmlspecialchars($profile['username']); ?>"
-                                class="w-full border rounded p-2">
-                        </div>
-                        <div>
-                            <label class="block mb-1">Full Name</label>
-                            <input type="text" name="fullName"
-                                value="<?php echo htmlspecialchars($profile['full_name']); ?>"
-                                class="w-full border rounded p-2">
-                        </div>
-                        <div>
-                            <label class="block mb-1">Age</label>
-                            <input type="number" name="age" value="<?php echo htmlspecialchars($profile['age'] ?? ''); ?>"
-                                min="13" max="85" class="w-full border rounded p-2">
-                        </div>
-                        <div>
-                            <label class="block mb-1">Email</label>
-                            <input type="email" name="email" value="<?php echo htmlspecialchars($profile['email']); ?>"
-                                class="w-full border rounded p-2">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block mb-1">Biography</label>
-                        <textarea name="biography"
-                            class="w-full border rounded p-2"><?php echo htmlspecialchars($profile['biography']); ?></textarea>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block mb-1">City</label>
-                            <input type="text" name="city" value="<?php echo htmlspecialchars($profile['city']); ?>"
-                                class="w-full border rounded p-2">
-                        </div>
-                        <div>
-                            <label class="block mb-1">Country</label>
-                            <input type="text" name="country" value="<?php echo htmlspecialchars($profile['country']); ?>"
-                                class="w-full border rounded p-2">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block mb-1">Website</label>
-                        <input type="url" name="website" value="<?php echo htmlspecialchars($profile['website']); ?>"
-                            class="w-full border rounded p-2">
-                    </div>
-                    <div class="flex justify-end gap-4">
-                        <button type="button" id="closeEditProfile" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                            Save Changes
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    <?php endif; ?>
 
     <script>
         $(document).ready(function () {
-            // Edit Profile Modal (sadece kendi profili)
-            <?php if ($isOwnProfile): ?>
-                $('#editProfile').click(function () {
-                    $('#editProfileModal').removeClass('hidden');
-                });
-
-                $('#closeEditProfile').click(function () {
-                    $('#editProfileModal').addClass('hidden');
-                });
-
-                function showToast(message, type = 'success') {
-                    const $toast = $('#toast');
-                    $toast.removeClass().addClass('toast-alert toast-' + type);
-                    $toast.text(message);
-                    $toast.fadeIn();
-                    setTimeout(() => $toast.fadeOut(), 3000);
-                }
-
-                $('#profileForm').submit(function (e) {
-                    e.preventDefault();
-                    $.ajax({
-                        url: '/public/components/update_profile.php',
-                        type: 'POST',
-                        data: $(this).serialize(),
-                        dataType: 'json',
-                        success: function (response) {
-                            if (response.success) {
-                                // Formdaki verileri al
-                                const formData = {
-                                    username: $('[name="username"]').val(),
-                                    fullName: $('[name="fullName"]').val(),
-                                    age: $('[name="age"]').val(),
-                                    city: $('[name="city"]').val(),
-                                    country: $('[name="country"]').val(),
-                                    biography: $('[name="biography"]').val(),
-                                    website: $('[name="website"]').val()
-                                };
-
-                                // Username ve full name güncelle
-                                $('h2.text-2xl.font-bold').text(formData.username);
-                                $('h3.font-bold').first().text(formData.fullName);
-
-                                // Biography güncelle
-                                const biographyContainer = $('.mb-4').find('p').first();
-                                if (formData.biography) {
-                                    biographyContainer.html(formData.biography.replace(/\n/g, '<br>'));
-                                } else {
-                                    biographyContainer.html('');
-                                }
-
-                                // Yaş, şehir ve ülke bölümünü güncelle
-                                const locationContainer = $('.flex.items-center.gap-2.text-gray-600');
-                                let locationHtml = '';
-
-                                if (formData.age) {
-                                    locationHtml += `<span>${formData.age} years old</span>`;
-                                    if (formData.city || formData.country) locationHtml += '<span>•</span>';
-                                }
-                                if (formData.city) {
-                                    locationHtml += `<span>${formData.city}</span>`;
-                                    if (formData.country) locationHtml += '<span>•</span>';
-                                }
-                                if (formData.country) {
-                                    locationHtml += `<span>${formData.country}</span>`;
-                                }
-                                locationContainer.html(locationHtml);
-
-                                // Website güncelle
-                                const websiteLink = $('.mb-4').find('a.text-blue-500');
-                                if (formData.website) {
-                                    if (websiteLink.length) {
-                                        websiteLink.attr('href', formData.website).text(formData.website);
-                                    } else {
-                                        $('.mb-4').append(`
-                                            <a href="${formData.website}" target="_blank" 
-                                               class="text-blue-500 hover:underline">
-                                                ${formData.website}
-                                            </a>
-                                        `);
-                                    }
-                                } else {
-                                    websiteLink.remove();
-                                }
-
-                                // Modalı kapat
-                                $('#editProfileModal').addClass('hidden');
-
-                                // Toast mesajı göster
-                                showToast('Profile updated successfully!');
-                            } else {
-                                showToast(response.message || 'Error updating profile', 'error');
-                            }
-                        },
-                        error: function (xhr, status, error) {
-                            showToast('Error updating profile: ' + error, 'error');
-                        }
-                    });
-                });
-            <?php endif; ?>
-
             // Follow/Unfollow functionality
             $('#followButton').click(function () {
                 const userId = $(this).data('user-id');
@@ -707,15 +700,6 @@ if (isset($_SESSION['user_id'])) {
             // Modal kapatma
             $('.closeModal').click(function () {
                 $(this).closest('[id$="Modal"]').addClass('hidden');
-            });
-
-            // Modal dışına tıklayınca kapatma
-            $(document).click(function (e) {
-                const $modal = $(e.target).closest('[id$="Modal"]');
-                // Edit profile modalı değilse ve modal içeriğine tıklanmadıysa
-                if ($modal.length && !$(e.target).closest('.modal-content').length && $modal.attr('id') !== 'editProfileModal') {
-                    $modal.addClass('hidden');
-                }
             });
 
             // Arama fonksiyonalitesi

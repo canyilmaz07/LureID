@@ -4,11 +4,11 @@ session_start();
 require_once '../config/database.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../views/auth/login.php');
+    header('Location: ../auth/login.php');
     exit;
 }
 
-// Fetch user data
+// Database connection and user data fetch remain the same until the HTML part
 try {
     $dbConfig = require '../config/database.php';
     $db = new PDO(
@@ -19,12 +19,12 @@ try {
     );
 
     $stmt = $db->prepare("
-        SELECT u.*, up.*, w.balance, w.coins
-        FROM users u
-        LEFT JOIN user_profiles up ON u.user_id = up.user_id
-        LEFT JOIN wallet w ON u.user_id = w.user_id
-        WHERE u.user_id = ?
-    ");
+    SELECT u.*, ued.*, w.balance, w.coins
+    FROM users u
+    LEFT JOIN user_extended_details ued ON u.user_id = ued.user_id
+    LEFT JOIN wallet w ON u.user_id = w.user_id
+    WHERE u.user_id = ?
+");
     $stmt->execute([$_SESSION['user_id']]);
     $_SESSION['user_data'] = $stmt->fetch(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
@@ -32,15 +32,41 @@ try {
     exit('Database error occurred');
 }
 
-// User_profiles tablosunu kontrol et
-$checkProfileStmt = $db->prepare("SELECT COUNT(*) FROM user_profiles WHERE user_id = ?");
+// User_extended_details tablosunu kontrol et
+$checkProfileStmt = $db->prepare("SELECT COUNT(*) FROM user_extended_details WHERE user_id = ?");
 $checkProfileStmt->execute([$_SESSION['user_id']]);
 if ($checkProfileStmt->fetchColumn() == 0) {
     $createProfileStmt = $db->prepare("
-        INSERT INTO user_profiles (user_id, profile_photo_url) 
-        VALUES (?, 'undefined')
+        INSERT INTO user_extended_details (
+            user_id,
+            profile_photo_url,
+            basic_info,
+            network_links,
+            skills_matrix
+        ) VALUES (
+            ?,
+            'undefined',
+            JSON_OBJECT(
+                'full_name', (SELECT full_name FROM users WHERE user_id = ?),
+                'age', NULL,
+                'biography', NULL,
+                'location', JSON_OBJECT('city', NULL, 'country', NULL),
+                'contact', JSON_OBJECT('email', NULL, 'website', NULL),
+                'languages', JSON_ARRAY()
+            ),
+            JSON_OBJECT(
+                'professional', JSON_OBJECT(),
+                'social', JSON_OBJECT(),
+                'portfolio_sites', JSON_OBJECT()
+            ),
+            JSON_OBJECT(
+                'technical_skills', JSON_ARRAY(),
+                'soft_skills', JSON_ARRAY(),
+                'tools', JSON_ARRAY()
+            )
+        )
     ");
-    $createProfileStmt->execute([$_SESSION['user_id']]);
+    $createProfileStmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
 }
 
 // Follows tablosunu kontrol et
@@ -53,28 +79,6 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
     ");
     $createFollowsStmt->execute([$_SESSION['user_id']]);
 }
-
-// Skills tablosunu kontrol et
-$checkSkillsStmt = $db->prepare("SELECT COUNT(*) FROM skills WHERE user_id = ?");
-$checkSkillsStmt->execute([$_SESSION['user_id']]);
-if ($checkSkillsStmt->fetchColumn() == 0) {
-    $createSkillsStmt = $db->prepare("
-        INSERT INTO skills (user_id, skills) 
-        VALUES (?, '[]')
-    ");
-    $createSkillsStmt->execute([$_SESSION['user_id']]);
-}
-
-// Social Links tablosunu kontrol et
-$checkSocialLinksStmt = $db->prepare("SELECT COUNT(*) FROM social_links WHERE user_id = ?");
-$checkSocialLinksStmt->execute([$_SESSION['user_id']]);
-if ($checkSocialLinksStmt->fetchColumn() == 0) {
-    $createSocialLinksStmt = $db->prepare("
-        INSERT INTO social_links (user_id, social_links) 
-        VALUES (?, '[]')
-    ");
-    $createSocialLinksStmt->execute([$_SESSION['user_id']]);
-}
 ?>
 
 <!DOCTYPE html>
@@ -86,11 +90,12 @@ if ($checkSocialLinksStmt->fetchColumn() == 0) {
     <title>LUREID - Dashboard</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
 </head>
 
 <body class="bg-gray-100">
     <?php
-    // Avatar kontrolünü header'a taşıyalım ve jQuery yüklendikten sonra çalıştıralım
     if (isset($_SESSION['user_data']['profile_photo_url']) && $_SESSION['user_data']['profile_photo_url'] === 'undefined') {
         echo "<script>
         $(document).ready(function() {
@@ -143,83 +148,6 @@ if ($checkSocialLinksStmt->fetchColumn() == 0) {
     }
     ?>
 
-    <!-- Settings Section -->
-    <div id="settingsSection" class="hidden">
-        <div class="bg-white shadow-sm border-b">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-4">
-                    <button id="backFromSettings" class="flex items-center text-gray-600 hover:text-gray-900">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Back to Dashboard
-                    </button>
-                    <h1 class="text-xl font-semibold">Account Settings</h1>
-                    <div></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex gap-6">
-                <!-- Sidebar -->
-                <div class="w-64 flex-shrink-0">
-                    <div class="bg-white rounded-lg shadow">
-                        <nav class="space-y-1">
-                            <button class="settingsTab w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors"
-                                data-tab="security">Privacy & Security</button>
-                            <button class="settingsTab w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors"
-                                data-tab="personal">Personal Information</button>
-                            <button class="settingsTab w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors"
-                                data-tab="social">Social Links</button>
-                            <button class="settingsTab w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors"
-                                data-tab="skills">Skills</button>
-                            <button class="settingsTab w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors"
-                                data-tab="invitations">Invitations</button>
-                            <button class="settingsTab w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors"
-                                data-tab="history">Account History</button>
-                            <button class="settingsTab w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors"
-                                data-tab="account">Account Details</button>
-                        </nav>
-                    </div>
-                </div>
-
-                <!-- Content Area -->
-                <div class="flex-1">
-                    <div id="settingsContent" class="bg-white rounded-lg shadow p-6">
-                        <!-- Content will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Wallet Section -->
-    <div id="walletSection" class="hidden">
-        <div class="bg-white shadow-sm border-b">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-4">
-                    <button id="backFromWallet" class="flex items-center text-gray-600 hover:text-gray-900">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Back to Dashboard
-                    </button>
-                    <h1 class="text-xl font-semibold">Wallet</h1>
-                    <div></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div id="walletContent" class="bg-white rounded-lg shadow p-6">
-                <!-- Wallet content will be loaded here -->
-            </div>
-        </div>
-    </div>
-
     <!-- Freelancer Section -->
     <div id="freelancerSection" class="hidden">
         <div class="bg-white shadow-sm border-b">
@@ -251,16 +179,17 @@ if ($checkSocialLinksStmt->fetchColumn() == 0) {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                 <h1 class="text-xl font-bold">LUREID</h1>
                 <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-4">
-                        <div class="relative">
-                            <input type="text" id="searchUsers"
-                                class="w-64 px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                                placeholder="Search users...">
-                            <div id="searchResults"
-                                class="hidden absolute w-full mt-1 bg-white border rounded-lg shadow-lg z-50"></div>
-                        </div>
+                    <!-- Search Bar -->
+                    <div class="relative">
+                        <input type="text" id="searchUsers"
+                            class="w-64 px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                            placeholder="Search users...">
+                        <div id="searchResults"
+                            class="hidden absolute w-full mt-1 bg-white border rounded-lg shadow-lg z-50"></div>
                     </div>
-                    <button id="openWallet"
+
+                    <!-- Wallet Button -->
+                    <a href="components/wallet/wallet.php"
                         class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -268,25 +197,105 @@ if ($checkSocialLinksStmt->fetchColumn() == 0) {
                             <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path>
                             <path d="M18 12a2 2 0 0 0 0 4h4v-4z"></path>
                         </svg>
-                        Wallet (₺<?php echo number_format($_SESSION['user_data']['balance'], 2); ?>)
-                    </button>
-                    <button id="openFreelancer"
-                        class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                        Freelancer
-                    </button>
-                    <button id="openSettings" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                        Profile Settings
-                    </button>
-                    <a href="../views/auth/logout.php" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-                        Logout
+                        Wallet
                     </a>
+
+                    <!-- User Profile Dropdown -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center gap-3 focus:outline-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
+                            </svg>
+                            <div class="text-right">
+                                <div class="font-semibold">
+                                    <?php echo htmlspecialchars($_SESSION['user_data']['username']); ?>
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    <?php echo htmlspecialchars($_SESSION['user_data']['email']); ?>
+                                </div>
+                            </div>
+                            <img src="<?php echo htmlspecialchars($_SESSION['user_data']['profile_photo_url']); ?>"
+                                alt="Profile" class="w-10 h-10 rounded-full object-cover">
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div x-show="open" @click.away="open = false"
+                            class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg py-1 z-50">
+                            <!-- Account Settings Group -->
+                            <div class="px-4 py-3 border-b">
+                                <div class="text-sm font-semibold text-gray-500">You'r Profile</div>
+                                <a href="/<?php echo htmlspecialchars($_SESSION['user_data']['username']); ?>"
+                                    class="block w-full text-left px-4 py-2 hover:bg-gray-50">
+                                    Profile
+                                </a>
+                                <div class="text-sm font-semibold text-gray-500">Account Settings</div>
+                                <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md mt-2"
+                                    data-tab="profile">
+                                    Profil Ayarları
+                                </button>
+                                <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
+                                    data-tab="security">
+                                    Güvenlik Merkezi
+                                </button>
+                                <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
+                                    data-tab="notifications">
+                                    Bildirim Ayarları
+                                </button>
+                                <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
+                                    data-tab="payment">
+                                    Ödeme & Finansal İşlemler
+                                </button>
+                                <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
+                                    data-tab="privacy">
+                                    Gizlilik Ayarları
+                                </button>
+                                <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
+                                    data-tab="account">
+                                    Hesap ve Veriler
+                                </button>
+                                <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
+                                    data-tab="language">
+                                    Dil ve Bölge
+                                </button>
+                                <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
+                                    data-tab="appearance">
+                                    Görünüm ve Tema
+                                </button>
+                            </div>
+
+                            <!-- Freelancer Section -->
+                            <div class="px-4 py-3 border-b">
+                                <?php if (isset($_SESSION['user_data']['freelancer_id'])): ?>
+                                    <button id="openFreelancer"
+                                        class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md">
+                                        Freelancer Panel
+                                    </button>
+                                <?php else: ?>
+                                    <button id="openFreelancer"
+                                        class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md">
+                                        Become a Freelancer
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Support Section -->
+                            <div class="px-4 py-3 border-b">
+                                <button class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
+                                    onclick="window.location.href='support.php'">
+                                    Destek ve Yardım
+                                </button>
+                            </div>
+
+                            <!-- Logout -->
+                            <div class="px-4 py-3">
+                                <a href="../auth/logout.php"
+                                    class="block w-full text-left px-3 py-2 text-red-600 hover:bg-red-50 rounded-md">
+                                    Çıkış Yap
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -375,60 +384,11 @@ if ($checkSocialLinksStmt->fetchColumn() == 0) {
 
     <script>
         $(document).ready(function () {
-            let currentSettingsTab = null;
-
-            // Settings Panel Functions
-            $('#openSettings').click(function () {
-                $('#mainDashboard').hide();
-                $('#walletSection').hide();
-                $('#settingsSection').show();
-                if (!currentSettingsTab) {
-                    loadSettingsTab('security');
-                }
-            });
-
-            $('#backFromSettings').click(function () {
-                $('#settingsSection').hide();
-                $('#mainDashboard').show();
-            });
-
+            // Settings Tab Click Handler
             $('.settingsTab').click(function () {
                 const tab = $(this).data('tab');
-                if (currentSettingsTab === tab) return;
-
-                $('.settingsTab').removeClass('bg-gray-50');
-                $(this).addClass('bg-gray-50');
-
-                loadSettingsTab(tab);
+                window.location.href = 'components/settings/settings.php?tab=' + tab;
             });
-
-            function loadSettingsTab(tab) {
-                currentSettingsTab = tab;
-                $('#settingsContent').html('<div class="text-center py-4">Loading...</div>');
-                $.get('components/user.php', { tab: tab }, function (response) {
-                    $('#settingsContent').html(response);
-                });
-            }
-
-            // Wallet Panel Functions
-            $('#openWallet').click(function () {
-                $('#mainDashboard').hide();
-                $('#settingsSection').hide();
-                $('#walletSection').show();
-                loadWallet();
-            });
-
-            $('#backFromWallet').click(function () {
-                $('#walletSection').hide();
-                $('#mainDashboard').show();
-            });
-
-            function loadWallet() {
-                $('#walletContent').html('<div class="text-center py-4">Loading...</div>');
-                $.get('components/wallet.php', function (response) {
-                    $('#walletContent').html(response);
-                });
-            }
 
             // Freelancer Panel Functions
             $('#openFreelancer').click(function () {
@@ -454,17 +414,16 @@ if ($checkSocialLinksStmt->fetchColumn() == 0) {
             // Listen for wallet balance updates
             $(document).on('walletBalanceUpdated', function (e, newBalance) {
                 $('#openWallet').html(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path>
-                    <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path>
-                    <path d="M18 12a2 2 0 0 0 0 4h4v-4z"></path>
-                </svg>
-                Wallet ($${parseFloat(newBalance).toFixed(2)})
-            `);
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path>
+                <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path>
+                <path d="M18 12a2 2 0 0 0 0 4h4v-4z"></path>
+            </svg>
+            Wallet ($${parseFloat(newBalance).toFixed(2)})
+        `);
             });
         });
-    </script>
-    <script>
+
         // Search functionality
         let searchTimeout;
         $('#searchUsers').on('input', function () {
@@ -483,16 +442,16 @@ if ($checkSocialLinksStmt->fetchColumn() == 0) {
                         let html = '';
                         data.forEach(user => {
                             html += `
-                        <a href="/${user.username}" class="flex items-center gap-3 p-3 hover:bg-gray-50">
-                            <img src="${user.profile_photo_url}" 
-                                 alt="${user.username}" 
-                                 class="w-8 h-8 rounded-full">
-                            <div>
-                                <div class="font-semibold">${user.username}</div>
-                                <div class="text-sm text-gray-500">${user.full_name}</div>
-                            </div>
-                        </a>
-                    `;
+                    <a href="/${user.username}" class="flex items-center gap-3 p-3 hover:bg-gray-50">
+                        <img src="${user.profile_photo_url}" 
+                             alt="${user.username}" 
+                             class="w-8 h-8 rounded-full">
+                        <div>
+                            <div class="font-semibold">${user.username}</div>
+                            <div class="text-sm text-gray-500">${user.full_name}</div>
+                        </div>
+                    </a>
+                `;
                         });
                         $results.html(html).removeClass('hidden');
                     } else {

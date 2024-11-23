@@ -66,3 +66,63 @@
 [2024-11-21 23:10:27] [INFO] User logged in successfully: cnylmz735@gmail.com
 [2024-11-21 23:10:41] [INFO] Successful login attempt for user: osmananlatici@gmail.com
 [2024-11-21 23:10:41] [INFO] User logged in successfully: osmananlatici@gmail.com
+[2024-11-22 00:37:44] [INFO] User ID: 547623719 logged out successfully
+[2024-11-22 12:44:20] [INFO] Successful login attempt for user: osmananlatici@gmail.com
+[2024-11-22 12:44:20] [INFO] User logged in successfully: osmananlatici@gmail.com
+[2024-11-22 12:44:27] [INFO] User ID: 469349221 logged out successfully
+[2024-11-22 12:45:06] [INFO] Successful login attempt for user: osmananlatici@gmail.com
+[2024-11-22 12:45:06] [INFO] User logged in successfully: osmananlatici@gmail.com
+[2024-11-22 12:49:58] [INFO] User ID: 469349221 logged out successfully
+[2024-11-22 12:50:08] [INFO] Verification email sent to: can@can.c
+[2024-11-22 12:50:31] [DEBUG] Registration started for email: can@can.c
+[2024-11-22 12:50:31] [DEBUG] Temp user found: {"temp_id":100,"email":"can@can.c","username":null,"password":null,"full_name":"Can Y\u0131lmaz","google_id":null,"verification_code":"6006","invite_code":"67406FF8B","referral_code":null,"created_at":"2024-11-22 14:50:05","expires_at":"2024-11-23 14:50:05"}
+[2024-11-22 12:50:31] [DEBUG] Generated user ID: 810680492 for email: can@can.c
+[2024-11-22 12:50:31] [DEBUG] User inserted into users table - UserID: 810680492, Username: canyilmaz
+[2024-11-22 12:50:31] [DEBUG] Referral source created for UserID: 810680492
+[2024-11-22 12:50:31] [DEBUG] Creating wallet with 0 coins for UserID: 810680492 (no referral)
+[2024-11-22 12:50:31] [DEBUG] Deleted temp user record for email: can@can.c
+[2024-11-22 12:50:31] [DEBUG] Registration completed successfully for UserID: 810680492
+[2024-11-22 12:55:43] [INFO] User ID: 810680492 logged out successfully
+[2024-11-22 12:55:58] [INFO] Successful login attempt for user: can@can.c
+[2024-11-22 12:55:58] [INFO] User logged in successfully: can@can.c
+[2024-11-22 12:58:51] [INFO] User ID: 810680492 logged out successfully
+[2024-11-22 12:58:59] [INFO] Successful login attempt for user: osmananlatici@gmail.com
+[2024-11-22 12:58:59] [INFO] User logged in successfully: osmananlatici@gmail.com
+[2024-11-22 12:59:06] [INFO] User ID: 469349221 logged out successfully
+[2024-11-22 12:59:13] [INFO] Successful login attempt for user: can@can.c
+[2024-11-22 12:59:13] [INFO] User logged in successfully: can@can.c
+[2024-11-22 13:34:24] [INFO] Work created successfully: ID 14
+[2024-11-22 13:35:00] [INFO] User ID: 810680492 logged out successfully
+[2024-11-22 13:35:12] [INFO] Successful login attempt for user: can@can.c
+[2024-11-22 13:35:12] [INFO] User logged in successfully: can@can.c
+[2024-11-22 13:48:51] [INFO] User ID: 810680492 logged out successfully
+[2024-11-22 13:48:59] [INFO] Successful login attempt for user: osmananlatici@gmail.com
+[2024-11-22 13:48:59] [INFO] User logged in successfully: osmananlatici@gmail.com
+[2024-11-22 13:50:11] [INFO] User ID: 469349221 logged out successfully
+[2024-11-22 13:50:21] [INFO] Successful login attempt for user: can@can.c
+[2024-11-22 13:50:21] [INFO] User logged in successfully: can@can.c
+[2024-11-22 14:46:41] [INFO] User ID: 810680492 logged out successfully
+[2024-11-22 14:46:57] [INFO] Verification email sent to: can@can.c
+[2024-11-22 14:47:21] [DEBUG] Registration started for email: can@can.c
+[2024-11-22 14:47:21] [DEBUG] Temp user found: {"temp_id":101,"email":"can@can.c","username":null,"password":null,"full_name":"Can Y\u0131lmaz","google_id":null,"verification_code":"2157","invite_code":"67408B59B","referral_code":null,"created_at":"2024-11-22 16:46:54","expires_at":"2024-11-23 16:46:54"}
+[2024-11-22 14:47:21] [DEBUG] Generated user ID: 262360575 for email: can@can.c
+[2024-11-22 14:47:21] [DEBUG] User inserted into users table - UserID: 262360575, Username: canyilmaz
+[2024-11-22 14:47:21] [DEBUG] Referral source created for UserID: 262360575
+[2024-11-22 14:47:21] [DEBUG] Creating wallet with 0 coins for UserID: 262360575 (no referral)
+[2024-11-22 14:47:21] [DEBUG] Deleted temp user record for email: can@can.c
+[2024-11-22 14:47:21] [DEBUG] Registration completed successfully for UserID: 262360575
+[2024-11-22 19:14:52] [INFO] User ID: 262360575 logged out successfully
+[2024-11-22 19:15:11] [INFO] Verification email sent to: can@can.c
+[2024-11-22 19:15:34] [DEBUG] Registration started for email: can@can.c
+[2024-11-22 19:15:34] [DEBUG] Temp user found: {"temp_id":102,"email":"can@can.c","username":null,"password":null,"full_name":"Can","google_id":null,"verification_code":"3219","invite_code":"6740CA389","referral_code":null,"created_at":"2024-11-22 21:15:08","expires_at":"2024-11-23 21:15:08"}
+[2024-11-22 19:15:34] [DEBUG] Generated user ID: 251081278 for email: can@can.c
+[2024-11-22 19:15:34] [DEBUG] User inserted into users table - UserID: 251081278, Username: can
+[2024-11-22 19:15:34] [DEBUG] Referral source created for UserID: 251081278
+[2024-11-22 19:15:34] [DEBUG] Creating wallet with 0 coins for UserID: 251081278 (no referral)
+[2024-11-22 19:15:34] [DEBUG] Deleted temp user record for email: can@can.c
+[2024-11-22 19:15:34] [DEBUG] Registration completed successfully for UserID: 251081278
+[2024-11-22 20:43:55] [ERROR] Database connection failed: SQLSTATE[HY000] [2006] MySQL server has gone away
+[2024-11-22 20:54:50] [INFO] Failed login attempt for: canyilmaz
+[2024-11-22 20:55:28] [INFO] Successful login attempt for user: can@can.c
+[2024-11-22 20:55:28] [INFO] User logged in successfully: can@can.c
+[2024-11-23 00:00:44] [INFO] Work created successfully: ID 15

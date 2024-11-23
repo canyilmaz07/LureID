@@ -144,6 +144,7 @@
 </head>
 <body>
     <a href="public/index.php">GİRİŞ</a>
+    <p>PRESS CTRL TO SEARCH</p>
 
 <div class="search-container">
    <div class="search-wrapper">
