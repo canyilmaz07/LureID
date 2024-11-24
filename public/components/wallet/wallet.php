@@ -2,6 +2,7 @@
 // wallet.php
 session_start();
 require_once '../../../config/database.php';
+require_once '../../../languages/language_handler.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../../../auth/login.php');
@@ -233,7 +234,7 @@ $recentTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LUREID - Wallet</title>
+    <title><?= __('LUREID - Wallet') ?></title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -247,78 +248,67 @@ $recentTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    Back to Dashboard
+                    <?= __('Back to Dashboard') ?>
                 </a>
-                <h1 class="text-xl font-semibold">Wallet</h1>
+                <h1 class="text-xl font-semibold"><?= __('Wallet') ?></h1>
                 <div></div>
             </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <!-- Rest of the wallet content remains the same -->
         <div class="space-y-6">
-
             <div class="space-y-6">
-                <!-- Wallet Balance -->
                 <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-lg font-medium mb-4">Wallet Balance</h3>
+                    <h3 class="text-lg font-medium mb-4"><?= __('Wallet Balance') ?></h3>
                     <div class="text-3xl font-bold mb-4">
                         ₺<span id="currentBalance"><?php echo number_format($walletData['balance'], 2); ?></span>
                     </div>
                 </div>
 
-                <!-- Transaction Actions -->
                 <div class="grid grid-cols-3 gap-4">
                     <a href="deposit.php"
                         class="bg-green-500 text-white px-4 py-3 rounded-lg hover:bg-green-600 transition-colors text-center">
-                        Deposit
+                        <?= __('Deposit') ?>
                     </a>
                     <button id="showWithdraw"
                         class="bg-red-500 text-white px-4 py-3 rounded-lg hover:bg-red-600 transition-colors">
-                        Withdraw
+                        <?= __('Withdraw') ?>
                     </button>
                     <button id="showTransfer"
                         class="bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors">
-                        Transfer
+                        <?= __('Transfer') ?>
                     </button>
                 </div>
 
-                <!-- Transaction Forms (Hidden by default) -->
                 <div id="transactionForms" class="space-y-4 hidden">
-                    <!-- Withdraw Form -->
                     <form id="withdrawForm" class="bg-white p-6 rounded-lg shadow hidden">
-                        <h4 class="text-lg font-medium mb-4">Withdraw Funds</h4>
+                        <h4 class="text-lg font-medium mb-4"><?= __('Withdraw Funds') ?></h4>
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium">Amount</label>
+                                <label class="block text-sm font-medium"><?= __('Amount') ?></label>
                                 <input type="number" step="0.01" min="0.01" name="amount" required
                                     class="mt-1 block w-full rounded border p-2">
                             </div>
                             <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                                Confirm Withdrawal
+                                <?= __('Confirm Withdrawal') ?>
                             </button>
                         </div>
                     </form>
 
-                    <!-- Transfer Form -->
                     <form id="transferForm" class="bg-white p-6 rounded-lg shadow hidden">
-                        <h4 class="text-lg font-medium mb-4">Transfer Funds</h4>
-                        <!-- Username Input ve Search Results -->
+                        <h4 class="text-lg font-medium mb-4"><?= __('Transfer Funds') ?></h4>
                         <div class="space-y-4">
                             <div class="recipient-search">
-                                <label class="block text-sm font-medium">Recipient Username</label>
+                                <label class="block text-sm font-medium"><?= __('Recipient Username') ?></label>
                                 <input type="text" name="receiver" class="mt-1 block w-full rounded border p-2"
-                                    placeholder="Search username...">
+                                    placeholder="<?= __('Search username...') ?>">
 
-                                <!-- Arama Sonuçları -->
                                 <div id="searchResults"
                                     class="hidden mt-2 border rounded-lg divide-y max-h-48 overflow-y-auto">
-                                    <!-- Burası JS ile doldurulacak -->
                                 </div>
                             </div>
 
-                            <!-- Seçilen Kullanıcı Bilgileri -->
                             <div id="recipientInfo" class="hidden bg-gray-50 p-4 rounded">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-3">
@@ -331,33 +321,30 @@ $recentTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     </div>
                                     <button type="button" id="changeRecipient"
                                         class="text-sm text-red-600 hover:text-red-800">
-                                        Change Recipient
+                                        <?= __('Change Recipient') ?>
                                     </button>
                                 </div>
                             </div>
 
-                            <!-- Miktar Girişi -->
                             <div id="amountSection" class="hidden">
-                                <label class="block text-sm font-medium">Amount</label>
+                                <label class="block text-sm font-medium"><?= __('Amount') ?></label>
                                 <input type="number" step="0.01" min="0.01" name="amount"
                                     class="mt-1 block w-full rounded border p-2">
                             </div>
 
-                            <!-- Transfer Butonu -->
                             <button type="submit" id="transferButton"
                                 class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 hidden">
-                                Confirm Transfer
+                                <?= __('Confirm Transfer') ?>
                             </button>
                         </div>
                     </form>
                 </div>
 
-                <!-- Recent Transactions -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-medium">Recent Transactions</h3>
+                        <h3 class="text-lg font-medium"><?= __('Recent Transactions') ?></h3>
                         <a href="recent-transactions.php"
-                            class="text-blue-500 hover:text-blue-600">View All</a>
+                            class="text-blue-500 hover:text-blue-600"><?= __('View All') ?></a>
                     </div>
                     <div class="space-y-4">
                         <?php foreach ($recentTransactions as $transaction): ?>
@@ -367,20 +354,20 @@ $recentTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <?php
                                         switch ($transaction['transaction_type']) {
                                             case 'DEPOSIT':
-                                                echo 'Deposit to Wallet';
+                                                echo __('Deposit to Wallet');
                                                 break;
                                             case 'WITHDRAWAL':
-                                                echo 'Withdrawal from Wallet';
+                                                echo __('Withdrawal from Wallet');
                                                 break;
                                             case 'TRANSFER':
                                                 if ($transaction['sender_id'] == $_SESSION['user_id']) {
-                                                    echo "Transfer to {$transaction['receiver_username']}";
+                                                    echo __("Transfer to") . " {$transaction['receiver_username']}";
                                                 } else {
-                                                    echo "Transfer from {$transaction['sender_username']}";
+                                                    echo __("Transfer from") . " {$transaction['sender_username']}";
                                                 }
                                                 break;
-                                            case 'PAYMENT':  // Payment case'ini ekledik
-                                                echo $transaction['description']; // Veritabanındaki description'ı göster
+                                            case 'PAYMENT':
+                                                echo $transaction['description'];
                                                 break;
                                             default:
                                                 echo $transaction['description'];

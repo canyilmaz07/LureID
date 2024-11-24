@@ -2,6 +2,7 @@
 // index.php
 session_start();
 require_once '../config/database.php';
+require_once '../languages/language_handler.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
@@ -106,7 +107,7 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
                     data: {
                         check_avatar: true,
                         user_id: '" . $_SESSION['user_id'] . "',
-                        full_name: '" . addslashes($_SESSION['user_data']['full_name']) . "'
+                        full_name: '" . addslashes($_SESSION['user_data']['full_name']) . "' 
                     },
                     success: function(response) {
                         if(response.needsAvatar) {
@@ -126,7 +127,7 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
                     data: {
                         create_avatar: true,
                         user_id: '" . $_SESSION['user_id'] . "',
-                        full_name: '" . addslashes($_SESSION['user_data']['full_name']) . "'
+                        full_name: '" . addslashes($_SESSION['user_data']['full_name']) . "' 
                     },
                     success: function(response) {
                         if(response.success) {
@@ -158,9 +159,9 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
-                        Back to Dashboard
+                        <?= __('Back to Dashboard') ?>
                     </button>
-                    <h1 class="text-xl font-semibold">Freelancer Registration</h1>
+                    <h1 class="text-xl font-semibold"><?= __('Freelancer Registration') ?></h1>
                     <div></div>
                 </div>
             </div>
@@ -183,7 +184,7 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
                     <div class="relative">
                         <input type="text" id="searchUsers"
                             class="w-64 px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                            placeholder="Search users...">
+                            placeholder="<?= __('Search users...') ?>">
                         <div id="searchResults"
                             class="hidden absolute w-full mt-1 bg-white border rounded-lg shadow-lg z-50"></div>
                     </div>
@@ -197,7 +198,7 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
                             <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path>
                             <path d="M18 12a2 2 0 0 0 0 4h4v-4z"></path>
                         </svg>
-                        Wallet
+                        <?= __('Wallet') ?>
                     </a>
 
                     <!-- User Profile Dropdown -->
@@ -209,13 +210,13 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
                             </svg>
                             <div class="text-right">
                                 <div class="font-semibold">
-                                    <?php echo htmlspecialchars($_SESSION['user_data']['username']); ?>
+                                    <?= htmlspecialchars($_SESSION['user_data']['username']); ?>
                                 </div>
                                 <div class="text-sm text-gray-500">
-                                    <?php echo htmlspecialchars($_SESSION['user_data']['email']); ?>
+                                    <?= htmlspecialchars($_SESSION['user_data']['email']); ?>
                                 </div>
                             </div>
-                            <img src="<?php echo htmlspecialchars($_SESSION['user_data']['profile_photo_url']); ?>"
+                            <img src="<?= htmlspecialchars($_SESSION['user_data']['profile_photo_url']); ?>"
                                 alt="Profile" class="w-10 h-10 rounded-full object-cover">
                         </button>
 
@@ -224,75 +225,69 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
                             class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg py-1 z-50">
                             <!-- Account Settings Group -->
                             <div class="px-4 py-3 border-b">
-                                <div class="text-sm font-semibold text-gray-500">You'r Profile</div>
-                                <a href="/<?php echo htmlspecialchars($_SESSION['user_data']['username']); ?>"
+                                <div class="text-sm font-semibold text-gray-500"><?= __('You\'re Profile') ?></div>
+                                <a href="/<?= htmlspecialchars($_SESSION['user_data']['username']); ?>"
                                     class="block w-full text-left px-4 py-2 hover:bg-gray-50">
-                                    Profile
+                                    <?= __('Profile') ?>
                                 </a>
-                                <div class="text-sm font-semibold text-gray-500">Account Settings</div>
+                                <div class="text-sm font-semibold text-gray-500"><?= __('Account Settings') ?></div>
                                 <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md mt-2"
                                     data-tab="profile">
-                                    Profil Ayarları
+                                    <?= __('Profile Settings') ?>
                                 </button>
                                 <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
                                     data-tab="security">
-                                    Güvenlik Merkezi
+                                    <?= __('Security') ?>
                                 </button>
                                 <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
                                     data-tab="notifications">
-                                    Bildirim Ayarları
+                                    <?= __('Notification Settings') ?>
                                 </button>
                                 <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
                                     data-tab="payment">
-                                    Ödeme & Finansal İşlemler
+                                    <?= __('Payment & Financial Transactions') ?>
                                 </button>
                                 <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
                                     data-tab="privacy">
-                                    Gizlilik Ayarları
+                                    <?= __('Privacy Settings') ?>
                                 </button>
                                 <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
                                     data-tab="account">
-                                    Hesap ve Veriler
+                                    <?= __('Account and Data') ?>
                                 </button>
                                 <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
                                     data-tab="language">
-                                    Dil ve Bölge
+                                    <?= __('Language and Region') ?>
                                 </button>
                                 <button class="settingsTab w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
                                     data-tab="appearance">
-                                    Görünüm ve Tema
+                                    <?= __('Appearance and Theme') ?>
                                 </button>
                             </div>
 
                             <!-- Freelancer Section -->
                             <div class="px-4 py-3 border-b">
                                 <?php if (isset($_SESSION['user_data']['freelancer_id'])): ?>
-                                    <button id="openFreelancer"
-                                        class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md">
-                                        Freelancer Panel
-                                    </button>
+                                    <a href="freelancer-section"
+                                        class="block w-full text-left px-4 py-2 text-green-500 hover:bg-gray-50">
+                                        <?= __('Go to Freelancer Dashboard') ?>
+                                    </a>
                                 <?php else: ?>
-                                    <button id="openFreelancer"
-                                        class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md">
-                                        Become a Freelancer
-                                    </button>
+                                    <a href="freelancer-registration"
+                                        class="block w-full text-left px-4 py-2 text-blue-500 hover:bg-gray-50">
+                                        <?= __('Freelancer Registration') ?>
+                                    </a>
                                 <?php endif; ?>
-                            </div>
-
-                            <!-- Support Section -->
-                            <div class="px-4 py-3 border-b">
-                                <button class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md"
-                                    onclick="window.location.href='support.php'">
-                                    Destek ve Yardım
-                                </button>
                             </div>
 
                             <!-- Logout -->
                             <div class="px-4 py-3">
-                                <a href="../auth/logout.php"
-                                    class="block w-full text-left px-3 py-2 text-red-600 hover:bg-red-50 rounded-md">
-                                    Çıkış Yap
-                                </a>
+                                <form method="POST" action="logout.php">
+                                    <button type="submit"
+                                        class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50">
+                                        <?= __('Logout') ?>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -303,24 +298,24 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-semibold mb-4">
-                    Welcome, <?php echo htmlspecialchars($_SESSION['user_data']['username']); ?>!
+                    <?= __('Welcome') ?>, <?php echo htmlspecialchars($_SESSION['user_data']['username']); ?>!
                 </h2>
                 <!-- Client Works Section in index.php after welcome message -->
                 <div class="mt-6">
-                    <h3 class="text-lg font-medium mb-4">Your Active Works</h3>
+                    <h3 class="text-lg font-medium mb-4"><?= __('Your Active Works') ?></h3>
                     <?php
                     // Get works where user is client
                     $stmt = $db->prepare("
-        SELECT j.*, u.username as freelancer_username, u.full_name as freelancer_name,
-               w.title as work_title
-        FROM jobs j
-        JOIN freelancers f ON j.freelancer_id = f.freelancer_id
-        JOIN users u ON f.user_id = u.user_id
-        JOIN works w ON j.title = w.title
-        WHERE j.user_id = :user_id 
-        AND j.status IN ('IN_PROGRESS', 'DELIVERED')
-        ORDER BY j.created_at DESC
-    ");
+            SELECT j.*, u.username as freelancer_username, u.full_name as freelancer_name,
+                   w.title as work_title
+            FROM jobs j
+            JOIN freelancers f ON j.freelancer_id = f.freelancer_id
+            JOIN users u ON f.user_id = u.user_id
+            JOIN works w ON j.title = w.title
+            WHERE j.user_id = :user_id 
+            AND j.status IN ('IN_PROGRESS', 'DELIVERED')
+            ORDER BY j.created_at DESC
+        ");
                     $stmt->execute([':user_id' => $_SESSION['user_id']]);
                     $clientJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -330,22 +325,22 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
                                 <div class="bg-white rounded-lg shadow p-4">
                                     <div class="flex justify-between items-start">
                                         <div>
-                                            <h4 class="font-medium"><?php echo htmlspecialchars($job['work_title']); ?></h4>
-                                            <p class="text-sm text-gray-600">Freelancer:
-                                                <?php echo htmlspecialchars($job['freelancer_name']); ?>
-                                                (@<?php echo htmlspecialchars($job['freelancer_username']); ?>)
+                                            <h4 class="font-medium"><?= htmlspecialchars($job['work_title']); ?></h4>
+                                            <p class="text-sm text-gray-600"><?= __('Freelancer') ?>:
+                                                <?= htmlspecialchars($job['freelancer_name']); ?>
+                                                (@<?= htmlspecialchars($job['freelancer_username']); ?>)
                                             </p>
-                                            <p class="text-sm text-gray-600">Budget:
-                                                ₺<?php echo number_format($job['budget'], 2); ?></p>
+                                            <p class="text-sm text-gray-600"><?= __('Budget') ?>:
+                                                ₺<?= number_format($job['budget'], 2); ?></p>
                                             <p
-                                                class="text-sm <?php echo $job['status'] === 'DELIVERED' ? 'text-yellow-600' : 'text-blue-600'; ?>">
-                                                Status: <?php echo $job['status']; ?>
+                                                class="text-sm <?= $job['status'] === 'DELIVERED' ? 'text-yellow-600' : 'text-blue-600'; ?>">
+                                                <?= __('Status') ?>: <?= $job['status']; ?>
                                             </p>
                                         </div>
                                         <?php if ($job['status'] === 'DELIVERED'): ?>
                                             <button onclick="acceptDelivery(<?php echo $job['job_id']; ?>)"
                                                 class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                                                Accept Delivery
+                                                <?= __('Accept Delivery') ?>
                                             </button>
                                         <?php endif; ?>
                                     </div>
@@ -353,7 +348,7 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
                             <?php endforeach; ?>
                         </div>
                     <?php else: ?>
-                        <p class="text-gray-500">No active works found.</p>
+                        <p class="text-gray-500"><?= __('No active works found.') ?></p>
                     <?php endif; ?>
                 </div>
 

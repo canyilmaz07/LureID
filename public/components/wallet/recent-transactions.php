@@ -2,6 +2,7 @@
 // components/wallet/recent-transactions.php
 session_start();
 require_once '../../../config/database.php';
+require_once '../../../languages/language_handler.php';
 
 if (!isset($_SESSION['user_id'])) {
     exit('Unauthorized');
@@ -23,7 +24,7 @@ $currentTab = $_GET['tab'] ?? 'transactions';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transaction History - LUREID</title>
+    <title><?= __('Transaction History') ?> - LUREID</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -35,9 +36,9 @@ $currentTab = $_GET['tab'] ?? 'transactions';
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                     </svg>
-                    Back to Wallet
+                    <?= __('Back to Wallet') ?>
                 </a>
-                <h1 class="text-xl font-semibold">Wallet History</h1>
+                <h1 class="text-xl font-semibold"><?= __('Wallet History') ?></h1>
                 <div></div>
             </div>
         </div>
@@ -50,20 +51,20 @@ $currentTab = $_GET['tab'] ?? 'transactions';
                 <div class="bg-white rounded-lg shadow">
                     <nav class="space-y-1">
                         <a href="?tab=transactions" 
-                           class="block px-4 py-3 hover:bg-gray-50 transition-colors <?php echo $currentTab === 'transactions' ? 'bg-gray-50' : ''; ?>">
-                            Transactions
+                           class="block px-4 py-3 hover:bg-gray-50 transition-colors <?= $currentTab === 'transactions' ? 'bg-gray-50' : ''; ?>">
+                            <?= __('Transactions') ?>
                         </a>
                         <a href="?tab=subscriptions" 
-                           class="block px-4 py-3 hover:bg-gray-50 transition-colors <?php echo $currentTab === 'subscriptions' ? 'bg-gray-50' : ''; ?>">
-                            Subscriptions
+                           class="block px-4 py-3 hover:bg-gray-50 transition-colors <?= $currentTab === 'subscriptions' ? 'bg-gray-50' : ''; ?>">
+                            <?= __('Subscriptions') ?>
                         </a>
                         <a href="?tab=invoices" 
-                           class="block px-4 py-3 hover:bg-gray-50 transition-colors <?php echo $currentTab === 'invoices' ? 'bg-gray-50' : ''; ?>">
-                            Invoices
+                           class="block px-4 py-3 hover:bg-gray-50 transition-colors <?= $currentTab === 'invoices' ? 'bg-gray-50' : ''; ?>">
+                            <?= __('Invoices') ?>
                         </a>
                         <a href="?tab=cards" 
-                           class="block px-4 py-3 hover:bg-gray-50 transition-colors <?php echo $currentTab === 'cards' ? 'bg-gray-50' : ''; ?>">
-                            Payment Methods
+                           class="block px-4 py-3 hover:bg-gray-50 transition-colors <?= $currentTab === 'cards' ? 'bg-gray-50' : ''; ?>">
+                            <?= __('Payment Methods') ?>
                         </a>
                     </nav>
                 </div>
@@ -89,7 +90,7 @@ $currentTab = $_GET['tab'] ?? 'transactions';
                         $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         ?>
                         
-                        <h2 class="text-xl font-semibold mb-6">Transaction History</h2>
+                        <h2 class="text-xl font-semibold mb-6"><?= __('Transaction History') ?></h2>
                         <div class="space-y-4">
                             <?php foreach ($transactions as $transaction): ?>
                                 <div class="flex justify-between items-center p-4 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
@@ -98,26 +99,26 @@ $currentTab = $_GET['tab'] ?? 'transactions';
                                             <?php
                                             switch ($transaction['transaction_type']) {
                                                 case 'DEPOSIT':
-                                                    echo 'Deposit to Wallet';
+                                                    echo __('Deposit to Wallet');
                                                     break;
                                                 case 'WITHDRAWAL':
-                                                    echo 'Withdrawal from Wallet';
+                                                    echo __('Withdrawal from Wallet');
                                                     break;
                                                 case 'TRANSFER':
                                                     if ($transaction['sender_id'] == $_SESSION['user_id']) {
-                                                        echo "Transfer to {$transaction['receiver_username']}";
+                                                        echo sprintf(__('Transfer to %s'), $transaction['receiver_username']);
                                                     } else {
-                                                        echo "Transfer from {$transaction['sender_username']}";
+                                                        echo sprintf(__('Transfer from %s'), $transaction['sender_username']);
                                                     }
                                                     break;
                                             }
                                             ?>
                                         </p>
                                         <p class="text-sm text-gray-600">
-                                            <?php echo date('F j, Y g:i a', strtotime($transaction['transaction_date'])); ?>
+                                            <?= date('F j, Y g:i a', strtotime($transaction['transaction_date'])); ?>
                                         </p>
                                         <p class="text-sm text-gray-600">
-                                            Transaction ID: #<?php echo $transaction['transaction_id']; ?>
+                                            <?= __('Transaction ID:') ?> #<?= $transaction['transaction_id']; ?>
                                         </p>
                                     </div>
                                     <div class="text-right">
@@ -137,7 +138,7 @@ $currentTab = $_GET['tab'] ?? 'transactions';
                                                 echo '+';
                                             }
                                             ?>
-                                            $<?php echo number_format($transaction['amount'], 2); ?>
+                                            $<?= number_format($transaction['amount'], 2); ?>
                                         </p>
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                             <?php
@@ -155,7 +156,7 @@ $currentTab = $_GET['tab'] ?? 'transactions';
                                                     echo 'bg-gray-100 text-gray-800';
                                             }
                                             ?>">
-                                            <?php echo $transaction['status']; ?>
+                                            <?= $transaction['status']; ?>
                                         </span>
                                     </div>
                                 </div>
@@ -168,8 +169,8 @@ $currentTab = $_GET['tab'] ?? 'transactions';
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                       d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                             </svg>
-                            <h3 class="mt-2 text-sm font-semibold text-gray-900">Coming Soon</h3>
-                            <p class="mt-1 text-sm text-gray-500">This feature is currently under development.</p>
+                            <h3 class="mt-2 text-sm font-semibold text-gray-900"><?= __('Coming Soon') ?></h3>
+                            <p class="mt-1 text-sm text-gray-500"><?= __('This feature is currently under development.') ?></p>
                         </div>
                     <?php endif; ?>
                 </div>

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../../../config/database.php';
+require_once '../../../languages/language_handler.php';
 
 if (!isset($_SESSION['user_id'])) {
     exit('Unauthorized');
@@ -89,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deposit Funds</title>
+    <title><?= __('Deposit Funds') ?></title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
@@ -99,13 +100,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-lg">
             <div>
                 <h2 class="text-center text-3xl font-extrabold text-gray-900">
-                    Deposit Funds
+                    <?= __('Deposit Funds') ?>
                 </h2>
             </div>
             <form id="depositForm" class="mt-8 space-y-6">
                 <div class="rounded-md shadow-sm space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Amount</label>
+                        <label class="block text-sm font-medium text-gray-700"><?= __('Amount') ?></label>
                         <div class="mt-1 relative rounded-md shadow-sm">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
                                 <span class="text-gray-500 sm:text-sm">₺</span>
@@ -116,14 +117,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Card Number</label>
+                        <label class="block text-sm font-medium text-gray-700"><?= __('Card Number') ?></label>
                         <input type="text" name="cardNumber" id="cardNumber" required
                             class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                             placeholder="1234 5678 9012 3456">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Cardholder Name</label>
+                        <label class="block text-sm font-medium text-gray-700"><?= __('Cardholder Name') ?></label>
                         <input type="text" name="cardName" required
                             class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                             placeholder="John Doe">
@@ -131,14 +132,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Expiry Date</label>
+                            <label class="block text-sm font-medium text-gray-700"><?= __('Expiry Date') ?></label>
                             <input type="text" name="expiryDate" id="expiryDate" required
                                 class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                 placeholder="MM/YY">
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">CVV</label>
+                            <label class="block text-sm font-medium text-gray-700"><?= __('CVV') ?></label>
                             <input type="text" name="cvv" id="cvv" required maxlength="4"
                                 class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                 placeholder="123">
@@ -154,9 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </svg>
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm text-gray-500">
-                                    Your payment information is secured with SSL encryption
-                                </p>
+                                <p class="text-sm text-gray-500"><?= __('Your payment information is secured with SSL encryption') ?></p>
                             </div>
                         </div>
                     </div>
@@ -172,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
                         </span>
-                        Deposit Now
+                        <?= __('Deposit Now') ?>
                     </button>
                 </div>
             </form>

@@ -1,6 +1,12 @@
 {
     "require": {
         "phpmailer/phpmailer": "^6.9.2",
-        "google/apiclient": "2.15.0"
+        "google/apiclient": "2.15.0",
+        "openai-php/client": "^0.10.3"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
     }
 }
