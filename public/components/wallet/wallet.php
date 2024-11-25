@@ -259,10 +259,28 @@ $recentTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div class="space-y-6">
             <div class="space-y-6">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-lg font-medium mb-4"><?= __('Wallet Balance') ?></h3>
-                    <div class="text-3xl font-bold mb-4">
-                        ₺<span id="currentBalance"><?php echo number_format($walletData['balance'], 2); ?></span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Balance Card -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center gap-3 mb-4">
+                            <img src="../../../sources/icons/bulk/wallet.svg" alt="Wallet" class="w-6 h-6">
+                            <h3 class="text-lg font-medium"><?= __('Wallet Balance') ?></h3>
+                        </div>
+                        <div class="text-3xl font-bold mb-4">
+                            ₺<span id="currentBalance"><?php echo number_format($walletData['balance'], 2); ?></span>
+                        </div>
+                    </div>
+
+                    <!-- Coins Card -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center gap-3 mb-4">
+                            <img src="../../../sources/icons/bulk/coin.svg" alt="Coins" class="w-6 h-6">
+                            <h3 class="text-lg font-medium"><?= __('Coins Balance') ?></h3>
+                        </div>
+                        <div class="text-3xl font-bold mb-4">
+                            <span id="currentCoins"><?php echo number_format($walletData['coins']); ?></span>
+                            <span class="text-gray-500">🪙</span>
+                        </div>
                     </div>
                 </div>
 
@@ -354,23 +372,26 @@ $recentTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <?php
                                         switch ($transaction['transaction_type']) {
                                             case 'DEPOSIT':
-                                                echo __('Deposit to Wallet');
+                                                echo '<div class="flex items-center gap-2"><img src="../../../sources/icons/bulk/arrow-down.svg" class="w-4 h-4" /> ' . __('Deposit to Wallet') . '</div>';
                                                 break;
                                             case 'WITHDRAWAL':
-                                                echo __('Withdrawal from Wallet');
+                                                echo '<div class="flex items-center gap-2"><img src="../../../sources/icons/bulk/arrow-up.svg" class="w-4 h-4" /> ' . __('Withdrawal from Wallet') . '</div>';
                                                 break;
                                             case 'TRANSFER':
                                                 if ($transaction['sender_id'] == $_SESSION['user_id']) {
-                                                    echo __("Transfer to") . " {$transaction['receiver_username']}";
+                                                    echo '<div class="flex items-center gap-2"><img src="../../../sources/icons/bulk/export.svg" class="w-4 h-4" /> ' . __("Transfer to") . " {$transaction['receiver_username']}</div>";
                                                 } else {
-                                                    echo __("Transfer from") . " {$transaction['sender_username']}";
+                                                    echo '<div class="flex items-center gap-2"><img src="../../../sources/icons/bulk/import.svg" class="w-4 h-4" /> ' . __("Transfer from") . " {$transaction['sender_username']}</div>";
                                                 }
                                                 break;
                                             case 'PAYMENT':
-                                                echo $transaction['description'];
+                                                echo '<div class="flex items-center gap-2"><img src="../../../sources/icons/bulk/card.svg" class="w-4 h-4" /> ' . $transaction['description'] . '</div>';
+                                                break;
+                                            case 'REFERRAL_REWARD':
+                                                echo '<div class="flex items-center gap-2"><img src="../../../sources/icons/bulk/medal-star.svg" class="w-4 h-4" /> ' . $transaction['description'] . '</div>';
                                                 break;
                                             default:
-                                                echo $transaction['description'];
+                                                echo '<div class="flex items-center gap-2"><img src="../../../sources/icons/bulk/refresh.svg" class="w-4 h-4" /> ' . $transaction['description'] . '</div>';
                                                 break;
                                         }
                                         ?>
@@ -382,6 +403,11 @@ $recentTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="text-right">
                                     <p class="font-medium <?php
                                     if (
+                                        $transaction['transaction_type'] == 'REFERRAL_REWARD' ||
+                                        (strpos(strtolower($transaction['description']), 'referral bonus') !== false)
+                                    ) {
+                                        echo 'text-green-600';  // Referral işlemleri her zaman yeşil
+                                    } elseif (
                                         $transaction['sender_id'] == $_SESSION['user_id'] &&
                                         $transaction['transaction_type'] != 'DEPOSIT'
                                     ) {
@@ -391,16 +417,25 @@ $recentTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     }
                                     ?>">
                                         <?php
+                                        // Referral ve coins işlemleri için özel görünüm
                                         if (
-                                            $transaction['sender_id'] == $_SESSION['user_id'] &&
-                                            $transaction['transaction_type'] != 'DEPOSIT'
+                                            $transaction['transaction_type'] == 'REFERRAL_REWARD' ||
+                                            strpos(strtolower($transaction['description']), 'referral bonus') !== false
                                         ) {
-                                            echo '-';
+                                            echo '+' . (int) $transaction['amount'] . ' 🪙'; // Referral bonusları her zaman pozitif ve coin olarak
                                         } else {
-                                            echo '+';
+                                            // Normal para işlemleri için mevcut mantık
+                                            if (
+                                                $transaction['sender_id'] == $_SESSION['user_id'] &&
+                                                $transaction['transaction_type'] != 'DEPOSIT'
+                                            ) {
+                                                echo '-';
+                                            } else {
+                                                echo '+';
+                                            }
+                                            echo '₺' . number_format($transaction['amount'], 2);
                                         }
                                         ?>
-                                        ₺<?php echo number_format($transaction['amount'], 2); ?>
                                     </p>
                                     <p class="text-sm text-gray-600"><?php echo $transaction['status']; ?></p>
                                 </div>

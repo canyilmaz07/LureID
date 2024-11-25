@@ -60,6 +60,14 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
         ");
         $stmt->execute([$user_id, $inviteCode, $referralCode ? 1 : 0]);
 
+        // Create wallet for new user
+        $stmt = $db->prepare("
+            INSERT INTO wallet (
+                user_id, balance, coins, created_at, last_transaction_date
+            ) VALUES (?, 0.00, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ");
+        $stmt->execute([$user_id]);
+
         // Process referral if provided
         if ($referralCode) {
             // Get inviter's user ID
@@ -72,7 +80,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             $inviterId = $stmt->fetchColumn();
 
             if ($inviterId) {
-                // Give coins to inviter
+                // Give coins to inviter (50 coins)
                 $stmt = $db->prepare("
                     UPDATE wallet 
                     SET coins = coins + 50,
@@ -81,7 +89,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                 ");
                 $stmt->execute([$inviterId]);
 
-                // Give coins to new user
+                // Give coins to new user (25 coins)
                 $stmt = $db->prepare("
                     UPDATE wallet 
                     SET coins = coins + 25,
@@ -97,6 +105,26 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                     ) VALUES (?, ?, ?)
                 ");
                 $stmt->execute([$inviterId, $user_id, $referralCode]);
+
+                // Log coin transactions for inviter
+                $stmt = $db->prepare("
+                    INSERT INTO transactions (
+                        transaction_id, sender_id, receiver_id, amount, 
+                        transaction_type, status, description
+                    ) VALUES (?, ?, ?, 50, 'TRANSFER', 'COMPLETED', 'Referral bonus - Inviter reward')
+                ");
+                $transactionId = mt_rand(10000000000, 99999999999);
+                $stmt->execute([$transactionId, $inviterId, $inviterId]);
+
+                // Log coin transactions for new user
+                $stmt = $db->prepare("
+                    INSERT INTO transactions (
+                        transaction_id, sender_id, receiver_id, amount, 
+                        transaction_type, status, description
+                    ) VALUES (?, ?, ?, 25, 'TRANSFER', 'COMPLETED', 'Referral bonus - New user reward')
+                ");
+                $transactionId = mt_rand(10000000000, 99999999999);
+                $stmt->execute([$transactionId, $user_id, $user_id]);
             }
         }
 

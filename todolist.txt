@@ -190,3 +190,243 @@ Topluluk kuralları
 Geri bildirim
 Sorun bildirme
 Öneri sunma
+
+
+
+
+freelancer
+
+# Freelancer Sitesi İş Akışı ve Gereksinimler Dokümanı
+
+## 1. Freelancer Kayıt Süreci
+### Gerekli Bilgiler
+- Kişisel Bilgiler
+  - Ad Soyad
+  - E-posta
+  - Telefon
+  - Ülke/Şehir
+  - Profil Fotoğrafı
+  - Doğum Tarihi
+  - Kimlik Doğrulama Belgesi
+
+### Profesyonel Bilgiler
+- Uzmanlık Alanları (maksimum 5 kategori seçimi)
+- Yetenekler (skills) listesi
+- Deneyim Süresi
+- Eğitim Bilgileri
+- Sertifikalar
+- Portfolio Çalışmaları
+- Referanslar
+
+### Finansal Bilgiler
+- Saatlik/Proje Bazlı Ücret Beklentisi
+- Ödeme Alma Yöntemleri
+- Banka/Ödeme Sistemi Bilgileri
+- Vergi Kimlik Numarası
+
+## 2. İş İlanı Oluşturma Süreci
+### İlan Detayları
+- Proje Başlığı
+- Proje Kategorisi
+- Alt Kategoriler
+- Proje Açıklaması
+- Gerekli Yetenekler
+- Proje Süresi
+- Bütçe Aralığı
+- Ödeme Tipi (Saatlik/Proje Bazlı)
+- Tecrübe Seviyesi Beklentisi
+- Dosya Ekleri (Varsa)
+
+### İlan Görünürlük Seçenekleri
+- Standart İlan
+- Öne Çıkarılmış İlan
+- Acil İş İlanı
+- NDA Gereksinimi
+
+## 3. İş İlanı Satın Alma Süreci
+### Teklif Verme
+- Fiyat Teklifi
+- Proje Tamamlama Süresi
+- Çalışma Planı
+- Örnek Çalışmalar
+- Motivasyon Mektubu
+
+### Müşteri Değerlendirme Kriterleri
+- Freelancer Puanı
+- Tamamlanan Proje Sayısı
+- Başarı Oranı
+- Müşteri Yorumları
+- Uzmanlık Seviyesi
+
+## 4. Proje Yönetim Süreci
+### Başlangıç Aşaması
+- Sözleşme İmzalama
+- Ödeme Güvence Altına Alma
+- Milestone Belirleme
+- Zaman Çizelgesi Oluşturma
+
+### İlerleme Takibi
+- Milestone Takip Sistemi
+- İlerleme Raporları
+- Dosya Paylaşım Sistemi
+- Mesajlaşma Platformu
+- Video Konferans İmkanı
+
+## 5. Teslim ve Sonlandırma Süreci
+### Proje Teslimi
+- Teslim Dosyaları
+- Kaynak Kodlar (Gerekirse)
+- Dokümantasyon
+- Kullanım Kılavuzu
+
+### Onay Süreci
+- Müşteri İncelemesi
+- Revizyon Talepleri
+- Final Onayı
+- Telif Hakkı Transferi
+
+### Ödeme ve Kapanış
+- Ödeme Serbest Bırakma
+- Karşılıklı Değerlendirme
+- Proje Referansı
+- Anlaşmazlık Çözüm Süreci
+
+## 6. Platform Özellikleri
+### Güvenlik
+- SSL Sertifikası
+- İki Faktörlü Doğrulama
+- Ödeme Güvenliği
+- Veri Şifreleme
+- KVKK Uyumluluğu
+
+### İletişim Araçları
+- Gerçek Zamanlı Chat
+- Video Konferans
+- Dosya Paylaşımı
+- Bildirim Sistemi
+- E-posta Entegrasyonu
+
+### Raporlama ve Analiz
+- Kazanç Takibi
+- Proje Metrikleri
+- Performans Analizleri
+- Zaman Takibi
+- Fatura Oluşturma
+
+## 7. Destek ve Yardım Sistemi
+### Müşteri Desteği
+- 7/24 Destek
+- Canlı Destek
+- Ticket Sistemi
+- SSS Bölümü
+- Eğitim Materyalleri
+
+### Anlaşmazlık Çözümü
+- Arabuluculuk Hizmeti
+- Para İadesi Politikası
+- Şikayet Yönetimi
+- Yasal Destek
+
+## 8. Platform Ücretlendirme
+### Komisyon Yapısı
+- Platform Komisyon Oranı
+- Ödeme İşlem Ücretleri
+- Premium Üyelik Seçenekleri
+- İlan Yükseltme Ücretleri
+
+### Ödeme Planları
+- Freemium Model
+- Premium Paketler
+- Kurumsal Çözümler
+- Özel Hizmetler
+
+
+
+
+
+Profesyonel bir freelancer dashboard'unda aşağıdaki temel özelliklerin bulunması önemlidir:
+
+1. Genel Bakış/Ana Sayfa
+- Toplam kazanç istatistikleri (günlük, aylık, yıllık)
+- Aktif projeler sayısı ve özeti
+- Yaklaşan teslim tarihleri/deadlinelar
+- Bekleyen teklifler
+- Yeni mesajlar/bildirimler
+- Profilinin görüntülenme sayısı
+
+2. Proje Yönetimi
+- Aktif projeler listesi ve durumları
+- Tamamlanan projeler arşivi
+- Proje filtreleme ve arama
+- Proje takvimi görünümü
+- Teslim tarihi yaklaşan işlerin uyarıları
+- Müşteri geri bildirimleri ve puanlamalar
+
+3. Finansal Yönetim
+- Kazanç grafikleri ve raporları
+- Bekleyen ödemeler
+- Tamamlanan ödemeler geçmişi
+- Fatura oluşturma ve yönetimi
+- Vergi hesaplamaları ve raporları
+- Masraf takibi
+
+4. İletişim Merkezi
+- Müşterilerle mesajlaşma sistemi
+- Proje bazlı sohbet odaları
+- Dosya paylaşım alanı
+- Görüntülü görüşme entegrasyonu
+- E-posta bildirimleri yönetimi
+
+5. Profil ve Portföy Yönetimi
+- Profil düzenleme
+- Portföy/iş örnekleri yükleme ve düzenleme
+- Yetenek ve sertifika yönetimi
+- Referans ve değerlendirme gösterimi
+- CV/özgeçmiş düzenleme
+
+6. İş Bulma Araçları
+- İş ilanları listesi ve filtreleme
+- Teklif verdiğiniz işlerin durumu
+- Otomatik iş önerileri
+- Teklif şablonları
+- Benzer freelancerların durumu ve rekabet analizi
+
+7. Zaman Yönetimi
+- Çalışma saatleri takibi
+- Proje bazlı zaman ölçümü
+- Takvim entegrasyonu
+- Hatırlatıcılar ve görev listeleri
+- Mola takibi
+
+8. Analitik ve Raporlama
+- Performans metrikleri
+- Müşteri memnuniyet oranları
+- Kazanç/zaman analizi
+- Başarı oranı istatistikleri
+- Büyüme grafikleri
+
+9. Eğitim ve Gelişim
+- Beceri geliştirme önerileri
+- Online kurslar/eğitimler
+- Sektör haberleri ve güncellemeleri
+- Başarılı freelancerların ipuçları
+- Kaynak kütüphanesi
+
+10. Ayarlar ve Güvenlik
+- Hesap ayarları
+- Bildirim tercihleri
+- Gizlilik ayarları
+- İki faktörlü doğrulama
+- Yedekleme seçenekleri
+
+Bu özelliklerin hepsini bir anda eklemeniz gerekmez. Öncelikle temel özellikleri (profil yönetimi, proje takibi, finansal yönetim ve iletişim) ekleyip, zamanla diğer özellikleri geliştirebilirsiniz. Önemli olan kullanıcı deneyimini basit ve sezgisel tutarken, freelancerlerin işlerini etkili bir şekilde yönetmelerine yardımcı olmaktır.
+
+Ayrıca, dashboard tasarımında şunlara dikkat etmelisiniz:
+- Mobil uyumlu tasarım
+- Hızlı yükleme süreleri
+- Kolay navigasyon
+- Görsel grafikler ve istatistikler
+- Özelleştirilebilir widget'lar
+- Sezgisel kullanıcı arayüzü
+
+Bu özellikleri eklerken kullanıcılarınızdan düzenli geri bildirim almayı ve en çok kullanılan özellikleri ön plana çıkarmayı unutmayın.

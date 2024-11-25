@@ -24,40 +24,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         switch ($action) {
             case 'create_password':
                 $password = $_POST['password'] ?? '';
-                
+
                 // Sunucu tarafında şifre validasyonu
                 if (strlen($password) < 8) {
                     exit(json_encode(['success' => false, 'message' => 'Şifre en az 8 karakter olmalıdır']));
                 }
-                
+
                 if (!preg_match('/[A-Z]/', $password)) {
                     exit(json_encode(['success' => false, 'message' => 'Şifre en az 1 büyük harf içermelidir']));
                 }
-                
+
                 if (!preg_match('/[a-z]/', $password)) {
                     exit(json_encode(['success' => false, 'message' => 'Şifre en az 1 küçük harf içermelidir']));
                 }
-                
+
                 // Kullanıcının Google hesabı olup olmadığını kontrol et
-                $stmt = $db->prepare("SELECT google_id FROM users WHERE user_id = ?");
+                $stmt = $db->prepare("SELECT google_id, username FROM users WHERE user_id = ?");
                 $stmt->execute([$userId]);
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
-                
+
                 if (empty($user['google_id'])) {
                     exit(json_encode(['success' => false, 'message' => 'Bu işlem sadece Google hesapları için geçerlidir']));
                 }
-                
-                // Şifreyi hashle ve güncelle
-                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-                
-                $stmt = $db->prepare("UPDATE users SET password = ? WHERE user_id = ?");
-                $success = $stmt->execute([$hashedPassword, $userId]);
-                
-                exit(json_encode([
-                    'success' => $success,
-                    'message' => $success ? 'Şifre başarıyla oluşturuldu' : 'Şifre oluşturulurken bir hata oluştu'
-                ]));
-                
+
+                try {
+                    // Şifreyi hashle ve güncelle - PASSWORD_DEFAULT ile hash'leme
+                    $hashedPassword = password_hash($password, PASSWORD_DEFAULT, ['cost' => 10]);
+
+                    $stmt = $db->prepare("UPDATE users SET password = ? WHERE user_id = ?");
+                    $success = $stmt->execute([$hashedPassword, $userId]);
+
+                    if ($success) {
+                        // Başarılı işlemi logla
+                        error_log(sprintf(
+                            "Password created for Google user - User: %s (%d) - Date: %s",
+                            $user['username'],
+                            $userId,
+                            date('Y-m-d H:i:s')
+                        ));
+                    }
+
+                    exit(json_encode([
+                        'success' => $success,
+                        'message' => $success ? 'Şifre başarıyla oluşturuldu' : 'Şifre oluşturulurken bir hata oluştu'
+                    ]));
+                } catch (Exception $e) {
+                    // Hata durumunu logla
+                    error_log(sprintf(
+                        "Password creation failed - User: %s (%d) - Error: %s",
+                        $user['username'],
+                        $userId,
+                        $e->getMessage()
+                    ));
+
+                    exit(json_encode([
+                        'success' => false,
+                        'message' => 'Şifre oluşturulurken bir hata oluştu: ' . $e->getMessage()
+                    ]));
+                }
+
             case 'verify_attempt':
                 $attemptId = $_POST['attempt_id'] ?? 0;
 
@@ -150,10 +175,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'params' => [$userId]
                         ],
 
-                        // 3. İş ve referans verileri
+                        // 3. İş ve freelancer verileri
                         [
-                            'name' => 'jobs',
-                            'query' => "DELETE FROM jobs WHERE user_id = ?",
+                            'name' => 'gig_milestones',
+                            'query' => "DELETE gm FROM gig_milestones gm 
+                                           INNER JOIN gigs g ON gm.gig_id = g.gig_id 
+                                           INNER JOIN freelancers f ON g.freelancer_id = f.freelancer_id 
+                                           WHERE f.user_id = ?",
+                            'params' => [$userId]
+                        ],
+                        [
+                            'name' => 'gig_nda_requirements',
+                            'query' => "DELETE gnr FROM gig_nda_requirements gnr 
+                                           INNER JOIN gigs g ON gnr.gig_id = g.gig_id 
+                                           INNER JOIN freelancers f ON g.freelancer_id = f.freelancer_id 
+                                           WHERE f.user_id = ?",
+                            'params' => [$userId]
+                        ],
+                        [
+                            'name' => 'gigs',
+                            'query' => "DELETE g FROM gigs g 
+                                           INNER JOIN freelancers f ON g.freelancer_id = f.freelancer_id 
+                                           WHERE f.user_id = ?",
+                            'params' => [$userId]
+                        ],
+                        [
+                            'name' => 'freelancers',
+                            'query' => "DELETE FROM freelancers WHERE user_id = ?",
                             'params' => [$userId]
                         ],
                         [
@@ -174,10 +222,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'params' => [$userId]
                         ],
 
-                        // 5. Profil ve detay verileri
+                        // 5. Profil ve ayar verileri
                         [
                             'name' => 'user_extended_details',
                             'query' => "DELETE FROM user_extended_details WHERE user_id = ?",
+                            'params' => [$userId]
+                        ],
+                        [
+                            'name' => 'user_settings',
+                            'query' => "DELETE FROM user_settings WHERE user_id = ?",
                             'params' => [$userId]
                         ],
 

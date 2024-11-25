@@ -149,31 +149,6 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
     }
     ?>
 
-    <!-- Freelancer Section -->
-    <div id="freelancerSection" class="hidden">
-        <div class="bg-white shadow-sm border-b">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-4">
-                    <button id="backFromFreelancer" class="flex items-center text-gray-600 hover:text-gray-900">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        <?= __('Back to Dashboard') ?>
-                    </button>
-                    <h1 class="text-xl font-semibold"><?= __('Freelancer Registration') ?></h1>
-                    <div></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div id="freelancerContent" class="bg-white rounded-lg shadow p-6">
-                <!-- Freelancer content will be loaded here -->
-            </div>
-        </div>
-    </div>
-
     <!-- Main Dashboard -->
     <div id="mainDashboard">
         <header class="bg-white shadow">
@@ -267,13 +242,20 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
 
                             <!-- Freelancer Section -->
                             <div class="px-4 py-3 border-b">
-                                <?php if (isset($_SESSION['user_data']['freelancer_id'])): ?>
-                                    <a href="freelancer-section"
+                                <?php
+                                // Kullanıcının freelancer olup olmadığını kontrol et
+                                $checkFreelancer = $db->prepare("SELECT freelancer_id FROM freelancers WHERE user_id = ?");
+                                $checkFreelancer->execute([$_SESSION['user_id']]);
+                                $isFreelancer = $checkFreelancer->rowCount() > 0;
+                                ?>
+
+                                <?php if ($isFreelancer): ?>
+                                    <a href="components/freelancer/dashboard.php"
                                         class="block w-full text-left px-4 py-2 text-green-500 hover:bg-gray-50">
                                         <?= __('Go to Freelancer Dashboard') ?>
                                     </a>
                                 <?php else: ?>
-                                    <a href="freelancer-registration"
+                                    <a href="components/freelancer/registration.php"
                                         class="block w-full text-left px-4 py-2 text-blue-500 hover:bg-gray-50">
                                         <?= __('Freelancer Registration') ?>
                                     </a>
@@ -282,7 +264,7 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
 
                             <!-- Logout -->
                             <div class="px-4 py-3">
-                                <form method="POST" action="logout.php">
+                                <form method="POST" action="../auth/logout.php">
                                     <button type="submit"
                                         class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50">
                                         <?= __('Logout') ?>
@@ -302,78 +284,8 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
                 </h2>
                 <!-- Client Works Section in index.php after welcome message -->
                 <div class="mt-6">
-                    <h3 class="text-lg font-medium mb-4"><?= __('Your Active Works') ?></h3>
-                    <?php
-                    // Get works where user is client
-                    $stmt = $db->prepare("
-            SELECT j.*, u.username as freelancer_username, u.full_name as freelancer_name,
-                   w.title as work_title
-            FROM jobs j
-            JOIN freelancers f ON j.freelancer_id = f.freelancer_id
-            JOIN users u ON f.user_id = u.user_id
-            JOIN works w ON j.title = w.title
-            WHERE j.user_id = :user_id 
-            AND j.status IN ('IN_PROGRESS', 'DELIVERED')
-            ORDER BY j.created_at DESC
-        ");
-                    $stmt->execute([':user_id' => $_SESSION['user_id']]);
-                    $clientJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-                    if (!empty($clientJobs)): ?>
-                        <div class="space-y-4">
-                            <?php foreach ($clientJobs as $job): ?>
-                                <div class="bg-white rounded-lg shadow p-4">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="font-medium"><?= htmlspecialchars($job['work_title']); ?></h4>
-                                            <p class="text-sm text-gray-600"><?= __('Freelancer') ?>:
-                                                <?= htmlspecialchars($job['freelancer_name']); ?>
-                                                (@<?= htmlspecialchars($job['freelancer_username']); ?>)
-                                            </p>
-                                            <p class="text-sm text-gray-600"><?= __('Budget') ?>:
-                                                ₺<?= number_format($job['budget'], 2); ?></p>
-                                            <p
-                                                class="text-sm <?= $job['status'] === 'DELIVERED' ? 'text-yellow-600' : 'text-blue-600'; ?>">
-                                                <?= __('Status') ?>: <?= $job['status']; ?>
-                                            </p>
-                                        </div>
-                                        <?php if ($job['status'] === 'DELIVERED'): ?>
-                                            <button onclick="acceptDelivery(<?php echo $job['job_id']; ?>)"
-                                                class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                                                <?= __('Accept Delivery') ?>
-                                            </button>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php else: ?>
-                        <p class="text-gray-500"><?= __('No active works found.') ?></p>
-                    <?php endif; ?>
                 </div>
-
-                <script>
-                    function acceptDelivery(jobId) {
-                        if (!confirm('Are you sure you want to accept this delivery? This will complete the work and release the payment.')) {
-                            return;
-                        }
-
-                        $.post('components/job_actions.php', {
-                            action: 'complete',
-                            job_id: jobId
-                        }).done(function (response) {
-                            if (response.success) {
-                                alert(response.message);
-                                location.reload();
-                            } else {
-                                alert(response.message || 'An error occurred');
-                            }
-                        }).fail(function () {
-                            alert('Network error occurred');
-                        });
-                    }
-                </script>
-            </div>
         </main>
     </div>
 
@@ -383,39 +295,6 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
             $('.settingsTab').click(function () {
                 const tab = $(this).data('tab');
                 window.location.href = 'components/settings/settings.php?tab=' + tab;
-            });
-
-            // Freelancer Panel Functions
-            $('#openFreelancer').click(function () {
-                $('#mainDashboard').hide();
-                $('#settingsSection').hide();
-                $('#walletSection').hide();
-                $('#freelancerSection').show();
-                loadFreelancer();
-            });
-
-            $('#backFromFreelancer').click(function () {
-                $('#freelancerSection').hide();
-                $('#mainDashboard').show();
-            });
-
-            function loadFreelancer() {
-                $('#freelancerContent').html('<div class="text-center py-4">Loading...</div>');
-                $.get('components/freelancer_subs.php', function (response) {
-                    $('#freelancerContent').html(response);
-                });
-            }
-
-            // Listen for wallet balance updates
-            $(document).on('walletBalanceUpdated', function (e, newBalance) {
-                $('#openWallet').html(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path>
-                <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path>
-                <path d="M18 12a2 2 0 0 0 0 4h4v-4z"></path>
-            </svg>
-            Wallet ($${parseFloat(newBalance).toFixed(2)})
-        `);
             });
         });
 

@@ -244,6 +244,227 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                     </div>
                                 </div>
 
+                                <!-- Profil doluluk oranı hesaplama -->
+                                <?php
+                                function calculateProfileCompleteness($basicInfo, $photos, $educationHistory, $workExperience, $skillsMatrix, $portfolioShowcase, $professionalProfile, $networkLinks, $achievements)
+                                {
+                                    $totalScore = 0;
+                                    $maxScore = 100;
+
+                                    // Initialize arrays if null
+                                    $basicInfo = is_array($basicInfo) ? $basicInfo : [];
+                                    $photos = is_array($photos) ? $photos : [];
+                                    $educationHistory = is_array($educationHistory) ? $educationHistory : [];
+                                    $workExperience = is_array($workExperience) ? $workExperience : [];
+                                    $skillsMatrix = is_array($skillsMatrix) ? $skillsMatrix : [
+                                        'technical_skills' => [],
+                                        'soft_skills' => [],
+                                        'tools' => []
+                                    ];
+                                    $portfolioShowcase = is_array($portfolioShowcase) ? $portfolioShowcase : [];
+                                    $professionalProfile = is_array($professionalProfile) ? $professionalProfile : [
+                                        'summary' => '',
+                                        'expertise_areas' => [],
+                                        'certifications' => []
+                                    ];
+                                    $networkLinks = is_array($networkLinks) ? $networkLinks : [
+                                        'professional' => [],
+                                        'social' => [],
+                                        'portfolio_sites' => []
+                                    ];
+                                    $achievements = is_array($achievements) ? $achievements : [];
+
+                                    // Fotoğraflar (10 puan)
+                                    if (isset($photos['profile_photo_url']) && $photos['profile_photo_url'] !== 'undefined')
+                                        $totalScore += 5;
+                                    if (isset($photos['cover_photo_url']) && $photos['cover_photo_url'] !== 'undefined')
+                                        $totalScore += 5;
+
+                                    // Temel Bilgiler (15 puan)
+                                    $basicInfoScore = 0;
+                                    $requiredFields = [
+                                        'full_name',
+                                        'biography',
+                                        ['location', 'city'],
+                                        ['location', 'country'],
+                                        ['contact', 'email']
+                                    ];
+
+                                    $filledFields = 0;
+                                    foreach ($requiredFields as $field) {
+                                        if (is_array($field)) {
+                                            if (isset($basicInfo[$field[0]][$field[1]]) && !empty($basicInfo[$field[0]][$field[1]]))
+                                                $filledFields++;
+                                        } else {
+                                            if (isset($basicInfo[$field]) && !empty($basicInfo[$field]))
+                                                $filledFields++;
+                                        }
+                                    }
+                                    // En az 2 alan doldurulduğunda tam puan
+                                    $totalScore += ($filledFields >= 2) ? 15 : ($filledFields * 7.5);
+
+                                    // Eğitim Geçmişi (15 puan)
+                                    $educationCount = count($educationHistory);
+                                    $totalScore += ($educationCount >= 2) ? 15 : ($educationCount * 7.5);
+
+                                    // İş Deneyimi (15 puan)
+                                    $workCount = count($workExperience);
+                                    $totalScore += ($workCount >= 2) ? 15 : ($workCount * 7.5);
+
+                                    // Yetenekler (15 puan)
+                                    $skillsScore = 0;
+                                    if (isset($skillsMatrix['technical_skills']) && count($skillsMatrix['technical_skills']) >= 2)
+                                        $skillsScore += 5;
+                                    if (isset($skillsMatrix['soft_skills']) && count($skillsMatrix['soft_skills']) >= 2)
+                                        $skillsScore += 5;
+                                    if (isset($skillsMatrix['tools']) && count($skillsMatrix['tools']) >= 2)
+                                        $skillsScore += 5;
+                                    $totalScore += $skillsScore;
+
+                                    // Portföy (10 puan)
+                                    $portfolioCount = count($portfolioShowcase);
+                                    $totalScore += ($portfolioCount >= 2) ? 10 : ($portfolioCount * 5);
+
+                                    // Profesyonel Profil (10 puan)
+                                    $profScore = 0;
+                                    if (isset($professionalProfile['summary']) && !empty($professionalProfile['summary']))
+                                        $profScore += 4;
+                                    if (isset($professionalProfile['expertise_areas']) && count($professionalProfile['expertise_areas']) >= 2)
+                                        $profScore += 3;
+                                    if (isset($professionalProfile['certifications']) && count($professionalProfile['certifications']) >= 2)
+                                        $profScore += 3;
+                                    $totalScore += $profScore;
+
+                                    // Sosyal Ağlar (5 puan)
+                                    $networkCount = 0;
+                                    if (isset($networkLinks['professional']) && count($networkLinks['professional']) >= 2)
+                                        $networkCount++;
+                                    if (isset($networkLinks['social']) && count($networkLinks['social']) >= 2)
+                                        $networkCount++;
+                                    if (isset($networkLinks['portfolio_sites']) && count($networkLinks['portfolio_sites']) >= 2)
+                                        $networkCount++;
+                                    $totalScore += ($networkCount >= 2) ? 5 : ($networkCount * 2.5);
+
+                                    // Başarılar (5 puan)
+                                    $achievementCount = count($achievements);
+                                    $totalScore += ($achievementCount >= 2) ? 5 : ($achievementCount * 2.5);
+
+                                    // Final skoru
+                                    return min(round($totalScore, 2), 100);
+                                }
+
+                                // Profil verilerini güncelle ve rozet kontrolü yap
+                                function updateProfileCompletenessAndBadges($userId, $completenessScore)
+                                {
+                                    require_once '../../../config/database.php';
+                                    global $db;
+
+                                    try {
+                                        // Mevcut rozetleri al
+                                        $stmt = $db->prepare("SELECT owned_badges FROM user_extended_details WHERE user_id = ?");
+                                        $stmt->execute([$userId]);
+                                        $currentBadges = json_decode($stmt->fetchColumn(), true) ?? [];
+
+                                        // Altın Geçmiş rozeti için kontrol
+                                        if ($completenessScore >= 75) {
+                                            $stmt = $db->prepare("SELECT badge_id FROM badges WHERE requirement_type = 'PROFILE_COMPLETENESS' AND requirement_value <= ?");
+                                            $stmt->execute([$completenessScore]);
+                                            $eligibleBadges = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+                                            // Yeni rozetleri ekle
+                                            foreach ($eligibleBadges as $badgeId) {
+                                                if (!in_array($badgeId, $currentBadges)) {
+                                                    $currentBadges[] = $badgeId;
+                                                }
+                                            }
+                                        }
+
+                                        // Profil doluluk oranını ve rozetleri güncelle
+                                        $stmt = $db->prepare("UPDATE user_extended_details SET 
+                                                             profile_completeness = ?,
+                                                             owned_badges = ?
+                                                             WHERE user_id = ?");
+
+                                        $stmt->execute([
+                                            $completenessScore,
+                                            json_encode($currentBadges),
+                                            $userId
+                                        ]);
+
+                                        return true;
+                                    } catch (PDOException $e) {
+                                        error_log("Profile completeness update error: " . $e->getMessage());
+                                        return false;
+                                    }
+                                }
+
+                                // Profil verilerini al
+                                $stmt = $db->prepare("SELECT basic_info, education_history, work_experience, skills_matrix, portfolio_showcase, professional_profile, network_links, achievements FROM user_extended_details WHERE user_id = ?");
+                                $stmt->execute([$_SESSION['user_id']]);
+                                $profileData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                                // JSON verileri decode et
+                                $basicInfo = json_decode($profileData['basic_info'], true) ?? [];
+                                $educationHistory = json_decode($profileData['education_history'], true) ?? [];
+                                $workExperience = json_decode($profileData['work_experience'], true) ?? [];
+                                $skillsMatrix = json_decode($profileData['skills_matrix'], true) ?? [];
+                                $portfolioShowcase = json_decode($profileData['portfolio_showcase'], true) ?? [];
+                                $professionalProfile = json_decode($profileData['professional_profile'], true) ?? [];
+                                $networkLinks = json_decode($profileData['network_links'], true) ?? [];
+                                $achievements = json_decode($profileData['achievements'], true) ?? [];
+
+                                // Profil doluluk oranını hesapla
+                                $completenessScore = calculateProfileCompleteness(
+                                    $basicInfo,
+                                    ['profile_photo_url' => $profilePhotoUrl, 'cover_photo_url' => $coverPhotoUrl],
+                                    $educationHistory,
+                                    $workExperience,
+                                    $skillsMatrix,
+                                    $portfolioShowcase,
+                                    $professionalProfile,
+                                    $networkLinks,
+                                    $achievements
+                                );
+
+                                updateProfileCompletenessAndBadges($_SESSION['user_id'], $completenessScore);
+                                ?>
+
+                                <!-- Profil doluluk oranı gösterimi -->
+                                <div class="mt-4">
+                                    <div class="flex items-center justify-center">
+                                        <div class="relative w-24 h-24">
+                                            <!-- Circular progress background -->
+                                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                                <circle cx="18" cy="18" r="16" fill="none" stroke="#e5e7eb" stroke-width="3">
+                                                </circle>
+                                                <!-- Progress circle -->
+                                                <circle cx="18" cy="18" r="16" fill="none" stroke="#3b82f6" stroke-width="3"
+                                                    stroke-dasharray="<?php echo $completenessScore * 1.005; ?>, 100"
+                                                    style="transition: stroke-dasharray 1s ease-in-out">
+                                                </circle>
+                                            </svg>
+                                            <!-- Percentage text -->
+                                            <div class="absolute inset-0 flex items-center justify-center">
+                                                <span class="text-xl font-semibold text-gray-700">
+                                                    <?php echo $completenessScore; ?>%
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center mt-2">
+                                        <h4 class="text-sm font-medium text-gray-700"><?= __('Profile Completeness') ?></h4>
+                                        <?php if ($completenessScore < 100): ?>
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                <?= __('Complete your profile to increase visibility') ?>
+                                            </p>
+                                        <?php else: ?>
+                                            <p class="text-xs text-green-500 mt-1">
+                                                <?= __('Your profile is complete!') ?>
+                                            </p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
                                 <!-- Kişisel Bilgiler -->
                                 <div class="mt-8 border-t pt-8">
                                     <h3 class="text-lg font-medium mb-4"><?= __('Personal Information') ?></h3>
@@ -776,15 +997,27 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                             'linkedin' => ['base' => 'https://linkedin.com/in/', 'prefix' => ''],
                                             'github' => ['base' => 'https://github.com/', 'prefix' => ''],
                                             'stackoverflow' => ['base' => 'https://stackoverflow.com/users/', 'prefix' => ''],
-                                            'medium' => ['base' => 'https://medium.com/@', 'prefix' => '']
+                                            'medium' => ['base' => 'https://medium.com/@', 'prefix' => ''],
+                                            'devto' => ['base' => 'https://dev.to/', 'prefix' => ''],
+                                            'gitlab' => ['base' => 'https://gitlab.com/', 'prefix' => ''],
+                                            'bitbucket' => ['base' => 'https://bitbucket.org/', 'prefix' => ''],
+                                            'codepen' => ['base' => 'https://codepen.io/', 'prefix' => ''],
+                                            'dribbble' => ['base' => 'https://dribbble.com/', 'prefix' => ''],
+                                            'behance' => ['base' => 'https://behance.net/', 'prefix' => '']
                                         ],
                                         'social' => [
                                             'twitter' => ['base' => 'https://twitter.com/', 'prefix' => ''],
                                             'instagram' => ['base' => 'https://instagram.com/', 'prefix' => ''],
                                             'youtube' => ['base' => 'https://youtube.com/', 'prefix' => '@'],
-                                            'facebook' => ['base' => 'https://facebook.com/', 'prefix' => '']
+                                            'facebook' => ['base' => 'https://facebook.com/', 'prefix' => ''],
+                                            'tiktok' => ['base' => 'https://tiktok.com/@', 'prefix' => ''],
+                                            'pinterest' => ['base' => 'https://pinterest.com/', 'prefix' => ''],
+                                            'reddit' => ['base' => 'https://reddit.com/user/', 'prefix' => ''],
+                                            'twitch' => ['base' => 'https://twitch.tv/', 'prefix' => ''],
+                                            'spotify' => ['base' => 'https://open.spotify.com/user/', 'prefix' => ''],
+                                            'discord' => ['base' => 'https://discord.gg/', 'prefix' => '']
                                         ],
-                                        'portfolio_sites' => []  // Custom URLs allowed
+                                        'portfolio_sites' => []
                                     ];
                                     ?>
                                 </div>
@@ -1118,42 +1351,42 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                         $('#addEducation').click(function () {
                                             const index = $('.education-entry').length;
                                             const template = `
-                                                                        <div class="education-entry bg-gray-50 p-4 rounded-lg">
-                                                                            <div class="grid grid-cols-2 gap-4">
-                                                                                <div>
-                                                                                    <label class="block text-sm font-medium text-gray-700">Okul Seviyesi</label>
-                                                                                    <select name="education[${index}][level]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                        <option value="high_school">Lise</option>
-                                                                                        <option value="university">Üniversite</option>
-                                                                                        <option value="second_university">İkinci Üniversite</option>
-                                                                                        <option value="masters">Yüksek Lisans</option>
-                                                                                        <option value="phd">Doktora</option>
-                                                                                    </select>
-                                                                                </div>
-                                                                                <div>
-                                                                                    <label class="block text-sm font-medium text-gray-700">Kurum Adı</label>
-                                                                                    <input type="text" name="education[${index}][institution]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                </div>
-                                                                                <div>
-                                                                                    <label class="block text-sm font-medium text-gray-700">Bölüm/Alan</label>
-                                                                                    <input type="text" name="education[${index}][degree]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                </div>
-                                                                                <div>
-                                                                                    <label class="block text-sm font-medium text-gray-700">Not Ortalaması</label>
-                                                                                    <input type="number" step="0.01" min="0" max="4" name="education[${index}][gpa]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                </div>
-                                                                                <div>
-                                                                                    <label class="block text-sm font-medium text-gray-700">Başlangıç Tarihi</label>
-                                                                                    <input type="month" name="education[${index}][start_date]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                </div>
-                                                                                <div>
-                                                                                    <label class="block text-sm font-medium text-gray-700">Bitiş Tarihi</label>
-                                                                                    <input type="month" name="education[${index}][end_date]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                </div>
-                                                                            </div>
-                                                                            <button type="button" class="remove-education mt-4 text-red-600 hover:text-red-800">Eğitimi Kaldır</button>
-                                                                        </div>
-                                                                    `;
+                                                                                                        <div class="education-entry bg-gray-50 p-4 rounded-lg">
+                                                                                                            <div class="grid grid-cols-2 gap-4">
+                                                                                                                <div>
+                                                                                                                    <label class="block text-sm font-medium text-gray-700">Okul Seviyesi</label>
+                                                                                                                    <select name="education[${index}][level]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                        <option value="high_school">Lise</option>
+                                                                                                                        <option value="university">Üniversite</option>
+                                                                                                                        <option value="second_university">İkinci Üniversite</option>
+                                                                                                                        <option value="masters">Yüksek Lisans</option>
+                                                                                                                        <option value="phd">Doktora</option>
+                                                                                                                    </select>
+                                                                                                                </div>
+                                                                                                                <div>
+                                                                                                                    <label class="block text-sm font-medium text-gray-700">Kurum Adı</label>
+                                                                                                                    <input type="text" name="education[${index}][institution]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                </div>
+                                                                                                                <div>
+                                                                                                                    <label class="block text-sm font-medium text-gray-700">Bölüm/Alan</label>
+                                                                                                                    <input type="text" name="education[${index}][degree]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                </div>
+                                                                                                                <div>
+                                                                                                                    <label class="block text-sm font-medium text-gray-700">Not Ortalaması</label>
+                                                                                                                    <input type="number" step="0.01" min="0" max="4" name="education[${index}][gpa]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                </div>
+                                                                                                                <div>
+                                                                                                                    <label class="block text-sm font-medium text-gray-700">Başlangıç Tarihi</label>
+                                                                                                                    <input type="month" name="education[${index}][start_date]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                </div>
+                                                                                                                <div>
+                                                                                                                    <label class="block text-sm font-medium text-gray-700">Bitiş Tarihi</label>
+                                                                                                                    <input type="month" name="education[${index}][end_date]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                            <button type="button" class="remove-education mt-4 text-red-600 hover:text-red-800">Eğitimi Kaldır</button>
+                                                                                                        </div>
+                                                                                                    `;
                                             $('#educationList').append(template);
                                             formChanged = true;
                                             $('#saveAllChanges').removeClass('opacity-50 cursor-not-allowed').prop('disabled', false);
@@ -1169,45 +1402,45 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                         $('#addWork').click(function () {
                                             const index = $('.work-entry').length;
                                             const template = `
-                                            <div class="work-entry bg-gray-50 p-4 rounded-lg">
-                                                <div class="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700">Şirket Adı</label>
-                                                        <input type="text" name="work[${index}][company]"
-                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                    </div>
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700">Pozisyon</label>
-                                                        <input type="text" name="work[${index}][position]"
-                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                    </div>
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700">Başlangıç Tarihi</label>
-                                                        <input type="month" name="work[${index}][start_date]"
-                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                    </div>
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700">Bitiş Tarihi</label>
-                                                        <input type="month" name="work[${index}][end_date]"
-                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                        <div class="mt-1">
-                                                            <label class="inline-flex items-center">
-                                                                <input type="checkbox" class="current-job-checkbox form-checkbox"
-                                                                    data-index="${index}"
-                                                                    class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                <span class="ml-2 text-sm text-gray-600">Şu an burada çalışıyorum</span>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="block text-sm font-medium text-gray-700">İş Tanımı</label>
-                                                        <textarea name="work[${index}][description]" rows="3"
-                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
-                                                    </div>
-                                                </div>
-                                                <button type="button" class="remove-work mt-4 text-red-600 hover:text-red-800">İş Deneyimini Kaldır</button>
-                                            </div>
-                                        `;
+                                                                            <div class="work-entry bg-gray-50 p-4 rounded-lg">
+                                                                                <div class="grid grid-cols-2 gap-4">
+                                                                                    <div>
+                                                                                        <label class="block text-sm font-medium text-gray-700">Şirket Adı</label>
+                                                                                        <input type="text" name="work[${index}][company]"
+                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <label class="block text-sm font-medium text-gray-700">Pozisyon</label>
+                                                                                        <input type="text" name="work[${index}][position]"
+                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <label class="block text-sm font-medium text-gray-700">Başlangıç Tarihi</label>
+                                                                                        <input type="month" name="work[${index}][start_date]"
+                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <label class="block text-sm font-medium text-gray-700">Bitiş Tarihi</label>
+                                                                                        <input type="month" name="work[${index}][end_date]"
+                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                        <div class="mt-1">
+                                                                                            <label class="inline-flex items-center">
+                                                                                                <input type="checkbox" class="current-job-checkbox form-checkbox"
+                                                                                                    data-index="${index}"
+                                                                                                    class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                <span class="ml-2 text-sm text-gray-600">Şu an burada çalışıyorum</span>
+                                                                                            </label>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div class="col-span-2">
+                                                                                        <label class="block text-sm font-medium text-gray-700">İş Tanımı</label>
+                                                                                        <textarea name="work[${index}][description]" rows="3"
+                                                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <button type="button" class="remove-work mt-4 text-red-600 hover:text-red-800">İş Deneyimini Kaldır</button>
+                                                                            </div>
+                                                                        `;
                                             $('#workExperienceList').append(template);
                                             formChanged = true;
                                             $('#saveAllChanges').removeClass('opacity-50 cursor-not-allowed').prop('disabled', false);
@@ -1264,17 +1497,17 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                             if (!skill) return;
 
                                             const skillHtml = `
-                                                                                                                                                                                                                                                                                                    <div class="flex items-center gap-2">
-                                                                                                                                                                                                                                                                                                        <input type="text" value="${skill}" 
-                                                                                                                                                                                                                                                                                                            class="${currentCategory}-skill flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                                                                                                                                                                                                                                                                                            readonly>
-                                                                                                                                                                                                                                                                                                        <button type="button" class="remove-skill text-red-600 hover:text-red-800">
-                                                                                                                                                                                                                                                                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                                                                                                                                                                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                                                                                                                                                                                                                                                                            </svg>
-                                                                                                                                                                                                                                                                                                        </button>
-                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                `;
+                                                                                                                                                                                                                                                                                                                                    <div class="flex items-center gap-2">
+                                                                                                                                                                                                                                                                                                                                        <input type="text" value="${skill}" 
+                                                                                                                                                                                                                                                                                                                                            class="${currentCategory}-skill flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                                                                                                                                                                                                                                                                                                                            readonly>
+                                                                                                                                                                                                                                                                                                                                        <button type="button" class="remove-skill text-red-600 hover:text-red-800">
+                                                                                                                                                                                                                                                                                                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                                                                                                                                                                                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                                                                                                                                                                                                                                                                            </svg>
+                                                                                                                                                                                                                                                                                                                                        </button>
+                                                                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                                                                `;
 
                                             $(`#${currentListId}`).append(skillHtml);
 
@@ -1318,32 +1551,32 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                             if (index >= 3) return;
 
                                             const template = `
-                                    <div class="achievement-entry bg-gray-50 p-4 rounded-lg">
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Başlık</label>
-                                                <input type="text" name="achievement[${index}][title]"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                            </div>
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Veren Kurum</label>
-                                                <input type="text" name="achievement[${index}][issuer]"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                            </div>
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Tarih</label>
-                                                <input type="month" name="achievement[${index}][date]"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                            </div>
-                                            <div class="col-span-2">
-                                                <label class="block text-sm font-medium text-gray-700">Açıklama</label>
-                                                <textarea name="achievement[${index}][description]" rows="2"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
-                                            </div>
-                                        </div>
-                                        <button type="button" class="remove-achievement mt-4 text-red-600 hover:text-red-800">Başarıyı Kaldır</button>
-                                    </div>
-                                `;
+                                                                    <div class="achievement-entry bg-gray-50 p-4 rounded-lg">
+                                                                        <div class="grid grid-cols-2 gap-4">
+                                                                            <div>
+                                                                                <label class="block text-sm font-medium text-gray-700">Başlık</label>
+                                                                                <input type="text" name="achievement[${index}][title]"
+                                                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                            </div>
+                                                                            <div>
+                                                                                <label class="block text-sm font-medium text-gray-700">Veren Kurum</label>
+                                                                                <input type="text" name="achievement[${index}][issuer]"
+                                                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                            </div>
+                                                                            <div>
+                                                                                <label class="block text-sm font-medium text-gray-700">Tarih</label>
+                                                                                <input type="month" name="achievement[${index}][date]"
+                                                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                            </div>
+                                                                            <div class="col-span-2">
+                                                                                <label class="block text-sm font-medium text-gray-700">Açıklama</label>
+                                                                                <textarea name="achievement[${index}][description]" rows="2"
+                                                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                                                            </div>
+                                                                        </div>
+                                                                        <button type="button" class="remove-achievement mt-4 text-red-600 hover:text-red-800">Başarıyı Kaldır</button>
+                                                                    </div>
+                                                                `;
 
                                             $('#achievementsList').append(template);
                                             updateAchievementCount();
@@ -1362,12 +1595,12 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                             for (const platform in platforms) {
                                                 if (!$(`.network-link-entry[data-platform="${platform}"]`).length) {
                                                     platformListHtml += `
-                                                                                                                                                                                                <button type="button" 
-                                                                                                                                                                                                    class="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-md platform-option"
-                                                                                                                                                                                                    data-platform="${platform}">
-                                                                                                                                                                                                    ${platform.charAt(0).toUpperCase() + platform.slice(1)}
-                                                                                                                                                                                                </button>
-                                                                                                                                                                                            `;
+                                                                                                                                                                                                                                <button type="button" 
+                                                                                                                                                                                                                                    class="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-md platform-option"
+                                                                                                                                                                                                                                    data-platform="${platform}">
+                                                                                                                                                                                                                                    ${platform.charAt(0).toUpperCase() + platform.slice(1)}
+                                                                                                                                                                                                                                </button>
+                                                                                                                                                                                                                            `;
                                                 }
                                             }
 
@@ -1379,15 +1612,15 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                             if ($('#certificationList .certification').length >= 2) return;
 
                                             const template = `
-                                                                                                                                                                                                                                            <div class="flex items-center gap-2">
-                                                                                                                                                                                                                                                <input type="text" class="certification flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                                                <button type="button" class="remove-certification text-red-600 hover:text-red-800">
-                                                                                                                                                                                                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                                                                                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                                                                                                                                                                                                                    </svg>
-                                                                                                                                                                                                                                                </button>
-                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                        `;
+                                                                                                                                                                                                                                                                            <div class="flex items-center gap-2">
+                                                                                                                                                                                                                                                                                <input type="text" class="certification flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                <button type="button" class="remove-certification text-red-600 hover:text-red-800">
+                                                                                                                                                                                                                                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                                                                                                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                                                                                                                                                                                                                    </svg>
+                                                                                                                                                                                                                                                                                </button>
+                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                        `;
 
                                             $('#certificationList').append(template);
                                             updateCertificationCount();
@@ -1397,15 +1630,15 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                             if ($('#expertiseList .expertise-area').length >= 2) return;
 
                                             const template = `
-                                                                                                                                                                                                                                            <div class="flex items-center gap-2">
-                                                                                                                                                                                                                                                <input type="text" class="expertise-area flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                                                                                                                                                                                                                <button type="button" class="remove-expertise text-red-600 hover:text-red-800">
-                                                                                                                                                                                                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                                                                                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                                                                                                                                                                                                                    </svg>
-                                                                                                                                                                                                                                                </button>
-                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                        `;
+                                                                                                                                                                                                                                                                            <div class="flex items-center gap-2">
+                                                                                                                                                                                                                                                                                <input type="text" class="expertise-area flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                                                                                                                                                                                                                                <button type="button" class="remove-expertise text-red-600 hover:text-red-800">
+                                                                                                                                                                                                                                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                                                                                                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                                                                                                                                                                                                                    </svg>
+                                                                                                                                                                                                                                                                                </button>
+                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                        `;
 
                                             $('#expertiseList').append(template);
                                             updateExpertiseCount();
@@ -1416,27 +1649,27 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                             if (index >= 3) return;
 
                                             const template = `
-                                    <div class="portfolio-entry bg-gray-50 p-4 rounded-lg">
-                                        <div class="grid grid-cols-1 gap-4">
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Proje Başlığı</label>
-                                                <input type="text" name="portfolio[${index}][title]"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                            </div>
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Proje Açıklaması</label>
-                                                <textarea name="portfolio[${index}][description]" rows="2"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
-                                            </div>
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Proje URL</label>
-                                                <input type="url" name="portfolio[${index}][url]"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                            </div>
-                                        </div>
-                                        <button type="button" class="remove-portfolio mt-4 text-red-600 hover:text-red-800">Projeyi Kaldır</button>
-                                    </div>
-                                `;
+                                                                    <div class="portfolio-entry bg-gray-50 p-4 rounded-lg">
+                                                                        <div class="grid grid-cols-1 gap-4">
+                                                                            <div>
+                                                                                <label class="block text-sm font-medium text-gray-700">Proje Başlığı</label>
+                                                                                <input type="text" name="portfolio[${index}][title]"
+                                                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                            </div>
+                                                                            <div>
+                                                                                <label class="block text-sm font-medium text-gray-700">Proje Açıklaması</label>
+                                                                                <textarea name="portfolio[${index}][description]" rows="2"
+                                                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                                                            </div>
+                                                                            <div>
+                                                                                <label class="block text-sm font-medium text-gray-700">Proje URL</label>
+                                                                                <input type="url" name="portfolio[${index}][url]"
+                                                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                                            </div>
+                                                                        </div>
+                                                                        <button type="button" class="remove-portfolio mt-4 text-red-600 hover:text-red-800">Projeyi Kaldır</button>
+                                                                    </div>
+                                                                `;
 
                                             $('#portfolioList').append(template);
                                             updatePortfolioCount();
@@ -1522,26 +1755,26 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                             const config = platformConfigs[currentNetworkCategory][platform];
 
                                             const template = `
-                                                                                                    <div class="network-link-entry" data-platform="${platform}">
-                                    <label class="block text-sm font-medium text-gray-700">${platform.charAt(0).toUpperCase() + platform.slice(1)}</label>
-                                    <div class="flex items-center gap-2 mt-1">
-                                        <div class="flex-1 flex items-center bg-white rounded-md border border-gray-300">
-                                            <span class="px-3 py-2 text-gray-500 bg-gray-50 border-r border-gray-300 rounded-l-md whitespace-nowrap">
-                                                ${config.base}
-                                            </span>
-                                            <input type="text" 
-                                                class="w-full p-2 block rounded-r-md border-0 focus:ring-2 focus:ring-blue-500 min-w-[200px]"
-                                                data-platform="${platform}"
-                                                data-category="${currentNetworkCategory}">
-                                        </div>
-                                        <button type="button" class="remove-network-link text-red-600 hover:text-red-800 shrink-0">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                                                                                `;
+                                                                                                                                    <div class="network-link-entry" data-platform="${platform}">
+                                                                    <label class="block text-sm font-medium text-gray-700">${platform.charAt(0).toUpperCase() + platform.slice(1)}</label>
+                                                                    <div class="flex items-center gap-2 mt-1">
+                                                                        <div class="flex-1 flex items-center bg-white rounded-md border border-gray-300">
+                                                                            <span class="px-3 py-2 text-gray-500 bg-gray-50 border-r border-gray-300 rounded-l-md whitespace-nowrap">
+                                                                                ${config.base}
+                                                                            </span>
+                                                                            <input type="text" 
+                                                                                class="w-full p-2 block rounded-r-md border-0 focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+                                                                                data-platform="${platform}"
+                                                                                data-category="${currentNetworkCategory}">
+                                                                        </div>
+                                                                        <button type="button" class="remove-network-link text-red-600 hover:text-red-800 shrink-0">
+                                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                            </svg>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                                                                                `;
 
                                             $(`#${currentNetworkCategory}LinksList`).append(template);
                                             $('#platformModal').addClass('hidden');
@@ -1551,23 +1784,23 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
 
                                         function addPortfolioSite() {
                                             const template = `
-                                        <div class="network-link-entry">
-                                            <div class="flex items-center gap-2 mt-1">
-                                                <input type="text" 
-                                                    placeholder="Site Adı"
-                                                    class="flex-1 p-2 rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                                    data-category="portfolio_sites">
-                                                <input type="url" 
-                                                    placeholder="URL"
-                                                    class="flex-1 p-2 rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500">
-                                                <button type="button" class="remove-network-link text-red-600 hover:text-red-800">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    `;
+                                                                        <div class="network-link-entry">
+                                                                            <div class="flex items-center gap-2 mt-1">
+                                                                                <input type="text" 
+                                                                                    placeholder="Site Adı"
+                                                                                    class="flex-1 p-2 rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500"
+                                                                                    data-category="portfolio_sites">
+                                                                                <input type="url" 
+                                                                                    placeholder="URL"
+                                                                                    class="flex-1 p-2 rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500">
+                                                                                <button type="button" class="remove-network-link text-red-600 hover:text-red-800">
+                                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                    </svg>
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    `;
 
                                             $('#portfolioSitesList').append(template);
                                             updateNetworkLinksCount('portfolio_sites');
@@ -2301,6 +2534,53 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                     </div>
                                 </div>
 
+                                <!-- İlk Onay Modalı -->
+                                <div id="deleteAccountModal"
+                                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                                    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                                        <h3 class="text-lg font-medium text-red-600 mb-4"><?= __('Delete Account') ?></h3>
+                                        <p class="text-sm text-gray-600 mb-4">
+                                            <?= __('Please enter your password to confirm account deletion.') ?>
+                                        </p>
+                                        <div class="mb-4">
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-2"><?= __('Password') ?></label>
+                                            <input type="password" id="deleteAccountPassword"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                                        </div>
+                                        <div class="flex justify-end space-x-3">
+                                            <button id="cancelDeleteAccount"
+                                                class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                                                <?= __('Cancel') ?>
+                                            </button>
+                                            <button id="confirmDeleteAccount"
+                                                class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
+                                                <?= __('Continue') ?>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Son Uyarı Modalı -->
+                                <div id="finalWarningModal"
+                                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                                    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                                        <h3 class="text-lg font-medium text-red-600 mb-4"><?= __('Final Warning') ?></h3>
+                                        <p class="text-sm text-gray-600 mb-4">
+                                            <?= __('This action cannot be undone. All your data will be permanently deleted. Are you absolutely sure?') ?>
+                                        </p>
+                                        <div class="flex justify-end space-x-3">
+                                            <button id="finalCancelDelete"
+                                                class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                                                <?= __('Cancel') ?>
+                                            </button>
+                                            <button id="finalConfirmDelete"
+                                                class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
+                                                <?= __('Delete My Account') ?>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <script>
                                     // Şifre validasyonu için regex patterns
@@ -2732,10 +3012,10 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
                                                 const selectedLabel = $(this).closest('label');
                                                 selectedLabel.removeClass('border-gray-200').addClass('border-blue-500 bg-blue-50');
                                                 selectedLabel.append(`
-                                                                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                                                </svg>
-                                                                            `);
+                                                                                                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                                                                                </svg>
+                                                                                                            `);
                                             });
                                         });
                                     </script>
@@ -2903,10 +3183,10 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
 
                                             // Add checkmark to the selected theme
                                             $(this).closest('label').append(`
-                                                                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                                                </svg>
-                                                                            `);
+                                                                                                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                                                                                </svg>
+                                                                                                            `);
 
                                             // Handle theme change
                                             $('body').toggleClass('dark-mode', theme === 'dark');
@@ -2927,10 +3207,10 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
 
                                             // Add checkmark to the selected font
                                             $(this).closest('label').append(`
-                                                                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                                                </svg>
-                                                                            `);
+                                                                                                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                                                                                </svg>
+                                                                                                            `);
 
                                             // Handle font change
                                             $('body').css('font-family', font);

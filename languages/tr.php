@@ -187,7 +187,7 @@
     'CVV' => 'CVV',
     'Your payment information is secured with SSL encryption' => 'Ödeme bilgileriniz SSL şifrelemesi ile güvence altına alınmıştır',
     'Deposit Now' => 'Şimdi Yatır',
-    'Welcome' => 'Hoş geldiniz',
+    'Welcome' => 'Hoş geldin',
     'Your Active Works' => 'Aktif İşleriniz',
     'Freelancer' => 'Freelancer',
     'Budget' => 'Bütçe',
@@ -230,5 +230,8 @@
     'Network Links' => 'Ağ Bağlantıları',
     'Achievements' => 'Başarılar',
     'Works'=> 'İş İlanları',
+    'Profile Completeness'=> 'Profil Doluluk Oranı',
+    'Complete your profile to increase visibility'=> 'Öne çıkmak ve rozet kazanmak için profilini doldur',
+    'Your profile is complete!'=> 'Profilin tamamen dolu :D',
 ];
 

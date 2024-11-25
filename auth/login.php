@@ -5,11 +5,11 @@ session_start();
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $auth = new Auth(new Logger());
     $user = $auth->getUserByToken($_COOKIE['remember_token']);
-    
+
     if ($user) {
         $_SESSION['user_id'] = $user['user_id'];
         $_SESSION['username'] = $user['username'];
-        
+
         // Login sayfasında değilsek yönlendirmeye gerek yok
         $currentPage = basename($_SERVER['PHP_SELF']);
         if ($currentPage === 'login.php') {
@@ -55,7 +55,6 @@ if (isset($_GET['code'])) {
         $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
         $client->setAccessToken($token);
 
-        // Get user info
         $google_oauth = new Google_Service_Oauth2($client);
         $google_account_info = $google_oauth->userinfo->get();
 
@@ -73,43 +72,55 @@ if (isset($_GET['code'])) {
             $dbConfig['options']
         );
 
-        // Check if user exists
-        $stmt = $db->prepare("SELECT * FROM users WHERE google_id = ? OR email = ?");
-        $stmt->execute([$google_id, $email]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Transaction başlat
+        $db->beginTransaction();
 
-        if ($user) {
-            // Existing user - Set session and redirect
-            $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['username'] = $user['username'];
-            $logger->log("Successful Google login for: {$email}");
+        try {
+            // Check if user exists
+            $stmt = $db->prepare("SELECT * FROM users WHERE google_id = ? OR email = ?");
+            $stmt->execute([$google_id, $email]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            echo "<script>
-                window.opener.postMessage({
-                    type: 'googleLoginComplete',
-                    newUser: false
-                }, '*');
-                window.close();
-            </script>";
-        } else {
-            $logger->log("New Google registration initiated for: {$email}");
-            // Save to temp_users table
-            $inviteCode = strtoupper(substr(uniqid() . bin2hex(random_bytes(8)), 0, 9));
+            if ($user) {
+                // Existing user - Set session and redirect
+                $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['username'] = $user['username'];
+                $logger->log("Successful Google login for: {$email}");
 
-            $stmt = $db->prepare("INSERT INTO temp_users (email, full_name, google_id, invite_code) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$email, $name, $google_id, $inviteCode]);
+                $db->commit();
 
-            echo "<script>
-                window.opener.postMessage({
-                    type: 'googleLoginComplete',
-                    newUser: true,
-                    email: " . json_encode($email) . ",
-                    name: " . json_encode($name) . ",
-                    googleId: " . json_encode($google_id) . ",
-                    inviteCode: " . json_encode($inviteCode) . "
-                }, '*');
-                window.close();
-            </script>";
+                echo "<script>
+                    window.opener.postMessage({
+                        type: 'googleLoginComplete',
+                        newUser: false
+                    }, '*');
+                    window.close();
+                </script>";
+            } else {
+                $logger->log("New Google registration initiated for: {$email}");
+                // Save to temp_users table with generated invite code
+                $inviteCode = strtoupper(substr(uniqid() . bin2hex(random_bytes(8)), 0, 9));
+
+                $stmt = $db->prepare("INSERT INTO temp_users (email, full_name, google_id, invite_code) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$email, $name, $google_id, $inviteCode]);
+
+                $db->commit();
+
+                echo "<script>
+                    window.opener.postMessage({
+                        type: 'googleLoginComplete',
+                        newUser: true,
+                        email: " . json_encode($email) . ",
+                        name: " . json_encode($name) . ",
+                        googleId: " . json_encode($google_id) . ",
+                        inviteCode: " . json_encode($inviteCode) . "
+                    }, '*');
+                    window.close();
+                </script>";
+            }
+        } catch (Exception $e) {
+            $db->rollBack();
+            throw $e;
         }
         exit;
     } catch (Exception $e) {
@@ -438,10 +449,11 @@ class Auth
         }
     }
 
-    public function createRememberToken($userId) {
+    public function createRememberToken($userId)
+    {
         $token = bin2hex(random_bytes(32));
         $hashedToken = password_hash($token, PASSWORD_DEFAULT);
-        
+
         $stmt = $this->db->prepare("
             UPDATE users 
             SET remember_token = ?, 
@@ -449,11 +461,12 @@ class Auth
             WHERE user_id = ?
         ");
         $stmt->execute([$hashedToken, $userId]);
-        
+
         return $token;
     }
-    
-    public function verifyRememberToken($userId, $token) {
+
+    public function verifyRememberToken($userId, $token)
+    {
         $stmt = $this->db->prepare("
             SELECT remember_token 
             FROM users 
@@ -463,11 +476,12 @@ class Auth
         ");
         $stmt->execute([$userId]);
         $storedToken = $stmt->fetchColumn();
-        
+
         return $storedToken && password_verify($token, $storedToken);
     }
-    
-    public function getUserByToken($token) {
+
+    public function getUserByToken($token)
+    {
         $stmt = $this->db->prepare("
             SELECT user_id, username, email 
             FROM users 
@@ -476,13 +490,13 @@ class Auth
         ");
         $stmt->execute();
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         foreach ($users as $user) {
             if ($this->verifyRememberToken($user['user_id'], $token)) {
                 return $user;
             }
         }
-        
+
         return null;
     }
 }
@@ -589,7 +603,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                         $token = $auth->createRememberToken($result['user_id']);
                         setcookie('remember_token', $token, time() + (86400 * 30), '/', '', true, true);
                     }
-                    
+
                     echo json_encode([
                         'success' => true,
                         'requires_2fa' => false,
@@ -620,7 +634,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                 unset($_SESSION['pending_2fa']);
 
                 if (isset($_POST['remember']) && $_POST['remember'] === 'true') {
-                    $token = bin2hex(random_bytes(32));
+                    $token = $auth->createRememberToken($userId);
                     setcookie('remember_token', $token, time() + (86400 * 30), '/', '', true, true);
                 }
 
@@ -661,7 +675,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             exit;
         }
 
-        // username check endpoint - AJAX handlers kısmına eklenecek
+        // Check username availability
         if (isset($_POST['check_username'])) {
             $username = filter_var($_POST['username'], FILTER_SANITIZE_STRING);
 
@@ -678,8 +692,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             try {
                 $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
                 $googleId = filter_var($_POST['google_id'], FILTER_SANITIZE_STRING);
-                $referralCode = isset($_POST['referral_code']) ?
-                    filter_var($_POST['referral_code'], FILTER_SANITIZE_STRING) : null;
+                $referralCode = isset($_POST['referral_code']) ? filter_var($_POST['referral_code'], FILTER_SANITIZE_STRING) : null;
 
                 // Get temp user data
                 $stmt = $auth->db->prepare("SELECT * FROM temp_users WHERE email = ? AND google_id = ?");
@@ -728,6 +741,39 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                         $referralCode ? 1 : 0
                     ]);
 
+                    // Create wallet for new user
+                    $stmt = $auth->db->prepare("
+                        INSERT INTO wallet (
+                            user_id, coins, last_transaction_date
+                        ) VALUES (?, ?, CURRENT_TIMESTAMP)
+                    ");
+                    $initialCoins = $referralCode ? 25 : 0;
+                    $stmt->execute([$userId, $initialCoins]);
+
+                    // Create extended user details
+                    $stmt = $auth->db->prepare("
+                        INSERT INTO user_extended_details (
+                            user_id, 
+                            basic_info,
+                            profile_completeness
+                        ) VALUES (?, ?, ?)
+                    ");
+                    $basicInfo = json_encode([
+                        'full_name' => $tempUser['full_name'],
+                        'age' => null,
+                        'biography' => null,
+                        'location' => [
+                            'city' => null,
+                            'country' => null
+                        ],
+                        'contact' => [
+                            'email' => null,
+                            'website' => null
+                        ],
+                        'languages' => []
+                    ]);
+                    $stmt->execute([$userId, $basicInfo, 0]);
+
                     if ($referralCode) {
                         // Get referrer's user ID
                         $stmt = $auth->db->prepare("
@@ -739,47 +785,15 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                         $referrerId = $stmt->fetchColumn();
 
                         if ($referrerId) {
-                            // Check if referrer has a wallet
-                            $stmt = $auth->db->prepare("SELECT user_id FROM wallet WHERE user_id = ?");
-                            $stmt->execute([$referrerId]);
-                            if (!$stmt->fetch()) {
-                                // Create wallet for referrer if not exists
-                                $stmt = $auth->db->prepare("
-                                    INSERT INTO wallet (user_id, coins, last_transaction_date) 
-                                    VALUES (?, 0, CURRENT_TIMESTAMP)
-                                ");
-                                $stmt->execute([$referrerId]);
-                            }
-
-                            // Check if new user has a wallet
-                            $stmt = $auth->db->prepare("SELECT user_id FROM wallet WHERE user_id = ?");
-                            $stmt->execute([$userId]);
-                            if (!$stmt->fetch()) {
-                                // Create wallet for new user if not exists
-                                $stmt = $auth->db->prepare("
-                                    INSERT INTO wallet (user_id, coins, last_transaction_date) 
-                                    VALUES (?, 0, CURRENT_TIMESTAMP)
-                                ");
-                                $stmt->execute([$userId]);
-                            }
-
-                            // Give coins to referrer
+                            // Update referrer's wallet
                             $stmt = $auth->db->prepare("
-                                UPDATE wallet 
-                                SET coins = coins + 50,
+                                INSERT INTO wallet (user_id, coins, last_transaction_date)
+                                VALUES (?, 50, CURRENT_TIMESTAMP)
+                                ON DUPLICATE KEY UPDATE 
+                                    coins = coins + 50,
                                     last_transaction_date = CURRENT_TIMESTAMP
-                                WHERE user_id = ?
                             ");
                             $stmt->execute([$referrerId]);
-
-                            // Give coins to new user
-                            $stmt = $auth->db->prepare("
-                                UPDATE wallet 
-                                SET coins = coins + 25,
-                                    last_transaction_date = CURRENT_TIMESTAMP
-                                WHERE user_id = ?
-                            ");
-                            $stmt->execute([$userId]);
 
                             // Record invitation
                             $stmt = $auth->db->prepare("
@@ -788,6 +802,24 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                                 ) VALUES (?, ?, ?)
                             ");
                             $stmt->execute([$referrerId, $userId, $referralCode]);
+
+                            // Log transactions
+                            $stmt = $auth->db->prepare("
+                                INSERT INTO transactions (
+                                    transaction_id, sender_id, receiver_id, amount,
+                                    transaction_type, status, description
+                                ) VALUES 
+                                (?, ?, ?, 50, 'REFERRAL_REWARD', 'COMPLETED', 'Referral bonus - Inviter reward'),
+                                (?, ?, ?, 25, 'REFERRAL_REWARD', 'COMPLETED', 'Referral bonus - New user reward')
+                            ");
+                            $stmt->execute([
+                                mt_rand(10000000000, 99999999999),
+                                $referrerId,
+                                $referrerId,
+                                mt_rand(10000000000, 99999999999),
+                                $userId,
+                                $userId
+                            ]);
                         }
                     }
 
@@ -800,6 +832,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                     $_SESSION['username'] = $tempUser['username'];
 
                     $auth->db->commit();
+                    $logger->log("Successful Google registration for user: {$email}");
+
                     echo json_encode(['success' => true]);
 
                 } catch (Exception $e) {
@@ -1162,8 +1196,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
     <div id="toast-container" class="fixed bottom-5 right-5 space-y-2 z-50"></div>
 
     <!-- Back Navigation -->
-    <a href="../"
-        class="nav-back absolute top-10 left-10 text-gray-800 hover:text-gray-600 font-semibold text-sm z-20">
+    <a href="../" class="nav-back absolute top-10 left-10 text-gray-800 hover:text-gray-600 font-semibold text-sm z-20">
         ← Get back
     </a>
 
