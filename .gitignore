@@ -4,3 +4,4 @@ config/logs/app.log
 /config/logs
 /config/logs
 config/logs/app.log
+/public/components/freelancer/uploads
