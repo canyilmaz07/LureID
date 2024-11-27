@@ -2,7 +2,20 @@
 session_start();
 
 if (isset($_SESSION['staff_id']) && basename($_SERVER['PHP_SELF']) === 'staff-auth.php') {
-    header('Location: panel.php');
+    // Role göre yönlendirme
+    switch($_SESSION['staff_role']) {
+        case 'ADMIN':
+            header('Location: admin/panel.php');
+            break;
+        case 'MODERATOR':
+            header('Location: moderator/panel.php');
+            break;
+        case 'SUPPORT':
+            header('Location: support/panel.php');
+            break;
+        default:
+            header('Location: staff-auth.php');
+    }
     exit;
 }
 
@@ -254,9 +267,23 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                 $_SESSION['staff_username'] = $result['username'];
                 $_SESSION['staff_role'] = $result['role'];
 
+                // Role'e göre yönlendirme URL'i
+                $redirectUrl = '';
+                switch($result['role']) {
+                    case 'ADMIN':
+                        $redirectUrl = 'admin/panel.php';
+                        break;
+                    case 'MODERATOR':
+                        $redirectUrl = 'moderator/panel.php';
+                        break;
+                    case 'SUPPORT':
+                        $redirectUrl = 'support/panel.php';
+                        break;
+                }
+
                 echo json_encode([
                     'success' => true,
-                    'redirect' => 'panel.php'
+                    'redirect' => $redirectUrl
                 ]);
             } else {
                 echo json_encode([

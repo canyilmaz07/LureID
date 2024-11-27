@@ -1655,55 +1655,55 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             };
 
             const getUsernameModalHTML = () => `
-        <h1 class="text-[2em] md:text-[24px] font-bold text-[#111827] text-center uppercase tracking-wider font-['Bebas_Neue'] mb-3">
-            Choose Your Username
-        </h1>
-        <p class="text-[#6B7280] text-center mb-12 md:mb-8 md:text-[14px]">
-            This username will be unique to your account
-        </p>
-        <div class="space-y-4">
-            <div class="relative">
-                <i class="fas fa-user absolute left-[25px] top-[22px] md:top-[16px] text-[#BEBEBE]"></i>
-                <input type="text" id="username-input" 
-                    class="w-full h-[60px] md:h-[48px] pl-[55px] pr-[25px] border border-[#E5E7EB] rounded-lg text-[13px] md:text-[14px] font-medium bg-[#f9f9f9] focus:outline-none focus:border-[#4F46E5] transition-colors"
-                    placeholder="Enter username">
-                <p id="username-status" class="mt-2 text-[13px]"></p>
-            </div>
-            <button id="continue-button" disabled
-                class="w-full h-[60px] md:h-[52px] bg-black text-white rounded-lg text-sm font-semibold transition-colors hover:bg-[#3f3f3f] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                Continue
-            </button>
+    <h1 class="text-[2em] md:text-[24px] font-bold text-[#111827] text-center uppercase tracking-wider font-['Bebas_Neue'] mb-3">
+        Choose Your Username
+    </h1>
+    <p class="text-[#6B7280] text-center mb-12 md:mb-8 md:text-[14px]">
+        This username will be unique to your account
+    </p>
+    <div class="space-y-4">
+        <div class="relative flex items-center">
+            <img src="../sources/icons/bulk/user.svg" class="absolute left-[25px]" width="20" height="20" alt="user icon">
+            <input type="text" id="username-input" 
+                class="w-full h-[60px] md:h-[48px] pl-[55px] pr-[25px] border border-[#E5E7EB] rounded-lg text-[13px] md:text-[14px] font-medium bg-[#f9f9f9] focus:outline-none focus:border-[#4F46E5] transition-colors"
+                placeholder="Enter username">
         </div>
-    `;
+        <p id="username-status" class="mt-2 text-[13px]"></p>
+        <button id="continue-button" disabled
+            class="w-full h-[60px] md:h-[52px] bg-black text-white rounded-lg text-sm font-semibold transition-colors hover:bg-[#3f3f3f] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+            Continue
+        </button>
+    </div>
+`;
 
             const getInvitationModalHTML = () => `
-        <h1 class="text-[2em] md:text-[24px] font-bold text-[#111827] text-center uppercase tracking-wider font-['Bebas_Neue'] mb-3">
-            Your Invitation Code
-        </h1>
-        <p class="text-[#6B7280] text-center mb-12 md:mb-8 md:text-[14px]">
-            Save this code - you'll need it to invite others
-        </p>
-        <div class="space-y-4">
-            <div class="relative">
-                <i class="fas fa-ticket absolute left-[25px] top-[22px] md:top-[16px] text-[#BEBEBE]"></i>
-                <input type="text" value="${inviteCode}" readonly
-                    class="w-full h-[60px] md:h-[48px] pl-[55px] pr-[25px] border border-[#E5E7EB] rounded-lg text-[13px] md:text-[14px] font-medium bg-[#f9f9f9] focus:outline-none focus:border-[#4F46E5] transition-colors text-center font-mono">
-            </div>
-            
-            <div class="relative mt-8">
-                <i class="fas fa-user-plus absolute left-[25px] top-[22px] md:top-[16px] text-[#BEBEBE]"></i>
-                <input type="text" id="referral-input" 
-                    class="w-full h-[60px] md:h-[48px] pl-[55px] pr-[25px] border border-[#E5E7EB] rounded-lg text-[13px] md:text-[14px] font-medium bg-[#f9f9f9] focus:outline-none focus:border-[#4F46E5] transition-colors"
-                    placeholder="Enter referral code (optional)">
-                <p id="referral-status" class="mt-2 text-[13px]"></p>
-            </div>
-            
-            <button id="complete-registration"
-                class="w-full h-[60px] md:h-[52px] bg-black text-white rounded-lg text-sm font-semibold transition-colors hover:bg-[#3f3f3f] shadow-lg">
-                Complete Registration
-            </button>
+    <h1 class="text-[2em] md:text-[24px] font-bold text-[#111827] text-center uppercase tracking-wider font-['Bebas_Neue'] mb-3">
+        Your Invitation Code
+    </h1>
+    <p class="text-[#6B7280] text-center mb-12 md:mb-8 md:text-[14px]">
+        Save this code - you'll need it to invite others
+    </p>
+    <div class="space-y-4">
+        <div class="relative flex items-center">
+            <img src="../sources/icons/bulk/ticket.svg" class="absolute left-[25px]" width="20" height="20" alt="ticket icon">
+            <input type="text" value="${inviteCode}" readonly
+                class="w-full h-[60px] md:h-[48px] pl-[55px] pr-[25px] border border-[#E5E7EB] rounded-lg text-[13px] md:text-[14px] font-medium bg-[#f9f9f9] focus:outline-none focus:border-[#4F46E5] transition-colors text-center font-mono">
         </div>
-    `;
+        
+        <div class="relative flex items-center mt-8">
+            <img src="../sources/icons/bulk/arrow-right-1.svg" class="absolute left-[25px]" width="20" height="20" alt="referral icon">
+            <input type="text" id="referral-input" 
+                class="w-full h-[60px] md:h-[48px] pl-[55px] pr-[25px] border border-[#E5E7EB] rounded-lg text-[13px] md:text-[14px] font-medium bg-[#f9f9f9] focus:outline-none focus:border-[#4F46E5] transition-colors"
+                placeholder="Enter referral code (optional)">
+        </div>
+        <p id="referral-status" class="mt-2 text-[13px]"></p>
+        
+        <button id="complete-registration"
+            class="w-full h-[60px] md:h-[52px] bg-black text-white rounded-lg text-sm font-semibold transition-colors hover:bg-[#3f3f3f] shadow-lg">
+            Complete Registration
+        </button>
+    </div>
+`;
 
             const updateModalContent = () => {
                 modal.innerHTML = currentStep === 'username' ? getUsernameModalHTML() : getInvitationModalHTML();

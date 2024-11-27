@@ -1,0 +1,845 @@
+<!-- profil -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Menu</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #fff;
+            padding-top: 50px;
+        }
+
+        .menu-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            display: flex;
+            justify-content: center;
+            transform: translateY(-100px);
+        }
+
+        .menu-container {
+            width: 60px;
+            height: 60px;
+            background: #fff;
+            border: 1px solid #dedede;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: visible;
+            opacity: 0;
+            transform: scale(0);
+            margin-top: 20px;
+            transition: border-radius 0.3s ease;
+        }
+
+        .main-menu {
+            width: 100%;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            background: #fff;
+            position: relative;
+            z-index: 2;
+            border-radius: 15px;
+            transition: border-radius 0.3s ease;
+        }
+
+        .left-menu {
+            display: flex;
+            gap: 24px;
+            visibility: hidden;
+            align-items: center;
+        }
+
+        .menu-item {
+            color: #000;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            transition: background 0.3s;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(-20px);
+            font-size: 12px;
+            font-weight: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-item.active {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .center-search {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 36px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            opacity: 0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .ctrl-box {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .right-icons {
+            display: flex;
+            gap: 24px;
+            align-items: baseline;
+            visibility: hidden;
+        }
+
+        .icon-item {
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        .profile {
+            padding-left: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .profile img.avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            font-size: 12px;
+            text-align: right;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            filter: brightness(0);
+        }
+
+        .profile .icon {
+            transition: transform 0.3s ease;
+        }
+
+        .profile.active .icon {
+            transform: rotate(180deg);
+        }
+
+        .white-icon {
+            filter: brightness(0);
+        }
+
+        .submenu-container {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 0;
+            background: #fff;
+            border: 1px solid #dedede;
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            overflow: hidden;
+            opacity: 0;
+            margin-top: -1px;
+        }
+
+        .submenu {
+            padding: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .submenu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            grid-auto-flow: column;
+            grid-template-rows: repeat(3, 1fr);
+        }
+
+        .submenu-item {
+            padding: 8px 15px;
+            font-size: 12px;
+            color: #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 65px;
+            /* 10px arttırıldı */
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .submenu-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+        }
+
+        .submenu-content {
+            flex: 1;
+        }
+
+        .submenu-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .submenu-description {
+            font-size: 11px;
+            opacity: 0.5;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 240px;
+            padding: 13px;
+            background: #fff;
+            border: 1px solid #dedede;
+            border-radius: 15px;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.95);
+            transform-origin: top right;
+        }
+
+        .profile-menu-item {
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(-10px);
+            margin: 4px 0;
+            border-radius: 10px;
+        }
+
+        .profile-menu-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .profile-menu-item .white-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .settings-dropdown {
+            background: rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+            height: 0;
+        }
+
+        .setting-item {
+            padding: 8px 15px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(-10px);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .setting-item .white-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.6;
+        }
+
+        .setting-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .setting-item:hover .white-icon {
+            opacity: 0.8;
+        }
+
+        .logout-item {
+            color: #ff4757;
+        }
+
+        .logout-item .white-icon {
+            filter: invert(48%) sepia(54%) saturate(2673%) hue-rotate(325deg) brightness(101%) contrast(101%);
+        }
+
+        .logout-item:hover {
+            background: rgba(255, 71, 87, 0.1);
+        }
+
+        .settings-arrow {
+            margin-left: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .settings-arrow.active {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="menu-wrapper">
+        <div class="menu-container">
+            <div class="main-menu">
+                <div class="left-menu">
+                    <a class="menu-item">Ana Sayfa</a>
+                    <a class="menu-item">Market</a>
+                    <a class="menu-item">Topluluk</a>
+                    <a class="menu-item">Eğitim</a>
+                </div>
+
+                <div class="center-search">
+                    <div class="ctrl-box">CTRL</div>
+                    <span>Arama</span>
+                </div>
+
+                <div class="right-icons">
+                    <div class="icon-item">
+                        <img src="sources/icons/bulk/wallet.svg" alt="wallet" class="white-icon">
+                    </div>
+                    <div class="icon-item">
+                        <img src="sources/icons/bulk/notification.svg" alt="notification" class="white-icon">
+                    </div>
+                    <div class="icon-item">
+                        <img src="sources/icons/bulk/message.svg" alt="message" class="white-icon">
+                    </div>
+                    <div class="icon-item profile">
+                        <img src="sources/icons/bulk/arrow-down.svg" alt="arrow" class="icon">
+                        <div class="profile-info">
+                            <span>John Doe</span>
+                            <span>john@example.com</span>
+                        </div>
+                        <img src="/api/placeholder/32/32" alt="Profile" class="avatar">
+                    </div>
+                </div>
+            </div>
+            <div class="submenu-container">
+                <div class="submenu">
+                    <div class="submenu-grid">
+                        <div class="submenu-item">
+                            <div class="submenu-icon"></div>
+                            <div class="submenu-content">
+                                <div class="submenu-title">Submenu Item #1</div>
+                                <div class="submenu-description">Submenu item description</div>
+                            </div>
+                        </div>
+                        <div class="submenu-item">
+                            <div class="submenu-icon"></div>
+                            <div class="submenu-content">
+                                <div class="submenu-title">Submenu Item #4</div>
+                                <div class="submenu-description">Submenu item description</div>
+                            </div>
+                        </div>
+                        <div class="submenu-item">
+                            <div class="submenu-icon"></div>
+                            <div class="submenu-content">
+                                <div class="submenu-title">Submenu Item #2</div>
+                                <div class="submenu-description">Submenu item description</div>
+                            </div>
+                        </div>
+                        <div class="submenu-item">
+                            <div class="submenu-icon"></div>
+                            <div class="submenu-content">
+                                <div class="submenu-title">Submenu Item #5</div>
+                                <div class="submenu-description">Submenu item description</div>
+                            </div>
+                        </div>
+                        <div class="submenu-item">
+                            <div class="submenu-icon"></div>
+                            <div class="submenu-content">
+                                <div class="submenu-title">Submenu Item #3</div>
+                                <div class="submenu-description">Submenu item description</div>
+                            </div>
+                        </div>
+                        <div class="submenu-item">
+                            <div class="submenu-icon"></div>
+                            <div class="submenu-content">
+                                <div class="submenu-title">Submenu Item #6</div>
+                                <div class="submenu-description">Submenu item description</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-dropdown">
+                <div class="profile-menu-item view-profile">
+                    <img src="sources/icons/bulk/user.svg" alt="profile" class="white-icon">
+                    <span>Profili Görüntüle</span>
+                </div>
+                <div class="profile-menu-item settings-trigger">
+                    <img src="sources/icons/bulk/setting.svg" alt="settings" class="white-icon">
+                    <span>Ayarlar</span>
+                    <img src="sources/icons/bulk/arrow-down.svg" alt="arrow" class="white-icon settings-arrow">
+                </div>
+                <div class="settings-dropdown">
+                    <div class="setting-item">
+                        <img src="sources/icons/bulk/user-edit.svg" alt="profile" class="white-icon">
+                        Profil Ayarları
+                    </div>
+                    <div class="setting-item">
+                        <img src="sources/icons/bulk/shield-tick.svg" alt="security" class="white-icon">
+                        Güvenlik
+                    </div>
+                    <div class="setting-item">
+                        <img src="sources/icons/bulk/notification-bing.svg" alt="notification" class="white-icon">
+                        Bildirim Ayarları
+                    </div>
+                    <div class="setting-item">
+                        <img src="sources/icons/bulk/wallet-money.svg" alt="payment" class="white-icon">
+                        Ödeme ve Finansal İşlemler
+                    </div>
+                    <div class="setting-item">
+                        <img src="sources/icons/bulk/lock.svg" alt="privacy" class="white-icon">
+                        Gizlilik Ayarları
+                    </div>
+                    <div class="setting-item">
+                        <img src="sources/icons/bulk/cloud.svg" alt="account" class="white-icon">
+                        Hesap ve Veriler
+                    </div>
+                    <div class="setting-item">
+                        <img src="sources/icons/bulk/language-square.svg" alt="language" class="white-icon">
+                        Dil ve Bölge
+                    </div>
+                    <div class="setting-item">
+                        <img src="sources/icons/bulk/brush.svg" alt="theme" class="white-icon">
+                        Görünüm Tema
+                    </div>
+                </div>
+                <div class="profile-menu-item">
+                    <img src="sources/icons/bulk/briefcase.svg" alt="freelancer" class="white-icon">
+                    <span>Freelancer</span>
+                </div>
+                <div class="profile-menu-item logout-item">
+                    <img src="sources/icons/bulk/logout.svg" alt="logout" class="white-icon">
+                    <span>Çıkış Yap</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tl = gsap.timeline();
+            const menuItems = document.querySelectorAll('.menu-item');
+            const menuContainer = document.querySelector('.menu-container');
+            const submenuContainer = document.querySelector('.submenu-container');
+            const submenu = document.querySelector('.submenu');
+            let activeButton = null;
+            let isSubmenuOpen = false;
+
+            // İlk animasyon
+            tl.to('.menu-wrapper', {
+                height: '80px',
+                duration: 0.1,
+                ease: 'none'
+            })
+                .to('.menu-wrapper', {
+                    y: 0,
+                    duration: 0.6,
+                    ease: 'power3.inOut'
+                })
+                .to('.menu-container', {
+                    opacity: 1,
+                    scale: 1.1,
+                    duration: 0.4,
+                    ease: 'power3.out'
+                })
+                .to('.menu-container', {
+                    scale: 1,
+                    duration: 0.2,
+                    ease: 'power3.out'
+                })
+                .to('.menu-container', {
+                    width: '1700px',
+                    duration: 0.8,
+                    ease: 'power4.inOut'
+                })
+                .to('.left-menu, .right-icons', {
+                    visibility: 'visible',
+                    duration: 0
+                })
+                .to('.menu-item', {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.5,
+                    stagger: 0.1,
+                    ease: 'power3.out'
+                }, '-=0.2')
+                .to('.icon-item', {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.5,
+                    stagger: 0.1,
+                    ease: 'power3.out'
+                }, '-=0.3')
+                .to('.center-search', {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.5,
+                    ease: 'power3.out'
+                }, '-=0.3');
+
+            // Hover animasyonları
+            const hoverElements = document.querySelectorAll('.menu-item, .center-search, .icon-item');
+            hoverElements.forEach(element => {
+                element.addEventListener('mouseenter', () => {
+                    if (!element.classList.contains('active')) {
+                        gsap.to(element, {
+                            scale: 1.1,
+                            duration: 0.3,
+                            ease: 'power2.out'
+                        });
+                    }
+                });
+
+                element.addEventListener('mouseleave', () => {
+                    if (!element.classList.contains('active')) {
+                        gsap.to(element, {
+                            scale: 1,
+                            duration: 0.3,
+                            ease: 'power2.out'
+                        });
+                    }
+                });
+            });
+
+            // Submenu işlemleri için fonksiyonlar
+            function closeSubmenu(button, onComplete) {
+                const tl = gsap.timeline();
+                const submenuItems = document.querySelectorAll('.submenu-item');
+
+                // Animation timeline oluştur
+                tl.to(submenuItems, {
+                    opacity: 0,
+                    scale: 0.8,
+                    duration: 0.5,
+                    stagger: 0.05,
+                    ease: 'power3.out'
+                })
+                    .to(submenu, {
+                        opacity: 0,
+                        y: 20,
+                        duration: 0.5,
+                        ease: 'power3.out'
+                    })
+                    .to(submenuContainer, {
+                        height: 0,
+                        duration: 0.5,
+                        ease: 'power3.out'
+                    }, '-=0.3')
+                    .to(['.menu-container', '.main-menu'], {
+                        borderRadius: '15px',
+                        duration: 0.3,
+                        ease: 'power3.out'
+                    }, '-=0.3')
+                    .to(button, {
+                        width: 'auto',
+                        duration: 0.3,
+                        ease: 'power3.out',
+                        onComplete: () => {
+                            button.classList.remove('active');
+                            if (onComplete) onComplete();
+                        }
+                    }, '-=0.2');
+            }
+
+            function openSubmenu(button) {
+                button.classList.add('active');
+                gsap.to('.menu-container', {
+                    borderRadius: '15px 15px 0 0',
+                    duration: 0.3,
+                    ease: 'power3.out'
+                });
+                gsap.to('.main-menu', {
+                    borderRadius: '15px 15px 0 0',
+                    duration: 0.3,
+                    ease: 'power3.out'
+                });
+                gsap.to(button, {
+                    width: '200px',
+                    duration: 0.5,
+                    ease: 'power3.out',
+                    onComplete: () => {
+                        gsap.to(submenuContainer, {
+                            height: '270px', // Azaltıldı
+                            opacity: 1,
+                            duration: 0.5,
+                            ease: 'power3.out',
+                            onComplete: () => {
+                                gsap.to(submenu, {
+                                    opacity: 1,
+                                    y: 0,
+                                    duration: 0.5,
+                                    ease: 'power3.out',
+                                    onComplete: () => {
+                                        // Submenu itemları sırayla animasyonla göster
+                                        const submenuItems = document.querySelectorAll('.submenu-item');
+                                        gsap.to(submenuItems, {
+                                            opacity: 1, scale: 1,
+                                            duration: 0.3,
+                                            stagger: 0.1,
+                                            ease: 'back.out(1.7)'
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Menu click handler
+            menuItems.forEach((button, index) => {
+                if (index === 0) return; // Ana Sayfa'yı atla
+
+                button.addEventListener('click', () => {
+                    if (isSubmenuOpen) {
+                        if (activeButton === button) {
+                            // Aynı butona tıklandı - kapat
+                            closeSubmenu(button, () => {
+                                activeButton = null;
+                                isSubmenuOpen = false;
+                            });
+                        } else {
+                            // Farklı butona tıklandı - geçiş yap
+                            closeSubmenu(activeButton, () => {
+                                activeButton = button;
+                                openSubmenu(button);
+                            });
+                        }
+                    } else {
+                        // Yeni menü aç
+                        activeButton = button;
+                        isSubmenuOpen = true;
+                        openSubmenu(button);
+                    }
+                });
+            });
+
+            // Submenu itemları için hover efekti
+            document.querySelectorAll('.submenu-item').forEach(item => {
+                item.addEventListener('mouseenter', () => {
+                    gsap.to(item, {
+                        background: 'rgba(0, 0, 0, 0.05)',
+                        borderRadius: '10px',
+                        duration: 0.3,
+                        ease: 'power2.out'
+                    });
+                });
+
+                item.addEventListener('mouseleave', () => {
+                    gsap.to(item, {
+                        background: 'rgba(0, 0, 0, 0)',
+                        duration: 0.3,
+                        ease: 'power2.out'
+                    });
+                });
+            });
+
+            const profileButton = document.querySelector('.profile');
+            const profileDropdown = document.querySelector('.profile-dropdown');
+            const settingsTrigger = document.querySelector('.settings-trigger');
+            const settingsDropdown = document.querySelector('.settings-dropdown');
+            const settingsItems = document.querySelectorAll('.setting-item');
+            const settingsArrow = document.querySelector('.settings-arrow');
+            const profileMenuItems = document.querySelectorAll('.profile-menu-item');
+            let isProfileOpen = false;
+            let isSettingsOpen = false;
+
+            function openProfileMenu() {
+                const tl = gsap.timeline();
+                profileDropdown.style.visibility = 'visible';
+                profileButton.classList.add('active');
+
+                tl.to(profileDropdown, {
+                    opacity: 1,
+                    scale: 1,
+                    duration: 0.3,
+                    ease: 'back.out(1.7)'
+                })
+                    .to(profileMenuItems, {
+                        opacity: 1,
+                        y: 0,
+                        duration: 0.2,
+                        stagger: 0.05,
+                        ease: 'power3.out'
+                    });
+
+                isProfileOpen = true;
+            }
+
+            function closeProfileMenu() {
+                const tl = gsap.timeline({
+                    onComplete: () => {
+                        profileDropdown.style.visibility = 'hidden';
+                        profileButton.classList.remove('active');
+                        if (isSettingsOpen) {
+                            closeSettings(true);
+                        }
+                    }
+                });
+
+                tl.to(profileMenuItems, {
+                    opacity: 0,
+                    y: -10,
+                    duration: 0.2,
+                    stagger: 0.03,
+                    ease: 'power3.in'
+                })
+                    .to(profileDropdown, {
+                        opacity: 0,
+                        scale: 0.95,
+                        duration: 0.2,
+                        ease: 'power3.in'
+                    });
+
+                isProfileOpen = false;
+            }
+
+            function openSettings() {
+                const tl = gsap.timeline();
+                settingsArrow.classList.add('active');
+
+                tl.to(settingsDropdown, {
+                    height: 'auto',
+                    duration: 0.3,
+                    ease: 'power3.out'
+                })
+                    .to(settingsItems, {
+                        opacity: 1,
+                        y: 0,
+                        duration: 0.2,
+                        stagger: 0.03,
+                        ease: 'power3.out'
+                    }, '-=0.1');
+
+                isSettingsOpen = true;
+            }
+
+            function closeSettings(immediate = false) {
+                const duration = immediate ? 0 : 0.2;
+                const tl = gsap.timeline();
+                settingsArrow.classList.remove('active');
+
+                tl.to(settingsItems, {
+                    opacity: 0,
+                    y: -10,
+                    duration: duration,
+                    stagger: 0.02,
+                    ease: 'power3.in'
+                })
+                    .to(settingsDropdown, {
+                        height: 0,
+                        duration: duration,
+                        ease: 'power3.in'
+                    });
+
+                isSettingsOpen = false;
+            }
+
+            profileButton.addEventListener('click', () => {
+                if (isSubmenuOpen) {
+                    // Önce açık olan submenu'yü kapat
+                    closeSubmenu(activeButton, () => {
+                        activeButton = null;
+                        isSubmenuOpen = false;
+                        // Sonra profil menüsünü aç
+                        openProfileMenu();
+                    });
+                } else if (!isProfileOpen) {
+                    openProfileMenu();
+                } else {
+                    closeProfileMenu();
+                }
+            });
+
+            settingsTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!isSettingsOpen) {
+                    openSettings();
+                } else {
+                    closeSettings();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (isProfileOpen && !profileDropdown.contains(e.target) && !profileButton.contains(e.target)) {
+                    closeProfileMenu();
+                }
+            });
+
+            // Hover animations for menu items
+            document.querySelectorAll('.profile-menu-item, .setting-item').forEach(item => {
+                item.addEventListener('mouseenter', () => {
+                    gsap.to(item, {
+                        scale: 1.02,
+                        duration: 0.3,
+                        ease: 'power2.out'
+                    });
+                });
+
+                item.addEventListener('mouseleave', () => {
+                    gsap.to(item, {
+                        scale: 1,
+                        duration: 0.3,
+                        ease: 'power2.out'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
