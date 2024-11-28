@@ -64,7 +64,7 @@ if (isset($_SESSION['user_id'])) {
 
         .menu-container {
             width: 100%;
-            max-width: 1700px;
+            max-width: 95%;
             height: 60px;
             display: flex;
             flex-direction: column;

@@ -6,7 +6,7 @@ require_once '../../../languages/language_handler.php';
 
 // Kullanıcı kontrolü
 if (!isset($_SESSION['user_id'])) {
-    header('Location: /login');
+    header('Location: /auth/login.php');
     exit;
 }
 
