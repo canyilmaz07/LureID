@@ -1,5 +1,5 @@
 <?php
-// index.php
+// public/index.php
 session_start();
 require_once '../config/database.php';
 require_once '../languages/language_handler.php';
@@ -91,11 +91,10 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
     <title>LUREID - Dashboard</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-white">
     <?php include 'components/menu.php'; ?>
     <?php
     if (isset($_SESSION['user_data']['profile_photo_url']) && $_SESSION['user_data']['profile_photo_url'] === 'undefined') {
@@ -157,49 +156,6 @@ if ($checkFollowsStmt->fetchColumn() == 0) {
                 const tab = $(this).data('tab');
                 window.location.href = 'components/settings/settings.php?tab=' + tab;
             });
-        });
-
-        // Search functionality
-        let searchTimeout;
-        $('#searchUsers').on('input', function () {
-            clearTimeout(searchTimeout);
-            const query = $(this).val();
-            const $results = $('#searchResults');
-
-            if (query.length < 2) {
-                $results.html('').addClass('hidden');
-                return;
-            }
-
-            searchTimeout = setTimeout(() => {
-                $.get('components/search_users.php', { query: query }, function (data) {
-                    if (data.length > 0) {
-                        let html = '';
-                        data.forEach(user => {
-                            html += `
-                    <a href="/${user.username}" class="flex items-center gap-3 p-3 hover:bg-gray-50">
-                        <img src="${user.profile_photo_url}" 
-                             alt="${user.username}" 
-                             class="w-8 h-8 rounded-full">
-                        <div>
-                            <div class="font-semibold">${user.username}</div>
-                            <div class="text-sm text-gray-500">${user.full_name}</div>
-                        </div>
-                    </a>
-                `;
-                        });
-                        $results.html(html).removeClass('hidden');
-                    } else {
-                        $results.html('<div class="p-3 text-gray-500">No users found</div>').removeClass('hidden');
-                    }
-                });
-            }, 300);
-        });
-
-        $(document).click(function (e) {
-            if (!$(e.target).closest('#searchUsers, #searchResults').length) {
-                $('#searchResults').addClass('hidden');
-            }
         });
     </script>
 </body>

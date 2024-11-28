@@ -60,10 +60,9 @@ $achievements = json_decode($profile['achievements'], true) ?? [];
 $communityEngagement = json_decode($profile['community_engagement'], true) ?? [];
 $performanceMetrics = json_decode($profile['performance_metrics'], true) ?? [];
 
-// Check if user is freelancer
 $isFreelancer = false;
 $freelancerData = null;
-$works = [];
+$gigs = [];
 
 $stmt = $db->prepare("SELECT * FROM freelancers WHERE user_id = ?");
 $stmt->execute([$profile['user_id']]);
@@ -72,17 +71,16 @@ $freelancerData = $stmt->fetch(PDO::FETCH_ASSOC);
 if ($freelancerData) {
     $isFreelancer = true;
 
-    // Get works
     $stmt = $db->prepare("
-        SELECT w.*, wm.media_paths
-        FROM works w
-        LEFT JOIN works_media wm ON w.work_id = wm.work_id
-        WHERE w.freelancer_id = ? AND w.visibility = 1
-        ORDER BY w.created_at DESC
+        SELECT *
+        FROM gigs 
+        WHERE freelancer_id = ? 
+        AND status IN ('APPROVED', 'ACTIVE')
+        ORDER BY created_at DESC
         LIMIT 6
     ");
     $stmt->execute([$freelancerData['freelancer_id']]);
-    $works = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $gigs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 // Check avatar
@@ -249,12 +247,20 @@ if (isset($_SESSION['user_id'])) {
 
                     <!-- Professional Status -->
                     <?php if ($isFreelancer): ?>
+                        <?php
+                        $financialData = json_decode($freelancerData['financial_data'], true);
+                        $dailyRate = $financialData['daily_rate'] ?? null;
+                        ?>
                         <div class="flex items-center gap-2 mb-4">
-                            <span
-                                class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"><?= __('Freelancer') ?></span>
-                            <span class="mx-2 text-gray-400">•</span>
-                            <span
-                                class="text-gray-600">₺<?php echo number_format($freelancerData['daily_rate'], 2); ?>/<?= __('day') ?></span>
+                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                                <?= __('Freelancer') ?>
+                            </span>
+                            <?php if ($dailyRate): ?>
+                                <span class="mx-2 text-gray-400">•</span>
+                                <span class="text-gray-600">
+                                    ₺<?php echo number_format($dailyRate, 2); ?>/<?= __('day') ?>
+                                </span>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -457,55 +463,57 @@ if (isset($_SESSION['user_id'])) {
                 </div>
             <?php endif; ?>
 
-            <!-- Works Section -->
-            <?php if ($isFreelancer && !empty($works)): ?>
+            <!-- Gigs Section -->
+            <?php if ($isFreelancer && !empty($gigs)): ?>
                 <div class="mb-8">
-                    <h3 class="text-xl font-bold mb-4"><?= __('Works') ?></h3>
+                    <h3 class="text-xl font-bold mb-4"><?= __('Gigs') ?></h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <?php foreach ($works as $work): ?>
+                        <?php foreach ($gigs as $gig): ?>
                             <div class="bg-white rounded-lg shadow overflow-hidden">
                                 <?php
-                                $mediaPaths = json_decode($work['media_paths'], true);
+                                $mediaData = json_decode($gig['media_data'], true);
                                 $firstImage = null;
-                                if ($mediaPaths) {
-                                    foreach ($mediaPaths as $type => $path) {
-                                        if (strpos($type, 'image_') !== false) {
-                                            $firstImage = $path;
-                                            break;
-                                        }
-                                    }
+                                if ($mediaData && isset($mediaData['images']) && !empty($mediaData['images'])) {
+                                    $firstImage = $mediaData['images'][0];
                                 }
                                 ?>
                                 <?php if ($firstImage): ?>
                                     <div class="relative pt-[56.25%]">
-                                        <img src="/<?php echo htmlspecialchars($firstImage); ?>"
-                                            alt="<?php echo htmlspecialchars($work['title']); ?>"
+                                        <img src="/public/components/freelancer/<?php echo htmlspecialchars($firstImage); ?>"
+                                            alt="<?php echo htmlspecialchars($gig['title']); ?>"
                                             class="absolute inset-0 w-full h-full object-cover">
                                     </div>
                                 <?php endif; ?>
                                 <div class="p-4">
-                                    <h4 class="font-semibold mb-2"><?php echo htmlspecialchars($work['title']); ?></h4>
+                                    <h4 class="font-semibold mb-2"><?php echo htmlspecialchars($gig['title']); ?></h4>
                                     <p class="text-sm text-gray-600 mb-3 line-clamp-2">
-                                        <?php echo htmlspecialchars($work['description']); ?>
+                                        <?php echo htmlspecialchars($gig['description']); ?>
                                     </p>
                                     <div class="flex items-center justify-between">
                                         <div class="text-sm text-gray-500">
-                                            <?php echo date('M j, Y', strtotime($work['created_at'])); ?>
+                                            <?php echo date('M j, Y', strtotime($gig['created_at'])); ?>
                                         </div>
-                                        <a href="/public/views/work.php?id=<?php echo $work['work_id']; ?>"
+                                        <a href="/public/views/gig.php?id=<?php echo $gig['gig_id']; ?>"
                                             class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
-                                            View Details
+                                            <?= __('View Details') ?>
                                         </a>
                                     </div>
                                     <div class="mt-2 flex flex-wrap gap-2">
-                                        <?php if ($work['daily_rate']): ?>
+                                        <?php if ($gig['pricing_type'] !== 'ONE_TIME'): ?>
                                             <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                                                ₺<?php echo number_format($work['daily_rate'], 2); ?>/day
+                                                ₺<?php echo number_format($gig['price'], 2); ?>/<?php echo strtolower($gig['pricing_type']); ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                                                ₺<?php echo number_format($gig['price'], 2); ?>
                                             </span>
                                         <?php endif; ?>
-                                        <?php if ($work['fixed_price']): ?>
-                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                                                ₺<?php echo number_format($work['fixed_price'], 2); ?>
+                                        <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+                                            <?php echo $gig['delivery_time']; ?>         <?= __('days delivery') ?>
+                                        </span>
+                                        <?php if ($gig['revision_count'] > 0): ?>
+                                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
+                                                <?php echo $gig['revision_count']; ?>             <?= __('revision') ?>
                                             </span>
                                         <?php endif; ?>
                                     </div>
@@ -513,11 +521,11 @@ if (isset($_SESSION['user_id'])) {
                             </div>
                         <?php endforeach; ?>
                     </div>
-                    <?php if (count($works) >= 6): ?>
+                    <?php if (count($gigs) >= 6): ?>
                         <div class="text-center mt-4">
-                            <a href="/public/views/works.php?user=<?php echo htmlspecialchars($profile['username']); ?>"
+                            <a href="/public/views/gigs.php?user=<?php echo htmlspecialchars($profile['username']); ?>"
                                 class="inline-block px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                                View All Works
+                                <?= __('View All Gigs') ?>
                             </a>
                         </div>
                     <?php endif; ?>

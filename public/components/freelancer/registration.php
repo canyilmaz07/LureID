@@ -36,7 +36,7 @@ $stmt->execute([$userId]);
 $existingFreelancer = $stmt->fetch();
 
 if ($existingFreelancer) {
-    switch($existingFreelancer['approval_status']) {
+    switch ($existingFreelancer['approval_status']) {
         case 'PENDING':
             header('Location: dashboard.php');
             exit;
@@ -137,21 +137,197 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= __('Freelancer Registration') ?></title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js" defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #fff;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #000;
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: background 0.3s;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: scale(1.1);
+        }
+
+        .back-button img {
+            width: 20px;
+            height: 20px;
+            filter: brightness(0);
+        }
+
+        input,
+        select {
+            font-size: 12px !important;
+            font-weight: 500 !important;
+        }
+
+        .form-section {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        .menu-item,
+        input,
+        select,
+        button {
+            transition: transform 0.3s ease;
+        }
+
+        .menu-item:hover,
+        input:hover,
+        select:hover,
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Input stilleri */
+        input,
+        select {
+            height: 36px;
+            border-radius: 8px !important;
+        }
+
+        /* Button stilleri */
+        button[type="submit"] {
+            height: 36px;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            padding: 0 24px !important;
+            border-radius: 10px !important;
+        }
+
+        /* Alert box stilleri */
+        .alert {
+            font-size: 12px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+        }
+
+        /* Section başlıkları */
+        h2 {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+        }
+
+        /* Alt başlıklar */
+        h3 {
+            font-size: 14px !important;
+            font-weight: 600 !important;
+        }
+
+        /* Label'lar */
+        label {
+            font-size: 12px !important;
+            font-weight: 500 !important;
+        }
+
+        /* Yardım metinleri */
+        .text-sm {
+            font-size: 11px !important;
+        }
+
+        /* Style kısmına eklenecek */
+        select,
+        button[type="submit"] {
+            display: flex;
+            align-items: center;
+            justify-content: left;
+            text-align-last: left;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+        input[name="iban"] {
+            width: calc(100% - 50px) !important;
+        }
+
+        .mt-1.flex.rounded-md.shadow-sm span {
+            background: transparent !important;
+            border: none;
+            padding: 0 12px;
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            transform-origin: center;
+            font-weight: 500;
+        }
+
+        /* Progress bar stili */
+        .progress-container {
+            width: 100%;
+            background: #f3f4f6;
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #2563eb;
+            transition: width 0.3s ease;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        input[name="daily_rate"] {
+            padding-left: 32px !important;
+        }
+
+        .absolute.inset-y-0.left-0.pl-3 {
+            display: flex;
+            align-items: center;
+            pointer-events: none;
+            transform-origin: center;
+        }
+
+        .absolute.inset-y-0.left-0.pl-3 span {
+            margin-right: 10px;
+        }
+    </style>
 </head>
 
 <body class="bg-slate-100">
+    <a href="/public/index.php" class="back-button">
+        <img src="/sources/icons/bulk/arrow-left.svg" alt="back" class="white-icon">
+        Ana Sayfaya Dön
+    </a>
+
     <div class="container mx-auto px-4 py-8">
         <?php if ($profileCompleteness < 20): ?>
-            <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-100 border border-red-200" role="alert">
+            <div class="alert p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-100 border border-red-200" role="alert">
                 <div class="font-medium"><?= __('Profile completion is too low!') ?></div>
                 <p><?= __('Your profile must be at least 20% complete to register as a freelancer.') ?></p>
                 <a href="/public/components/settings/settings.php" class="text-red-800 underline">
@@ -160,7 +336,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         <?php elseif ($existingFreelancer): ?>
             <?php if ($existingFreelancer['approval_status'] === 'PENDING'): ?>
-                <div class="p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-100 border border-yellow-200">
+                <div class="alert p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-100 border border-yellow-200">
                     <div class="font-medium"><?= __('Application Under Review') ?></div>
                     <p><?= __('Your freelancer application is being reviewed. We will get back to you soon.') ?></p>
                 </div>
@@ -168,13 +344,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php else: ?>
             <div class="max-w-4xl mx-auto bg-white rounded-xl shadow">
                 <!-- Progress Bar -->
-                <div class="w-full bg-gray-200 h-1">
-                    <div class="bg-blue-600 h-1" style="width: <?= $profileCompleteness ?>%"></div>
+                <div class="form-section progress-container">
+                    <div class="progress-bar" style="width: 5%"></div>
                 </div>
 
                 <form method="POST" class="divide-y divide-gray-200">
                     <!-- Personal Information -->
-                    <div class="p-6">
+                    <div class="form-section p-6">
                         <h2 class="text-xl font-semibold text-gray-900 mb-4">
                             <?= __('Personal Information') ?>
                         </h2>
@@ -212,7 +388,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <!-- Professional Information Display -->
-                    <div class="p-6">
+                    <div class="form-section p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-semibold text-gray-900">
                                 <?= __('Professional Information') ?>
@@ -245,13 +421,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <!-- Financial Information -->
-                    <div class="p-6">
+                    <div class="form-section p-6">
                         <h2 class="text-xl font-semibold text-gray-900 mb-4">
                             <?= __('Financial Information') ?>
                         </h2>
                         <div class="space-y-6">
                             <!-- Bank Account Details -->
-                            <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="form-section bg-gray-50 p-4 rounded-lg">
                                 <h3 class="text-md font-medium text-gray-900 mb-4">
                                     <?= __('Bank Account Details') ?>
                                 </h3>
@@ -262,7 +438,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <span class="text-red-500">*</span>
                                         </label>
                                         <input type="text" name="account_holder" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
-                               focus:ring-blue-500 focus:border-blue-500">
+                           focus:ring-blue-500 focus:border-blue-500">
                                     </div>
 
                                     <div>
@@ -271,7 +447,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <span class="text-red-500">*</span>
                                         </label>
                                         <select name="bank_name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
-                               focus:ring-blue-500 focus:border-blue-500">
+                           focus:ring-blue-500 focus:border-blue-500">
                                             <option value=""><?= __('Select Bank') ?></option>
                                             <option value="Ziraat">Ziraat Bankası</option>
                                             <option value="Garanti">Garanti BBVA</option>
@@ -294,14 +470,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <?= __('IBAN Number') ?>
                                             <span class="text-red-500">*</span>
                                         </label>
-                                        <div class="mt-1 flex rounded-md shadow-sm">
-                                            <span
-                                                class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                                        <div class="mt-1 flex rounded-md shadow-sm items-center">
+                                            <span class="iban-tr inline-flex items-center px-3 text-gray-500 text-sm">
                                                 TR
                                             </span>
                                             <input type="text" name="iban" required pattern="\d{2}(\s\d{4}){5}\s\d{2}"
                                                 placeholder="XX XXXX XXXX XXXX XXXX XXXX XX"
-                                                class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-none rounded-r-md focus:ring-blue-500 focus:border-blue-500">
+                                                class="flex-1 block px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                                         </div>
                                         <p class="mt-1 text-sm text-gray-500">
                                             <?= __('Enter your IBAN number without TR prefix and spaces') ?>
@@ -311,7 +486,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
 
                             <!-- Tax Information -->
-                            <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="form-section bg-gray-50 p-4 rounded-lg">
                                 <h3 class="text-md font-medium text-gray-900 mb-4">
                                     <?= __('Tax Information') ?>
                                 </h3>
@@ -323,7 +498,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         </label>
                                         <input type="text" name="tax_number" required pattern="[0-9]{10}"
                                             placeholder="XXXXXXXXXX" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
-                               focus:ring-blue-500 focus:border-blue-500">
+                           focus:ring-blue-500 focus:border-blue-500">
                                         <p class="mt-1 text-sm text-gray-500">
                                             <?= __('Enter your 10-digit tax number') ?>
                                         </p>
@@ -335,13 +510,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <span class="text-red-500">*</span>
                                         </label>
                                         <input type="text" name="tax_office" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
-                               focus:ring-blue-500 focus:border-blue-500">
+                           focus:ring-blue-500 focus:border-blue-500">
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Rate Information -->
-                            <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="form-section bg-gray-50 p-4 rounded-lg">
                                 <h3 class="text-md font-medium text-gray-900 mb-4">
                                     <?= __('Rate Information') ?>
                                 </h3>
@@ -353,7 +528,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         </label>
                                         <div class="mt-1 relative rounded-md shadow-sm">
                                             <input type="number" name="daily_rate" required min="0" step="0.01" class="block w-full px-3 py-2 border border-gray-300 rounded-md 
-                                   focus:ring-blue-500 focus:border-blue-500 pl-7">
+                               focus:ring-blue-500 focus:border-blue-500 pl-7">
                                             <div
                                                 class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                 <span class="text-gray-500 sm:text-sm">₺</span>
@@ -369,7 +544,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <?= __('Preferred Payment Schedule') ?>
                                         </label>
                                         <select name="payment_schedule" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
-                               focus:ring-blue-500 focus:border-blue-500">
+                           focus:ring-blue-500 focus:border-blue-500">
                                             <option value="weekly"><?= __('Weekly') ?></option>
                                             <option value="biweekly"><?= __('Bi-weekly') ?></option>
                                             <option value="monthly"><?= __('Monthly') ?></option>
@@ -380,7 +555,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
 
                             <!-- Payment Methods -->
-                            <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="form-section bg-gray-50 p-4 rounded-lg">
                                 <h3 class="text-md font-medium text-gray-900 mb-4">
                                     <?= __('Additional Payment Methods') ?>
                                 </h3>
@@ -390,7 +565,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <?= __('PayPal Email') ?> (<?= __('Optional') ?>)
                                         </label>
                                         <input type="email" name="paypal_email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
-                               focus:ring-blue-500 focus:border-blue-500">
+                           focus:ring-blue-500 focus:border-blue-500">
                                     </div>
 
                                     <div>
@@ -398,14 +573,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <?= __('Cryptocurrency Wallet') ?> (<?= __('Optional') ?>)
                                         </label>
                                         <input type="text" name="crypto_wallet" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
-                               focus:ring-blue-500 focus:border-blue-500"
+                           focus:ring-blue-500 focus:border-blue-500"
                                             placeholder="<?= __('Your BTC/ETH wallet address') ?>">
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Agreement -->
-                            <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="form-section bg-blue-50 p-4 rounded-lg">
                                 <div class="flex items-start">
                                     <div class="flex items-center h-5">
                                         <input type="checkbox" name="terms_agreement" required
@@ -426,7 +601,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <!-- Submit Section -->
-                    <div class="p-6 bg-gray-50">
+                    <div class="form-section p-6 bg-gray-50">
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600">
                                 <?= __('Profile Completion') ?>: <?= number_format($profileCompleteness, 2) ?>%
@@ -443,8 +618,91 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        // Form doğrulama ve interaktif özellikler için gerekli JavaScript kodları
         document.addEventListener('DOMContentLoaded', function () {
+            // GSAP Animasyonları
+            const tl = gsap.timeline();
+
+            // Geri dönüş butonu animasyonu
+            tl.to('.back-button', {
+                opacity: 1,
+                y: 0,
+                duration: 0.6,
+                ease: 'power3.out'
+            });
+
+            // Form bölümlerinin animasyonları
+            gsap.utils.toArray('.form-section').forEach((section, i) => {
+                tl.to(section, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.6,
+                    ease: 'power3.out'
+                }, `-=0.4`);
+            });
+
+            // DOMContentLoaded event listener içine eklenecek
+            function calculateProgress() {
+                const form = document.querySelector('form');
+                const requiredInputs = form.querySelectorAll('input[required], select[required]');
+                const totalFields = requiredInputs.length + 2; // +2 for auto-filled name and email
+                let filledFields = 2; // Starting with 2 for auto-filled fields
+
+                requiredInputs.forEach(input => {
+                    if (input.value.trim() !== '') {
+                        filledFields++;
+                    }
+                });
+
+                const progressPercentage = (filledFields / totalFields) * 100;
+                updateProgressBar(progressPercentage);
+            }
+
+            function updateProgressBar(percentage) {
+                const progressBar = document.querySelector('.progress-bar');
+                if (progressBar) {
+                    // Minimum %5 göster ki bar tamamen boş görünmesin
+                    const displayPercentage = Math.max(5, percentage);
+                    progressBar.style.width = `${displayPercentage}%`;
+
+                    // Renk geçişi ekle
+                    if (percentage < 30) {
+                        progressBar.style.background = '#ef4444'; // Kırmızı
+                    } else if (percentage < 70) {
+                        progressBar.style.background = '#f59e0b'; // Turuncu
+                    } else {
+                        progressBar.style.background = '#10b981'; // Yeşil
+                    }
+                }
+            }
+
+            // Form alanlarının değişimini dinle
+            document.querySelectorAll('input, select').forEach(element => {
+                element.addEventListener('input', calculateProgress);
+                element.addEventListener('change', calculateProgress);
+            });
+
+            // Sayfa yüklendiğinde mevcut durumu hesapla
+            calculateProgress();
+
+            // Form elemanları için hover animasyonları
+            const hoverableElements = document.querySelectorAll('input, select, button, .menu-item, .absolute.inset-y-0, .iban-tr');            hoverableElements.forEach(element => {
+                element.addEventListener('mouseenter', () => {
+                    gsap.to(element, {
+                        scale: 1.05,
+                        duration: 0.3,
+                        ease: 'power2.out'
+                    });
+                });
+
+                element.addEventListener('mouseleave', () => {
+                    gsap.to(element, {
+                        scale: 1,
+                        duration: 0.3,
+                        ease: 'power2.out'
+                    });
+                });
+            });
+
             // Telefon formatı
             const phoneInput = document.querySelector('input[name="phone"]');
             if (phoneInput) {

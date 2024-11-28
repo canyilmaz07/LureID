@@ -34,25 +34,189 @@ if ($freelancerData) {
     $freelancer_id = null;
 }
 
-// Mevcut freelancer durumu kontrolü
-$checkFreelancerQuery = "SELECT approval_status FROM freelancers WHERE user_id = ?";
+// Freelancer durumunu kontrol et
+$checkFreelancerQuery = "SELECT freelancer_id, approval_status FROM freelancers WHERE user_id = ?";
 $stmt = $db->prepare($checkFreelancerQuery);
 $stmt->execute([$userId]);
-$freelancerStatus = $stmt->fetch(PDO::FETCH_ASSOC);
+$freelancerData = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// If trying to access registration.php while already having an approved status
-if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], 'registration.php') !== false) {
-    if ($freelancerStatus && $freelancerStatus['approval_status'] === 'APPROVED') {
-        header('Location: dashboard.php');
-        exit;
-    }
+// Kullanıcının freelancer kaydı yoksa ana sayfaya yönlendir
+if (!$freelancerData) {
+    header('Location: /public/index.php');
+    exit;
 }
 
-// Get user data
 $userQuery = "SELECT full_name FROM users WHERE user_id = ?";
 $stmt = $db->prepare($userQuery);
 $stmt->execute([$userId]);
 $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Duruma göre görüntülenecek içeriği belirle
+$status = $freelancerData['approval_status'];
+
+if ($status === 'PENDING') {
+    ?>
+    <!DOCTYPE html>
+    <html lang="<?= $current_language ?>">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Hesap İnceleniyor - LureID</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+            * {
+                font-family: 'Poppins', sans-serif;
+            }
+
+            .container-shadow {
+                box-shadow: 0 22px 40px rgba(0, 0, 0, 0.1);
+            }
+
+            .review-heading {
+                font-size: 22px;
+            }
+
+            .review-text,
+            .review-button {
+                font-size: 12px;
+                text-align: center;
+            }
+
+            .review-img {
+                height: 250px;
+                width: auto;
+                margin: 0 auto;
+                display: block;
+            }
+
+            .page-container {
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .content-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+                padding: 2rem;
+            }
+        </style>
+    </head>
+
+    <body class="bg-gray-100">
+        <div class="page-container">
+            <div class="max-w-md w-full bg-white rounded-lg container-shadow content-container">
+                <div class="mb-6 flex items-center justify-center">
+                    <img src="review.svg" alt="Review Icon" class="review-img">
+                </div>
+                <h2 class="review-heading font-bold text-gray-900 mb-4">Hesabınız İnceleniyor</h2>
+                <p class="review-text text-gray-600 mb-6">Başvurunuz şu anda inceleme aşamasında. Hesabınız onaylandığında
+                    size bildirim göndereceğiz.</p>
+                <a href="/public/index.php"
+                    class="review-button inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                    Ana Sayfaya Dön
+                </a>
+            </div>
+        </div>
+    </body>
+
+    </html>
+    <?php
+    exit;
+} elseif ($status === 'REJECTED') {
+    ?>
+    <!DOCTYPE html>
+    <html lang="<?= $current_language ?>">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Hesap Onaylanmadı - LureID</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+            * {
+                font-family: 'Poppins', sans-serif;
+            }
+
+            .container-shadow {
+                box-shadow: 0 22px 40px rgba(0, 0, 0, 0.1);
+            }
+
+            .review-heading {
+                font-size: 22px;
+            }
+
+            .review-text,
+            .review-button {
+                font-size: 12px;
+                text-align: center;
+            }
+
+            .review-img {
+                height: 250px;
+                width: auto;
+                margin: 0 auto;
+                display: block;
+            }
+
+            .page-container {
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .content-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+                padding: 2rem;
+            }
+        </style>
+    </head>
+
+    <body class="bg-gray-100">
+        <div class="page-container">
+            <div class="max-w-md w-full bg-white rounded-lg container-shadow content-container">
+                <div class="mb-6 flex items-center justify-center">
+                    <img src="sad.svg" alt="Rejection Icon" class="review-img">
+                </div>
+                <h2 class="review-heading font-bold text-gray-900 mb-4">Hesabınız Onaylanmadı</h2>
+                <p class="review-text text-gray-600 mb-6">Üzgünüz, freelancer başvurunuz onaylanmadı. Yeniden başvuru
+                    yapabilirsiniz.</p>
+                <div class="space-x-4">
+                    <a href="/public/index.php"
+                        class="review-button inline-block bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700">
+                        Ana Sayfaya Dön
+                    </a>
+                    <form action="reapply.php" method="POST" class="inline-block">
+                        <input type="hidden" name="user_id" value="<?= $userId ?>">
+                        <button type="submit"
+                            class="review-button bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                            Yeniden Başvur
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    </html>
+    <?php
+    exit;
+} elseif ($status !== 'APPROVED') {
+    header('Location: /public/index.php');
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -86,7 +250,8 @@ $userData = $stmt->fetch(PDO::FETCH_ASSOC);
                     </div>
                     <div>
                         <h5 class="text-xl font-bold text-gray-900">Merhaba,
-                            <?= htmlspecialchars($userData['full_name']) ?>!</h5>
+                            <?= htmlspecialchars($userData['full_name']) ?>!
+                        </h5>
                         <p class="mt-1 text-sm text-gray-600">Profiliniz %85 tamamlandı. Daha fazla iş fırsatı için
                             profilinizi güncelleyin.</p>
                     </div>

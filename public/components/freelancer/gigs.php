@@ -45,6 +45,8 @@ $filter = $_GET['filter'] ?? 'all';
 
 // İlanları filtreye göre al
 $gigsQuery = "SELECT g.*, 
+    JSON_EXTRACT(g.milestones_data, '$') as milestones,
+    JSON_EXTRACT(g.nda_data, '$') as nda,
     CASE 
         WHEN g.status = 'APPROVED' THEN 'Aktif'
         WHEN g.status = 'PENDING_REVIEW' THEN 'Onay Bekliyor'
@@ -53,8 +55,8 @@ $gigsQuery = "SELECT g.*,
         WHEN g.status = 'DELETED' THEN 'Silindi'
     END as status_text,
     DATEDIFF(DATE_ADD(updated_at, INTERVAL 30 DAY), NOW()) as days_until_delete
-    FROM gigs g 
-    WHERE g.freelancer_id = ? ";
+FROM gigs g 
+WHERE g.freelancer_id = ? ";
 
 // Modify the query based on filter
 switch ($filter) {
@@ -162,7 +164,10 @@ $tempGigs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="bg-white rounded-lg shadow-md overflow-hidden">
                         <?php
                         $mediaData = json_decode($gig['media_data'], true);
-                        $firstImage = $mediaData['images'][0] ?? 'assets/images/default-gig.jpg';
+                        if (empty($mediaData['images'][0])) {
+                            continue; // Bu gig'i gösterme
+                        }
+                        $firstImage = $mediaData['images'][0];
                         ?>
                         <img src="<?= htmlspecialchars($firstImage) ?>" alt="<?= htmlspecialchars($gig['title']) ?>"
                             class="w-full h-48 object-cover">

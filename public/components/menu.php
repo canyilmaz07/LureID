@@ -1,5 +1,5 @@
 <?php
-// menu.php
+// public/components/menu.php
 if (!isset($_SESSION)) {
     session_start();
 }
@@ -7,6 +7,18 @@ if (!isset($_SESSION)) {
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
     exit;
+}
+
+$isFreelancer = false; // Varsayılan olarak false
+
+if (isset($_SESSION['user_id'])) {
+    // Kullanıcının freelancer olup olmadığını kontrol et
+    $freelancerCheckQuery = "SELECT freelancer_id FROM freelancers WHERE user_id = ? AND status = 'ACTIVE'";
+    $stmt = $db->prepare($freelancerCheckQuery);
+    $stmt->execute([$_SESSION['user_id']]);
+    $freelancer = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $isFreelancer = !empty($freelancer); // Eğer freelancer kaydı varsa true olacak
 }
 ?>
 
@@ -20,7 +32,6 @@ if (!isset($_SESSION['user_id'])) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <style>
-        /* Base Styles */
         * {
             margin: 0;
             padding: 0;
@@ -31,53 +42,49 @@ if (!isset($_SESSION['user_id'])) {
         body {
             min-height: 100vh;
             background: #fff;
-            padding-top: 50px;
         }
 
         /* Menu Wrapper & Container */
         .menu-wrapper {
             position: fixed;
             top: 0;
+            /* -80px yerine 0 yapıyoruz */
             left: 0;
             width: 100%;
-            height: 0;
+            height: 60px;
             display: flex;
             justify-content: center;
-            transform: translateY(-100px);
             z-index: 1000;
+            background: transparent;
+            opacity: 0;
+            /* Görünmezlik için opacity kullanıyoruz */
+            transform: translateY(-80px);
+            /* Position yerine transform kullanıyoruz */
         }
 
         .menu-container {
-            width: 120px;
+            width: 100%;
+            max-width: 1700px;
             height: 60px;
-            background: #fff;
-            border: 1px solid #dedede;
-            border-radius: 15px;
             display: flex;
             flex-direction: column;
             position: relative;
             overflow: visible;
-            opacity: 0;
-            transform: scale(0);
-            margin-top: 20px;
-            transition: border-radius 0.3s ease;
-            box-shadow: 0 22px 40px rgba(0, 0, 0, 0.1);
         }
 
         /* Main Menu */
         .main-menu {
             width: 100%;
             height: 60px;
+            /* Height düşürüldü */
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0 24px;
-            background: #fff;
+            background: transparent;
+            /* Başlangıçta arkaplan yok */
             position: relative;
             z-index: 2;
-            border-radius: 15px;
-            transition: border-radius 0.3s ease;
-            overflow: hidden;
         }
 
         .left-menu {
@@ -85,6 +92,7 @@ if (!isset($_SESSION['user_id'])) {
             gap: 24px;
             visibility: hidden;
             align-items: center;
+            opacity: 0;
         }
 
         /* Menu Items */
@@ -126,7 +134,7 @@ if (!isset($_SESSION['user_id'])) {
             padding: 0 5px;
             letter-spacing: 2px;
             white-space: nowrap;
-            height: 100%;
+            height: 60px;
             display: flex;
             align-items: center;
             overflow: hidden;
@@ -180,13 +188,11 @@ if (!isset($_SESSION['user_id'])) {
             width: 100%;
             background: #fff;
             border: 1px solid #dedede;
-            border-top: none;
-            border-radius: 0 0 15px 15px;
             overflow: hidden;
+            border-radius: 20px;
             opacity: 0;
             height: 0;
-            margin-top: -1px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            box-shadow: 0 22px 40px rgba(0, 0, 0, 0.1);
         }
 
         .submenu {
@@ -322,12 +328,13 @@ if (!isset($_SESSION['user_id'])) {
             width: 240px;
             padding: 13px;
             background: #fff;
-            border: 1px solid #dedede;
             border-radius: 15px;
             opacity: 0;
             visibility: hidden;
             transform: scale(0.95);
             transform-origin: top right;
+            border: 1px solid #dedede;
+            box-shadow: 0px 22px 40px rgba(0, 0, 0, 0.1);
         }
 
         .profile-menu-item {
@@ -399,8 +406,8 @@ if (!isset($_SESSION['user_id'])) {
         .wallet-dropdown {
             position: absolute;
             top: calc(100% + 10px);
-            right: 180px;
-            width: 400px;
+            right: 210px;
+            width: 350px;
             padding: 13px;
             background: #fff;
             border: 1px solid #dedede;
@@ -409,6 +416,7 @@ if (!isset($_SESSION['user_id'])) {
             visibility: hidden;
             transform: scale(0.95);
             transform-origin: top right;
+            box-shadow: 0px 22px 40px rgba(0, 0, 0, 0.1);
         }
 
         .wallet-header {
@@ -544,12 +552,100 @@ if (!isset($_SESSION['user_id'])) {
         .logout-item:hover {
             background: rgba(255, 71, 87, 0.1);
         }
+
+        .search-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            background: #fff;
+            border: 1px solid #dedede;
+            border-radius: 15px;
+            opacity: 0;
+            visibility: hidden;
+            box-shadow: 0px 22px 40px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding: 8px;
+        }
+
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .search-result-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: scale(1.02);
+        }
+
+
+        .search-result-item:first-child {
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+
+        .search-result-item:last-child {
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
+
+        .search-result-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .search-result-info {
+            flex: 1;
+        }
+
+        .search-result-name {
+            font-weight: 800;
+            font-size: 12px;
+            color: #000;
+        }
+
+        .search-result-username {
+            font-size: 12px;
+            color: #bebebe;
+        }
+
+        .no-results {
+            padding: 16px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .search-result-arrow {
+            width: 20px;
+            height: 20px;
+            opacity: 0.6;
+        }
+
+        .search-result-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.05);
+            margin: 0 8px;
+        }
     </style>
 </head>
 
 <body>
     <div class="menu-wrapper">
         <div class="menu-container">
+            <div class="search-dropdown">
+                <div id="searchResults"></div>
+            </div>
             <div class="main-menu">
                 <div class="left-menu">
                     <a href="/public/index.php" class="menu-item">Ana Sayfa</a>
@@ -559,7 +655,7 @@ if (!isset($_SESSION['user_id'])) {
                     <a class="menu-item">Projeler</a>
                 </div>
 
-                <div class="lure-text">LURE</div>
+                <div class="lure-text">LUREID</div>
                 <div class="center-search">
                     <div class="ctrl-box">CTRL</div>
                     <span>Arama</span>
@@ -684,8 +780,7 @@ if (!isset($_SESSION['user_id'])) {
                                     </div>
                                 </a>
                                 <a href="#" class="submenu-item">
-                                    <img src="/sources/icons/bulk/code-circle.svg" alt="code-circle"
-                                        class="white-icon">
+                                    <img src="/sources/icons/bulk/code-circle.svg" alt="code-circle" class="white-icon">
                                     <div class="submenu-content">
                                         <h4>Premium Kod Blokları</h4>
                                         <p>Özelleştirilebilir kod parçacıkları</p>
@@ -726,8 +821,7 @@ if (!isset($_SESSION['user_id'])) {
                             </h3>
                             <div class="submenu-items">
                                 <a href="#" class="submenu-item">
-                                    <img src="/sources/icons/bulk/monitor-mobbile.svg" alt="monitor"
-                                        class="white-icon">
+                                    <img src="/sources/icons/bulk/monitor-mobbile.svg" alt="monitor" class="white-icon">
                                     <div class="submenu-content">
                                         <h4>Proje Showcase</h4>
                                         <p>Topluluk projelerini keşfet</p>
@@ -802,8 +896,7 @@ if (!isset($_SESSION['user_id'])) {
                             </h3>
                             <div class="submenu-items">
                                 <a href="#" class="submenu-item">
-                                    <img src="/sources/icons/bulk/document-text.svg" alt="document"
-                                        class="white-icon">
+                                    <img src="/sources/icons/bulk/document-text.svg" alt="document" class="white-icon">
                                     <div class="submenu-content">
                                         <h4>Yazılı Kaynaklar</h4>
                                         <p>Makaleler ve dökümanlar</p>
@@ -886,8 +979,7 @@ if (!isset($_SESSION['user_id'])) {
                                     </div>
                                 </a>
                                 <a href="#" class="submenu-item">
-                                    <img src="/sources/icons/bulk/document-copy.svg" alt="document"
-                                        class="white-icon">
+                                    <img src="/sources/icons/bulk/document-copy.svg" alt="document" class="white-icon">
                                     <div class="submenu-content">
                                         <h4>Ödev Takibi</h4>
                                         <p>Proje ve ödev yönetimi</p>
@@ -916,16 +1008,14 @@ if (!isset($_SESSION['user_id'])) {
                             </h3>
                             <div class="submenu-items">
                                 <a href="#" class="submenu-item">
-                                    <img src="/sources/icons/bulk/profile-circle.svg" alt="profile"
-                                        class="white-icon">
+                                    <img src="/sources/icons/bulk/profile-circle.svg" alt="profile" class="white-icon">
                                     <div class="submenu-content">
                                         <h4>Eğitmen Profili</h4>
                                         <p>Profil ve portfolio yönetimi</p>
                                     </div>
                                 </a>
                                 <a href="#" class="submenu-item">
-                                    <img src="/sources/icons/bulk/document-text.svg" alt="document"
-                                        class="white-icon">
+                                    <img src="/sources/icons/bulk/document-text.svg" alt="document" class="white-icon">
                                     <div class="submenu-content">
                                         <h4>Ders İçerik Yönetimi</h4>
                                         <p>Müfredat ve içerik planlama</p>
@@ -1015,8 +1105,7 @@ if (!isset($_SESSION['user_id'])) {
                                     </div>
                                 </a>
                                 <a href="#" class="submenu-item">
-                                    <img src="/sources/icons/bulk/document-text.svg" alt="document"
-                                        class="white-icon">
+                                    <img src="/sources/icons/bulk/document-text.svg" alt="document" class="white-icon">
                                     <div class="submenu-content">
                                         <h4>Dokümentasyon</h4>
                                         <p>Proje belgeleri</p>
@@ -1063,6 +1152,7 @@ if (!isset($_SESSION['user_id'])) {
                     </div>
                 </div>
             </div>
+
             <div class="profile-dropdown">
                 <a href="/<?php echo htmlspecialchars($_SESSION['user_data']['username']); ?>"
                     class="profile-menu-item">
@@ -1108,15 +1198,15 @@ if (!isset($_SESSION['user_id'])) {
                         Görünüm Tema
                     </a>
                 </div>
-                <?php if (isset($isFreelancer) && $isFreelancer): ?>
+                <?php if ($isFreelancer): ?>
                     <a href="/public/components/freelancer/dashboard.php" class="profile-menu-item">
                         <img src="/sources/icons/bulk/briefcase.svg" alt="freelancer" class="white-icon">
-                        <span>Freelancer</span>
+                        <span>Satış Paneli</span>
                     </a>
                 <?php else: ?>
                     <a href="/public/components/freelancer/registration.php" class="profile-menu-item">
                         <img src="/sources/icons/bulk/briefcase.svg" alt="freelancer" class="white-icon">
-                        <span>Freelancer Ol</span>
+                        <span>Satıcı Profili Oluştur</span>
                     </a>
                 <?php endif; ?>
                 <form method="POST" action="/auth/logout.php" class="profile-menu-item logout-item">
@@ -1265,6 +1355,112 @@ if (!isset($_SESSION['user_id'])) {
                 }
             }
 
+            let searchTimeout;
+            let isSearchDropdownOpen = false;
+
+            function openSearchDropdown() {
+                const searchDropdown = document.querySelector('.search-dropdown');
+                gsap.to(searchDropdown, {
+                    opacity: 1,
+                    visibility: 'visible',
+                    duration: 0.3,
+                    ease: 'power3.out'
+                });
+                isSearchDropdownOpen = true;
+            }
+
+            function closeSearchDropdown() {
+                const searchDropdown = document.querySelector('.search-dropdown');
+                gsap.to(searchDropdown, {
+                    opacity: 0,
+                    visibility: 'hidden',
+                    duration: 0.2,
+                    ease: 'power3.in',
+                    onComplete: () => {
+                        document.querySelector('#searchResults').innerHTML = '';
+                    }
+                });
+                isSearchDropdownOpen = false;
+            }
+
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+
+                if (query.length < 2) {
+                    closeSearchDropdown();
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => {
+                    fetch(`/public/components/search_dropdown.php?query=${encodeURIComponent(query)}`)
+                        .then(async response => {
+                            if (!response.ok) {
+                                const errorData = await response.json();
+                                throw new Error(errorData.error || 'Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(response => {
+                            const searchResults = document.querySelector('#searchResults');
+
+                            if (response.status === 'success' && response.data.length > 0) {
+                                const html = response.data.map((user, index) => `
+            ${index !== 0 ? '<div class="search-result-divider"></div>' : ''}
+            <a href="/${user.username}" class="search-result-item">
+                <img src="${user.profile_photo_url === 'undefined' ?
+                                        '/public/sources/defaults/avatar.jpg' :
+                                        '/public/' + user.profile_photo_url}" 
+                     alt="${user.username}" 
+                     class="search-result-avatar"
+                     onerror="this.src='/public/sources/defaults/avatar.jpg'">
+                <div class="search-result-info">
+                    <div class="search-result-name">${user.full_name}</div>
+                    <div class="search-result-username">@${user.username}</div>
+                </div>
+                <img src="/sources/icons/bulk/arrow-right.svg" alt="arrow" class="search-result-arrow">
+            </a>
+        `).join('');
+
+                                searchResults.innerHTML = html;
+                            } else {
+                                searchResults.innerHTML = '<div class="no-results">Kullanıcı bulunamadı</div>';
+                            }
+
+                            if (!isSearchDropdownOpen) {
+                                openSearchDropdown();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Search error:', error.message);
+                            const searchResults = document.querySelector('#searchResults');
+                            searchResults.innerHTML = `<div class="no-results">Hata: ${error.message}</div>`;
+                        });
+                }, 300);
+            });
+
+            // Sayfa tıklaması ile dropdown'ı kapat
+            document.addEventListener('click', (e) => {
+                if (isSearchDropdownOpen &&
+                    !e.target.closest('.search-dropdown') &&
+                    !e.target.closest('.search-input')) {
+                    closeSearchDropdown();
+                }
+            });
+
+            // ESC tuşu ile kapatma kısmını güncelle
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (isSearchActive) {
+                        closeSearch();
+                        searchInput.value = '';
+                    }
+                    if (isSearchDropdownOpen) {
+                        closeSearchDropdown();
+                    }
+                }
+            });
+
             function closeSearch() {
                 if (isSearchActive) {
                     const tl = gsap.timeline();
@@ -1337,54 +1533,45 @@ if (!isset($_SESSION['user_id'])) {
             const menuContainer = document.querySelector('.menu-container');
             const submenuContainer = document.querySelector('.submenu-container');
             const submenuLayouts = document.querySelectorAll('.submenu-layout');
+            const menuWrapper = document.querySelector('.menu-wrapper');
             let activeButton = null;
             let isSubmenuOpen = false;
 
             // İlk animasyon
-            tl.to('.menu-wrapper', {
-                height: '80px',
-                duration: 0.1,
-                ease: 'none'
+            gsap.set(menuWrapper, {
+                opacity: 0,
+                y: -80
+            });
+
+            tl.to(menuWrapper, {
+                opacity: 1,
+                y: 0,
+                duration: 0.6,
+                ease: 'power3.inOut'
             })
-                .to('.menu-wrapper', {
-                    y: 0,
-                    duration: 0.6,
-                    ease: 'power3.inOut'
-                })
-                .to(['.menu-container', '.lure-text'], {
+                .to('.menu-container', {
                     opacity: 1,
-                    scale: 1.1,
                     duration: 0.4,
                     ease: 'power3.out'
                 })
-                .to('.menu-container', {
+                .to('.lure-text', {
+                    opacity: 1,
                     scale: 1,
-                    duration: 0.2,
+                    duration: 0.4,
                     ease: 'power3.out'
                 })
-                .to('.menu-container', {
-                    width: '1700px',
-                    duration: 0.8,
-                    ease: 'power4.inOut'
-                })
-                .to('.left-menu, .right-icons', {
+                .to(['.left-menu', '.right-icons'], {
                     visibility: 'visible',
-                    duration: 0
+                    opacity: 1,
+                    duration: 0.4
                 })
-                .to('.menu-item', {
+                .to(['.menu-item', '.icon-item'], {
                     opacity: 1,
                     y: 0,
                     duration: 0.5,
                     stagger: 0.1,
                     ease: 'power3.out'
                 }, '-=0.2')
-                .to('.icon-item', {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.5,
-                    stagger: 0.1,
-                    ease: 'power3.out'
-                }, '-=0.3')
                 .add(() => {
                     setTimeout(() => {
                         gsap.to('.lure-text', {
@@ -1454,12 +1641,12 @@ if (!isset($_SESSION['user_id'])) {
                         duration: 0.3,
                         ease: 'power3.out'
                     })
-                    .to(submenuContainer, {
-                        height: submenuHeight,
-                        opacity: 1,
-                        duration: 0.5,
-                        ease: 'power3.out'
-                    })
+                tl.to(submenuContainer, {
+                    height: submenuHeight,
+                    opacity: 1,
+                    duration: 0.5,
+                    ease: 'power3.out'
+                })
                     .to('.submenu', {
                         opacity: 1,
                         y: 0,

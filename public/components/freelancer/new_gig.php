@@ -148,7 +148,7 @@ if (isset($_POST['ajax_upload'])) {
     exit;
 }
 
-// Form işleme kısmını güncelle
+// Form işleme kısmı
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
     $step = $_POST['step'] ?? 1;
     $formData = $_POST;
@@ -159,16 +159,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
 
         if ($temp_id) {
             // Mevcut form verilerini al
-            $tempGigQuery = "SELECT form_data, milestones_data, nda_data FROM temp_gigs WHERE temp_gig_id = ? AND freelancer_id = ?";
+// Mevcut form verilerini al
+            $tempGigQuery = "SELECT form_data, media_data FROM temp_gigs WHERE temp_gig_id = ? AND freelancer_id = ?";
             $stmt = $db->prepare($tempGigQuery);
             $stmt->execute([$temp_id, $freelancer_id]);
             $tempGigData = $stmt->fetch(PDO::FETCH_ASSOC);
 
             $existingFormData = json_decode($tempGigData['form_data'], true) ?? [];
-            $existingMilestonesData = json_decode($tempGigData['milestones_data'], true) ?? [];
-            $existingNdaData = json_decode($tempGigData['nda_data'], true) ?? [];
-
-            // Yeni form verilerini mevcut verilerle birleştir
             $formData = array_merge($existingFormData, $formData);
 
             if ($step == 6) {
@@ -177,7 +174,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                     throw new Exception(__('Lütfen iş süreci anlaşmasını kabul edin.'));
                 }
 
-                // Milestone verilerini hazırla
+                $mediaData = json_decode($tempGigData['media_data'], true) ?? ['images' => [], 'video' => null];
+                $finalMediaData = ['images' => [], 'video' => null];
+
+                // Uploads klasörlerini kontrol et ve oluştur
+                if (!is_dir('uploads/photos')) {
+                    mkdir('uploads/photos', 0777, true);
+                }
+                if (!is_dir('uploads/videos')) {
+                    mkdir('uploads/videos', 0777, true);
+                }
+
+                // Fotoğrafları taşı
+                if (!empty($mediaData['images'])) {
+                    foreach ($mediaData['images'] as $tempPath) {
+                        if (file_exists($tempPath)) {
+                            $extension = pathinfo($tempPath, PATHINFO_EXTENSION);
+                            $fileName = 'gig_' . uniqid() . '.' . $extension;
+                            $finalPath = 'uploads/photos/' . $fileName;
+
+                            if (rename($tempPath, $finalPath)) {
+                                $finalMediaData['images'][] = $finalPath;
+                            }
+                        }
+                    }
+                }
+
+                // Videoyu taşı
+                if (!empty($mediaData['video']) && file_exists($mediaData['video'])) {
+                    $extension = pathinfo($mediaData['video'], PATHINFO_EXTENSION);
+                    $fileName = 'gig_' . uniqid() . '.' . $extension;
+                    $finalPath = 'uploads/videos/' . $fileName;
+
+                    if (rename($mediaData['video'], $finalPath)) {
+                        $finalMediaData['video'] = $finalPath;
+                    }
+                }
+
+                // Milestone ve NDA verilerini hazırla
                 $milestones = [];
                 $milestoneTitles = $_POST['milestone_titles'] ?? [];
                 $milestoneDescriptions = $_POST['milestone_descriptions'] ?? [];
@@ -190,18 +224,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                     ];
                 }
 
-                // NDA verilerini hazırla
                 $ndaData = [
                     'required' => isset($_POST['nda_required']),
                     'text' => $_POST['nda_text'] ?? ''
                 ];
 
-                // Gig oluştur
+                // Gig oluştur - media_data olarak $finalMediaData'yı kullan
                 $insertGigQuery = "INSERT INTO gigs (
-                    freelancer_id, title, category, subcategory, description,
-                    requirements, price, pricing_type, delivery_time, revision_count,
-                    media_data, status, agreement_accepted, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_REVIEW', ?, NOW())";
+    freelancer_id, title, category, subcategory, description,
+    requirements, price, pricing_type, delivery_time, revision_count,
+    media_data, milestones_data, nda_data, status, agreement_accepted, 
+    created_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_REVIEW', ?, NOW())";
 
                 $stmt = $db->prepare($insertGigQuery);
                 $stmt->execute([
@@ -215,113 +249,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                     $formData['pricing_type'],
                     $formData['delivery_time'],
                     $formData['revision_count'],
-                    $tempGigData['media_data'],
+                    json_encode($finalMediaData), // Taşınmış medya verilerini kullan
+                    json_encode($milestones),
+                    json_encode($ndaData),
                     true
                 ]);
-
-                $gigId = $db->lastInsertId();
-
-                // Milestone'ları kaydet
-                foreach ($milestones as $milestone) {
-                    $insertMilestoneQuery = "INSERT INTO gig_milestones (
-                        gig_id, title, description, order_number
-                    ) VALUES (?, ?, ?, ?)";
-
-                    $stmt = $db->prepare($insertMilestoneQuery);
-                    $stmt->execute([
-                        $gigId,
-                        $milestone['title'],
-                        $milestone['description'],
-                        $milestone['order_number']
-                    ]);
-                }
-
-                // NDA gereksinimlerini kaydet
-                if ($ndaData['required']) {
-                    $insertNdaQuery = "INSERT INTO gig_nda_requirements (
-                        gig_id, nda_text, is_required
-                    ) VALUES (?, ?, ?)";
-
-                    $stmt = $db->prepare($insertNdaQuery);
-                    $stmt->execute([
-                        $gigId,
-                        $ndaData['text'],
-                        true
-                    ]);
-                }
-
-                // Medya dosyalarını taşı
-                $mediaData = json_decode($tempGig['media_data'], true) ?? ['images' => [], 'video' => null];
-                $finalMediaData = ['images' => [], 'video' => null];
-
-                // Fotoğrafları taşı
-                if (!empty($mediaData['images'])) {
-                    foreach ($mediaData['images'] as $tempPath) {
-                        if (file_exists($tempPath)) {
-                            $extension = pathinfo($tempPath, PATHINFO_EXTENSION);
-                            $fileName = 'gig_' . $gigId . '_' . uniqid() . '.' . $extension;
-                            $finalPath = 'uploads/photos/' . $fileName;
-
-                            if (!is_dir('uploads/photos')) {
-                                mkdir('uploads/photos', 0777, true);
-                            }
-
-                            if (rename($tempPath, $finalPath)) {
-                                $finalMediaData['images'][] = $finalPath;
-                            }
-                        }
-                    }
-                }
-
-                // Videoyu taşı
-                if (!empty($mediaData['video']) && file_exists($mediaData['video'])) {
-                    $extension = pathinfo($mediaData['video'], PATHINFO_EXTENSION);
-                    $fileName = 'gig_' . $gigId . '_' . uniqid() . '.' . $extension;
-                    $finalPath = 'uploads/videos/' . $fileName;
-
-                    if (!is_dir('uploads/videos')) {
-                        mkdir('uploads/videos', 0777, true);
-                    }
-
-                    if (rename($mediaData['video'], $finalPath)) {
-                        $finalMediaData['video'] = $finalPath;
-                    }
-                }
-
-                // Gig'i güncelle
-                $updateGigQuery = "UPDATE gigs SET media_data = ? WHERE gig_id = ?";
-                $stmt = $db->prepare($updateGigQuery);
-                $stmt->execute([json_encode($finalMediaData), $gigId]);
 
                 // Temp gig'i sil
                 $deleteQuery = "DELETE FROM temp_gigs WHERE temp_gig_id = ? AND freelancer_id = ?";
                 $stmt = $db->prepare($deleteQuery);
                 $stmt->execute([$temp_id, $freelancer_id]);
 
+                $gigId = $db->lastInsertId();
+
+                // Gig medya verilerini güncelle
+                $updateGigQuery = "UPDATE gigs SET media_data = ? WHERE gig_id = ?";
+                $stmt = $db->prepare($updateGigQuery);
+                $stmt->execute([json_encode($finalMediaData), $gigId]);
+
                 $db->commit();
                 $_SESSION['success'] = __('İlanınız başarıyla oluşturuldu ve onay sürecine alındı.');
                 header('Location: dashboard.php');
                 exit;
             } else {
-                // Normal adım güncelleme
-                $updateData = [
-                    'current_step' => $step + 1,
-                    'form_data' => json_encode($formData)
-                ];
-
-                if ($step == 5) {
-                    $updateData['milestones_data'] = json_encode($milestones ?? []);
-                    $updateData['nda_data'] = json_encode($ndaData ?? []);
-                }
-
-                $updateQuery = "UPDATE temp_gigs SET " .
-                    implode(', ', array_map(function ($key) {
-                        return "$key = ?";
-                    }, array_keys($updateData))) .
-                    " WHERE temp_gig_id = ?";
-
+                // Normal adım güncelleme - Temp gig güncelleme
+                $updateQuery = "UPDATE temp_gigs SET current_step = ?, form_data = ? WHERE temp_gig_id = ?";
                 $stmt = $db->prepare($updateQuery);
-                $stmt->execute([...array_values($updateData), $temp_id]);
+                $stmt->execute([$step + 1, json_encode($formData), $temp_id]);
+
+                $db->commit();
+                header("Location: new_gig.php?temp_id=" . $temp_id);
+                exit;
             }
         } else {
             // İlk temp gig oluşturma
@@ -329,11 +287,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
             $stmt = $db->prepare($insertQuery);
             $stmt->execute([$freelancer_id, $step + 1, json_encode($formData)]);
             $temp_id = $db->lastInsertId();
-        }
 
-        $db->commit();
-
-        if ($step < 6) {
+            $db->commit();
             header("Location: new_gig.php?temp_id=" . $temp_id);
             exit;
         }
@@ -655,7 +610,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                                 <!-- Sabit Teslim Aşaması -->
                                 <div class="milestone-item bg-gray-50 p-4 rounded-lg">
                                     <div class="flex items-center gap-4">
-                                        <span class="font-medium milestone-end-number"></span>
+                                        <span class="font-medium milestone-end-number">2. Teslim</span>
                                         <input type="hidden" name="milestone_titles[]" value="Teslim">
                                         <input type="text" name="milestone_descriptions[]"
                                             placeholder="<?= __('İş teslim edilir ve müşteri onayı beklenir') ?>"
@@ -727,23 +682,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                             const newMilestone = document.createElement('div');
                             newMilestone.className = 'milestone-item p-4 rounded-lg border';
                             newMilestone.innerHTML = `
-                                        <div class="flex items-center gap-4">
-                                            <input type="text" name="milestone_titles[]" 
-                                                   placeholder="<?= __('Aşama başlığı') ?>"
-                                                   class="w-1/3 rounded-md border-gray-300"
-                                                   required>
-                                            <input type="text" name="milestone_descriptions[]" 
-                                                   placeholder="<?= __('Aşama açıklaması') ?>"
-                                                   class="flex-1 rounded-md border-gray-300"
-                                                   required>
-                                            <button type="button" onclick="removeMilestone(this)" 
-                                                    class="text-red-600 hover:text-red-800">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    `;
+                                                                        <div class="flex items-center gap-4">
+                                                                            <input type="text" name="milestone_titles[]" 
+                                                                                   placeholder="<?= __('Aşama başlığı') ?>"
+                                                                                   class="w-1/3 rounded-md border-gray-300"
+                                                                                   required>
+                                                                            <input type="text" name="milestone_descriptions[]" 
+                                                                                   placeholder="<?= __('Aşama açıklaması') ?>"
+                                                                                   class="flex-1 rounded-md border-gray-300"
+                                                                                   required>
+                                                                            <button type="button" onclick="removeMilestone(this)" 
+                                                                                    class="text-red-600 hover:text-red-800">
+                                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                </svg>
+                                                                            </button>
+                                                                        </div>
+                                                                    `;
 
                             container.appendChild(newMilestone);
                             updateMilestoneNumbers();
@@ -1062,11 +1017,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
             const dynamicMilestones = document.getElementById('dynamic-milestones').children;
             const endNumberElement = document.querySelector('.milestone-end-number');
 
-            // Son numarayı güncelle
+            // Dinamik aşamaların sayısına göre son numarayı güncelle
             if (endNumberElement) {
-                endNumberElement.textContent = `${dynamicMilestones.length + 2}. Teslim`;
+                const totalSteps = dynamicMilestones.length + 2; // +2 for start and end
+                endNumberElement.textContent = `${totalSteps}. Teslim`;
             }
         }
+
+        // Sayfa yüklendiğinde updateMilestoneNumbers'ı çağır
+        document.addEventListener('DOMContentLoaded', function () {
+            updateMilestoneNumbers();
+        });
     </script>
 </body>
 
