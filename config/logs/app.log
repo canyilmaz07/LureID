@@ -126,3 +126,15 @@
 [2024-11-22 20:55:28] [INFO] Successful login attempt for user: can@can.c
 [2024-11-22 20:55:28] [INFO] User logged in successfully: can@can.c
 [2024-11-23 00:00:44] [INFO] Work created successfully: ID 15
+[2024-11-28 13:32:02] [ERROR] Error fetching pending gigs: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'lureid.gig_milestones' doesn't exist
+[2024-11-28 13:32:05] [ERROR] Error fetching pending gigs: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'lureid.gig_milestones' doesn't exist
+[2024-11-28 13:32:05] [ERROR] Error fetching pending gigs: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'lureid.gig_milestones' doesn't exist
+[2024-11-28 13:32:05] [ERROR] Error fetching pending gigs: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'lureid.gig_milestones' doesn't exist
+[2024-11-28 13:32:06] [ERROR] Error fetching pending gigs: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'lureid.gig_milestones' doesn't exist
+[2024-11-28 13:32:06] [ERROR] Error fetching pending gigs: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'lureid.gig_milestones' doesn't exist
+[2024-11-28 13:32:07] [ERROR] Error fetching pending gigs: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'lureid.gig_milestones' doesn't exist
+[2024-11-28 13:32:07] [ERROR] Error fetching pending gigs: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'lureid.gig_milestones' doesn't exist
+[2024-11-28 13:32:08] [ERROR] Error fetching pending gigs: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'lureid.gig_milestones' doesn't exist
+[2024-12-02 12:09:45] [ERROR] Error fetching pending gigs: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'lureid.gig_milestones' doesn't exist
+[2024-12-04 15:33:11] [ERROR] Error fetching pending gigs: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'lureid.gig_milestones' doesn't exist
+[2024-12-04 15:33:12] [ERROR] Error fetching pending gigs: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'lureid.gig_milestones' doesn't exist
