@@ -42,7 +42,6 @@ if ($userData['subscription_plan'] == 'id_plus') {
 $menuItems = [
     ['section' => 'wallet', 'icon' => 'wallet-2.svg', 'text' => 'Cüzdan'],
     ['section' => 'transactions', 'icon' => 'timer-1.svg', 'text' => 'Hareketler'],
-    ['section' => 'cards', 'icon' => 'card.svg', 'text' => 'Kayıtlı Kartlar'],
     ['section' => 'subscriptions', 'icon' => 'receipt-2.svg', 'text' => 'Abonelikler'],
 ];
 ?>
@@ -55,12 +54,8 @@ $menuItems = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wallet Sidebar</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <style>
-        @font-face {
-            font-family: 'Anton';
-            src: url('/public/components/fonts/Anton.ttf') format('truetype');
-        }
-
         *,
         body,
         html {
@@ -81,7 +76,8 @@ $menuItems = [
         }
 
         .logo {
-            font-family: 'Anton', sans-serif;
+            font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 2px;
             text-align: center;
             font-size: 24px;
             margin-bottom: 20px;
@@ -331,17 +327,19 @@ $menuItems = [
                 </a>
 
                 <?php foreach ($menuItems as $item): ?>
-                    <a href="?section=<?php echo $item['section']; ?>" 
-                       class="menu-item <?php echo $activeSection === $item['section'] ? 'active' : ''; ?>">
+                    <a href="?section=<?php echo $item['section']; ?>"
+                        class="menu-item <?php echo $activeSection === $item['section'] ? 'active' : ''; ?>">
                         <img src="/sources/icons/bulk/<?php echo $item['icon']; ?>" alt="<?php echo $item['text']; ?>">
                         <?php echo $item['text']; ?>
                     </a>
                 <?php endforeach; ?>
 
-                <a href="?section=upgrade" class="upgrade-button">
-                    <img src="/sources/icons/bulk/flash-circle.svg" alt="ID+ Edin">
-                    <?php echo $userData['subscription_plan'] === 'basic' ? 'ID+ Edin' : 'ID+ Hesabım'; ?>
-                </a>
+                <?php if ($userData['subscription_plan'] === 'basic'): ?>
+                    <a href="?section=upgrade" class="upgrade-button">
+                        <img src="/sources/icons/bulk/flash-circle.svg" alt="ID+ Edin">
+                        ID+ Edin
+                    </a>
+                <?php endif; ?>
             </div>
 
             <!-- Profile section -->
@@ -369,5 +367,39 @@ $menuItems = [
             <?php echo getWalletContent($activeSection, $userData); ?>
         </div>
     </div>
+
+    <?php
+    if (isset($_SESSION['show_subscription_welcome'])) {
+        $planName = $userData['subscription_plan'] == 'id_plus' ? 'ID+' : 'ID+ Pro';
+        ?>
+        <div id="welcome-modal"
+            style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+            <div style="background: white; padding: 30px; border-radius: 15px; max-width: 400px; text-align: center;">
+                <img src="/sources/icons/bulk/crown.svg" style="width: 48px; height: 48px; margin-bottom: 20px;">
+                <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 10px;">🎉 <?php echo $planName; ?> Ailesine Hoş
+                    Geldiniz!</h2>
+                <p style="font-size: 14px; color: #666; margin-bottom: 20px;">
+                    <?php if ($userData['subscription_plan'] == 'id_plus_pro'): ?>
+                        Artık tüm premium özelliklere sınırsız erişiminiz var.
+                    <?php else: ?>
+                        ID+ üyesi olarak özel ayrıcalıklardan yararlanabilirsiniz.
+                    <?php endif; ?>
+                </p>
+                <button onclick="closeModal()"
+                    style="background: #4F46E5; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px;">Anladım</button>
+            </div>
+        </div>
+
+        <script>
+            function closeModal() {
+                document.getElementById('welcome-modal').style.display = 'none';
+                fetch('clear_welcome_modal.php');
+            }
+        </script>
+        <?php
+        unset($_SESSION['show_subscription_welcome']);
+    }
+    ?>
 </body>
+
 </html>

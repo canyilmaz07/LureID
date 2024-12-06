@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Anamakine: 127.0.0.1
--- Üretim Zamanı: 24 Kas 2024, 20:30:36
+-- Üretim Zamanı: 05 Ara 2024, 14:59:47
 -- Sunucu sürümü: 10.4.32-MariaDB
 -- PHP Sürümü: 8.2.12
 
@@ -57,9 +57,10 @@ CREATE TABLE `follows` (
 --
 
 INSERT INTO `follows` (`user_id`, `following`, `followers`, `created_at`, `updated_at`) VALUES
-(464470963, '[]', '[]', '2024-11-24 19:27:47', NULL),
-(633509523, '[251081278]', '[251081278]', '2024-11-22 23:06:14', '2024-11-24 02:06:36'),
-(651413290, '[]', '[]', '2024-11-24 17:15:31', NULL);
+(113691405, '[]', '[]', '2024-12-02 13:29:26', NULL),
+(384546394, '[395548956]', '[]', '2024-12-04 20:41:47', '2024-12-05 11:32:33'),
+(395548956, '[]', '[768556619,384546394]', '2024-12-02 13:30:50', '2024-12-05 11:32:33'),
+(768556619, '[395548956]', '[]', '2024-12-04 14:26:39', '2024-12-04 14:27:29');
 
 -- --------------------------------------------------------
 
@@ -79,16 +80,17 @@ CREATE TABLE `freelancers` (
   `approval_status` enum('PENDING','APPROVED','REJECTED') DEFAULT 'PENDING',
   `status` enum('ACTIVE','INACTIVE','BANNED') DEFAULT 'ACTIVE',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `mod_note` text DEFAULT NULL COMMENT 'Moderatör red notu'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Tablo döküm verisi `freelancers`
 --
 
-INSERT INTO `freelancers` (`freelancer_id`, `user_id`, `phone`, `identity_number`, `profile_data`, `professional_data`, `financial_data`, `additional_data`, `approval_status`, `status`, `created_at`, `updated_at`) VALUES
-(3, 633509523, '5116651212', '12121212133', '{\"phone\":\"5116651212\",\"identity_number\":\"12121212133\",\"birth_year\":null,\"location\":{\"country\":null,\"city\":null}}', '{\"experience\":null,\"skills\":[\"\"],\"education\":null,\"certifications\":null,\"portfolio\":null,\"references\":null}', '{\"account_holder\":\"Osman\",\"bank_name\":\"ING\",\"iban\":\"34 2845 8923 4597 2424 2384 58\",\"tax_number\":\"6516516516\",\"daily_rate\":\"1221\"}', NULL, 'APPROVED', 'ACTIVE', '2024-11-24 04:23:25', '2024-11-24 04:23:41'),
-(4, 651413290, '5116651212', '12121212133', '{\"phone\":\"5116651212\",\"identity_number\":\"12121212133\",\"birth_year\":null,\"location\":{\"country\":null,\"city\":null}}', '{\"experience\":null,\"skills\":[\"\"],\"education\":null,\"certifications\":null,\"portfolio\":null,\"references\":null}', '{\"account_holder\":\"Can\",\"bank_name\":\"YapiKredi\",\"iban\":\"15 1516 5165 1655 6132 1351 65\",\"tax_number\":\"6516516516\",\"daily_rate\":\"1500\"}', NULL, 'APPROVED', 'ACTIVE', '2024-11-24 17:21:09', '2024-11-24 17:21:36');
+INSERT INTO `freelancers` (`freelancer_id`, `user_id`, `phone`, `identity_number`, `profile_data`, `professional_data`, `financial_data`, `additional_data`, `approval_status`, `status`, `created_at`, `updated_at`, `mod_note`) VALUES
+(16, 768556619, '5301556515', '51651651652', '{\"phone\":\"5301556515\",\"identity_number\":\"51651651652\",\"birth_year\":null,\"location\":{\"country\":null,\"city\":null}}', '{\"experience\":null,\"skills\":[\"\"],\"education\":null,\"certifications\":null,\"portfolio\":null,\"references\":null}', '{\"account_holder\":\"Can\",\"bank_name\":\"Ziraat\",\"iban\":\"51 2561 6516 5165 1651 6516 51\",\"tax_number\":\"5156165561\",\"daily_rate\":\"500\"}', NULL, 'APPROVED', 'ACTIVE', '2024-12-04 14:31:39', '2024-12-04 14:32:02', NULL),
+(17, 384546394, '5301556515', '51651651652', '{\"phone\":\"5301556515\",\"identity_number\":\"51651651652\",\"birth_year\":null,\"location\":{\"country\":null,\"city\":null}}', '{\"experience\":null,\"skills\":[\"\"],\"education\":null,\"certifications\":null,\"portfolio\":null,\"references\":null}', '{\"account_holder\":\"Can\",\"bank_name\":\"Odeabank\",\"iban\":\"15 6165 1651 5616 5165 1651 65\",\"tax_number\":\"5156165561\",\"daily_rate\":\"500\"}', NULL, 'APPROVED', 'ACTIVE', '2024-12-04 22:13:42', '2024-12-04 22:13:58', NULL);
 
 -- --------------------------------------------------------
 
@@ -112,16 +114,20 @@ CREATE TABLE `gigs` (
   `media_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Fotoğraf ve video yolları' CHECK (json_valid(`media_data`)),
   `agreement_accepted` tinyint(1) DEFAULT 0,
   `views` int(11) DEFAULT 0,
+  `milestones_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `nda_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `mod_note` text DEFAULT NULL COMMENT 'Moderatör red notu'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Tablo döküm verisi `gigs`
 --
 
-INSERT INTO `gigs` (`gig_id`, `freelancer_id`, `title`, `category`, `subcategory`, `description`, `requirements`, `price`, `pricing_type`, `delivery_time`, `revision_count`, `status`, `media_data`, `agreement_accepted`, `views`, `created_at`, `updated_at`) VALUES
-(4, 4, '213', 'Dijital Pazarlama', 'Affiliate Marketing', '123', '13', 231.00, 'ONE_TIME', 13, 1, 'PAUSED', '{\"images\":[\"uploads\\/photos\\/gig_4_674367058c7ed.jpg\"],\"video\":null}', 1, 0, '2024-11-24 17:48:53', '2024-11-24 18:50:53');
+INSERT INTO `gigs` (`gig_id`, `freelancer_id`, `title`, `category`, `subcategory`, `description`, `requirements`, `price`, `pricing_type`, `delivery_time`, `revision_count`, `status`, `media_data`, `agreement_accepted`, `views`, `milestones_data`, `nda_data`, `created_at`, `updated_at`, `mod_note`) VALUES
+(15, 16, 'gregre', 'Web, Yazılım & Teknoloji', 'API Geliştirme', 'ewfewf', 'fewfew', 500.00, 'ONE_TIME', 2, 1, 'APPROVED', '{\"images\":[\"uploads\\/photos\\/gig_6750681f7efa4.jpg\"],\"video\":null}', 1, 0, '[{\"title\":\"Ba\\u015flang\\u0131\\u00e7\",\"description\":\"ewrwe\",\"order_number\":1},{\"title\":\"2.ger\",\"description\":\"5165\",\"order_number\":2},{\"title\":\"Teslim\",\"description\":\"werewr\",\"order_number\":3}]', '{\"required\":false,\"text\":\"\"}', '2024-12-04 14:33:03', '2024-12-04 14:33:24', NULL),
+(16, 17, 'fewfew', 'İş & Yönetim', 'İnsan Kaynakları', 'fewfew', 'fewfew', 500.00, 'MONTHLY', 5, 1, 'APPROVED', '{\"images\":[\"uploads\\/photos\\/gig_6750d44068105.jpg\"],\"video\":null}', 1, 0, '[{\"title\":\"Ba\\u015flang\\u0131\\u00e7\",\"description\":\"wdqwdq\",\"order_number\":1},{\"title\":\"Teslim\",\"description\":\"wqdwqd\",\"order_number\":2}]', '{\"required\":true,\"text\":\"dwqdwq\"}', '2024-12-04 22:14:24', '2024-12-04 22:14:34', NULL);
 
 -- --------------------------------------------------------
 
@@ -255,51 +261,6 @@ INSERT INTO `gig_categories` (`category_id`, `name`, `parent_id`, `created_at`) 
 -- --------------------------------------------------------
 
 --
--- Tablo için tablo yapısı `gig_milestones`
---
-
-CREATE TABLE `gig_milestones` (
-  `milestone_id` int(11) NOT NULL,
-  `gig_id` int(11) NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `order_number` int(11) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Tablo döküm verisi `gig_milestones`
---
-
-INSERT INTO `gig_milestones` (`milestone_id`, `gig_id`, `title`, `description`, `order_number`, `created_at`) VALUES
-(4, 4, 'Başlangıç', 'İş satın alınır', 1, '2024-11-24 17:48:53'),
-(5, 4, '2.Tanımlama', 'İş satın alınır', 2, '2024-11-24 17:48:53'),
-(6, 4, 'Teslim', 'İş satın alınır', 3, '2024-11-24 17:48:53');
-
--- --------------------------------------------------------
-
---
--- Tablo için tablo yapısı `gig_nda_requirements`
---
-
-CREATE TABLE `gig_nda_requirements` (
-  `nda_id` int(11) NOT NULL,
-  `gig_id` int(11) NOT NULL,
-  `nda_text` text NOT NULL,
-  `is_required` tinyint(1) DEFAULT 1,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Tablo döküm verisi `gig_nda_requirements`
---
-
-INSERT INTO `gig_nda_requirements` (`nda_id`, `gig_id`, `nda_text`, `is_required`, `created_at`) VALUES
-(2, 4, 'ewwe', 1, '2024-11-24 17:48:53');
-
--- --------------------------------------------------------
-
---
 -- Tablo için tablo yapısı `invitations`
 --
 
@@ -309,6 +270,46 @@ CREATE TABLE `invitations` (
   `invited_user_id` int(11) NOT NULL,
   `invitation_code` varchar(255) DEFAULT NULL,
   `used_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `invitations`
+--
+
+INSERT INTO `invitations` (`invitation_id`, `inviter_id`, `invited_user_id`, `invitation_code`, `used_at`) VALUES
+(21, 113691405, 395548956, '674DB6106', NULL),
+(22, 113691405, 768556619, '674DB6106', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `jobs`
+--
+
+CREATE TABLE `jobs` (
+  `job_id` int(11) NOT NULL,
+  `gig_id` int(11) NOT NULL,
+  `client_id` int(11) NOT NULL COMMENT 'User who purchased the gig',
+  `freelancer_id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `requirements` text DEFAULT NULL,
+  `category` varchar(100) NOT NULL,
+  `subcategory` varchar(100) DEFAULT NULL,
+  `budget` decimal(10,2) NOT NULL,
+  `status` enum('PENDING','IN_PROGRESS','UNDER_REVIEW','REVISION_REQUESTED','COMPLETED','CANCELLED','DISPUTED') NOT NULL DEFAULT 'PENDING',
+  `delivery_deadline` timestamp NULL DEFAULT NULL,
+  `completed_at` timestamp NULL DEFAULT NULL,
+  `revision_count` int(11) DEFAULT 0,
+  `max_revisions` int(11) DEFAULT 1,
+  `milestones_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`milestones_data`)),
+  `deliverables_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`deliverables_data`)),
+  `transaction_id` bigint(20) DEFAULT NULL,
+  `cancellation_reason` text DEFAULT NULL,
+  `client_rating` int(11) DEFAULT NULL,
+  `freelancer_rating` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -339,8 +340,9 @@ CREATE TABLE `login_attempts` (
 --
 
 INSERT INTO `login_attempts` (`attempt_id`, `user_id`, `ip_address`, `attempt_time`, `status`, `country`, `city`, `region`, `isp`, `timezone`, `browser`, `browser_version`, `os`, `verified`) VALUES
-(80, 633509523, '5.27.17.13', '2024-11-24 03:31:35', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
-(82, 633509523, '5.27.17.13', '2024-11-24 03:58:32', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '131.0.0.0', 'Windows', 0);
+(90, 395548956, '5.27.24.17', '2024-12-04 12:37:41', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(91, 768556619, '5.27.24.17', '2024-12-04 14:29:42', 'FAILED', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Unknown', 'Unknown', 'Unknown', 0),
+(92, 768556619, '5.27.24.17', '2024-12-04 14:29:46', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 1);
 
 -- --------------------------------------------------------
 
@@ -362,9 +364,10 @@ CREATE TABLE `referral_sources` (
 --
 
 INSERT INTO `referral_sources` (`source_id`, `user_id`, `source_type`, `specific_source`, `is_referral_signup`, `join_date`) VALUES
-(40, 633509523, 'ORGANIC', '67410E470', 1, '2024-11-22 23:06:12'),
-(43, 651413290, 'ORGANIC', '67435F2DC', 0, '2024-11-24 17:15:30'),
-(44, 464470963, 'ORGANIC', '67437E1DA', 0, '2024-11-24 19:27:45');
+(58, 113691405, 'ORGANIC', '674DB6106', 0, '2024-12-02 13:29:24'),
+(59, 395548956, 'ORGANIC', '674DB6776', 1, '2024-12-02 13:30:48'),
+(60, 768556619, 'ORGANIC', '67506685F', 1, '2024-12-04 14:26:37'),
+(61, 384546394, 'ORGANIC', '6750BE7FC', 0, '2024-12-04 20:41:47');
 
 -- --------------------------------------------------------
 
@@ -388,8 +391,8 @@ CREATE TABLE `staff` (
 --
 
 INSERT INTO `staff` (`staff_id`, `username`, `password`, `email`, `role`, `is_active`, `created_at`, `last_login`) VALUES
-(6, 'admin', '$2y$10$0QqrVX5J7GbVHbgcvRx7fOI/FcfeR3e4MxSBGdlIxKtTMItLhWavS', 'admin@lureid.com', 'ADMIN', 1, '2024-11-19 12:29:38', '2024-11-23 18:52:49'),
-(7, 'mod', '$2y$10$.JgApAzxzLdgmlTe1WQxiOZj0bG2A8FHocG6gyCMRwNrabpABlCaS', 'moderator@lureid.com', 'MODERATOR', 1, '2024-11-19 12:29:38', '2024-11-19 12:33:39'),
+(6, 'admin', '$2y$10$0QqrVX5J7GbVHbgcvRx7fOI/FcfeR3e4MxSBGdlIxKtTMItLhWavS', 'admin@lureid.com', 'ADMIN', 1, '2024-11-19 12:29:38', '2024-12-04 22:13:53'),
+(7, 'mod', '$2y$10$.JgApAzxzLdgmlTe1WQxiOZj0bG2A8FHocG6gyCMRwNrabpABlCaS', 'moderator@lureid.com', 'MODERATOR', 1, '2024-11-19 12:29:38', '2024-11-25 14:43:58'),
 (8, 'sup', '$2y$10$R0QQciU4BasDU.T54J.Brep6koZiGzBKEzUt94jEwd5Ov88zsmUq2', 'support@lureid.com', 'SUPPORT', 1, '2024-11-19 12:29:38', '2024-11-19 15:54:20');
 
 -- --------------------------------------------------------
@@ -419,7 +422,36 @@ CREATE TABLE `staff_login_attempts` (
 --
 
 INSERT INTO `staff_login_attempts` (`attempt_id`, `staff_id`, `ip_address`, `attempt_time`, `status`, `country`, `city`, `region`, `isp`, `timezone`, `browser`, `browser_version`, `os`) VALUES
-(15, 6, '5.27.17.13', '2024-11-23 18:52:49', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '131.0.0.0', 'Windows');
+(15, 6, '5.27.17.13', '2024-11-23 18:52:49', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '131.0.0.0', 'Windows'),
+(16, 7, '5.27.29.221', '2024-11-25 14:43:58', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows'),
+(17, 6, '5.27.29.221', '2024-11-25 14:44:15', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows'),
+(18, 6, '5.27.29.221', '2024-11-25 14:49:14', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows'),
+(19, 6, '5.27.29.221', '2024-11-25 18:21:07', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '131.0.0.0', 'Windows'),
+(20, 6, '5.27.20.191', '2024-11-27 01:09:17', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows'),
+(21, 6, '5.25.167.125', '2024-11-27 15:26:49', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows'),
+(22, 6, '5.25.174.7', '2024-11-28 02:35:25', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows'),
+(23, 6, '5.24.189.236', '2024-11-28 12:29:01', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows'),
+(24, 6, '5.27.24.203', '2024-12-02 11:09:43', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows'),
+(25, 6, '5.27.24.203', '2024-12-02 11:10:40', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows'),
+(26, 6, '5.27.24.17', '2024-12-04 14:31:53', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows'),
+(27, 6, '5.25.170.202', '2024-12-04 22:13:53', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows');
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `subscriptions`
+--
+
+CREATE TABLE `subscriptions` (
+  `subscription_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `subscription_name` varchar(255) NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `billing_period` enum('MONTHLY','YEARLY') DEFAULT 'MONTHLY',
+  `start_date` timestamp NOT NULL DEFAULT current_timestamp(),
+  `next_billing_date` timestamp NOT NULL DEFAULT (current_timestamp() + interval 1 month),
+  `status` enum('ACTIVE','CANCELLED','EXPIRED') DEFAULT 'ACTIVE'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -440,13 +472,6 @@ CREATE TABLE `temp_gigs` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Tablo döküm verisi `temp_gigs`
---
-
-INSERT INTO `temp_gigs` (`temp_gig_id`, `freelancer_id`, `current_step`, `form_data`, `pricing_type`, `media_data`, `milestones_data`, `nda_data`, `agreement_accepted`, `created_at`, `updated_at`) VALUES
-(13, 4, 2, '{\"title\":\"fewfew\",\"category\":\"Dijital Pazarlama\",\"subcategory\":\"Affiliate Marketing\"}', 'ONE_TIME', NULL, NULL, NULL, 0, '2024-11-24 18:09:20', NULL);
 
 -- --------------------------------------------------------
 
@@ -479,7 +504,7 @@ CREATE TABLE `transactions` (
   `sender_id` int(11) NOT NULL,
   `receiver_id` int(11) NOT NULL,
   `amount` decimal(10,2) DEFAULT NULL,
-  `transaction_type` enum('DEPOSIT','WITHDRAWAL','TRANSFER','PAYMENT') DEFAULT NULL,
+  `transaction_type` enum('DEPOSIT','WITHDRAWAL','TRANSFER','PAYMENT','COINS_RECEIVED','COINS_USED') DEFAULT NULL,
   `status` enum('PENDING','COMPLETED','FAILED','CANCELLED') DEFAULT NULL,
   `description` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -490,8 +515,7 @@ CREATE TABLE `transactions` (
 --
 
 INSERT INTO `transactions` (`transaction_id`, `sender_id`, `receiver_id`, `amount`, `transaction_type`, `status`, `description`, `created_at`) VALUES
-(26181805795, 633509523, 633509523, 1500.00, 'DEPOSIT', 'COMPLETED', 'Credit card deposit to wallet', '2024-11-22 23:38:32'),
-(77834045961, 633509523, 633509523, 100.00, 'WITHDRAWAL', 'COMPLETED', 'Withdrawal from wallet', '2024-11-22 23:42:22');
+(53042652616, 384546394, 384546394, 500.00, 'DEPOSIT', 'COMPLETED', 'Credit card deposit to wallet', '2024-12-04 23:02:02');
 
 -- --------------------------------------------------------
 
@@ -512,17 +536,19 @@ CREATE TABLE `users` (
   `two_factor_auth` tinyint(4) DEFAULT 0,
   `user_type` enum('user') DEFAULT 'user',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `remember_token_expires_at` timestamp NULL DEFAULT NULL
+  `remember_token_expires_at` timestamp NULL DEFAULT NULL,
+  `subscription_plan` enum('basic','id_plus','id_plus_pro') NOT NULL DEFAULT 'basic'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Tablo döküm verisi `users`
 --
 
-INSERT INTO `users` (`user_id`, `username`, `email`, `phone`, `password`, `full_name`, `google_id`, `is_verified`, `remember_token`, `two_factor_auth`, `user_type`, `created_at`, `remember_token_expires_at`) VALUES
-(464470963, 'canyilmaz07', 'osman@os.man', NULL, '$2y$10$nL/3mUyPAqgGlmY/WjuueegXAlhUIL4G7S.IL09n.2tspCmopWDVi', 'Can', NULL, 1, NULL, 0, 'user', '2024-11-24 19:27:45', NULL),
-(633509523, 'tospaa1', 'osmananlatici@gmail.com', NULL, '$2y$10$udMGDSuI0LcMPbsqExamD.aRyFZuuiQwgZJbqK.X.DUvF83ZCM0IO', 'Osman Taha Anlatıcı', NULL, 1, NULL, 0, 'user', '2024-11-22 23:06:12', NULL),
-(651413290, 'can', 'cnylmz735@gmail.com', NULL, '$2y$10$lCJhOmA3AlX8OEzdO04YMOCX3t9WoH8hW0/2qAJw5zmkL3c3WA8PW', 'Can Yılmaz', '105226956217972839065', 1, NULL, 0, 'user', '2024-11-24 17:15:30', NULL);
+INSERT INTO `users` (`user_id`, `username`, `email`, `phone`, `password`, `full_name`, `google_id`, `is_verified`, `remember_token`, `two_factor_auth`, `user_type`, `created_at`, `remember_token_expires_at`, `subscription_plan`) VALUES
+(113691405, 'can', 'CAN@CAN.c', NULL, '$2y$10$DYcn9FVutlBmN3TimYX3ZOEzHn2W7KEr.GwjLsUQFmrNJhYgaqoG.', 'Can', NULL, 1, NULL, 0, 'user', '2024-12-02 13:29:24', NULL, 'basic'),
+(384546394, 'canyilmaz', 'cnylmz735@gmail.com', NULL, '', 'Can Yılmaz', '105226956217972839065', 1, NULL, 0, 'user', '2024-12-04 20:41:47', NULL, 'basic'),
+(395548956, 'tospaa1', 'osmananlatici@gmail.com', NULL, '$2y$10$Ohq8R.RJkkA8HR/R2N4yVuZodh87G35F.nJp4XVVJqTWflJjyArsy', 'osman', NULL, 1, NULL, 0, 'user', '2024-12-02 13:30:48', NULL, 'basic'),
+(768556619, 'emir', 'emirpaytar2005@gmail.com', NULL, '$2y$10$5DV7oB9WIU6v3QL7xWxK5uvFz.TVkpVtOpKG.zFtP8ArL8vmpeZBm', 'emir', NULL, 1, NULL, 0, 'user', '2024-12-04 14:26:37', NULL, 'basic');
 
 --
 -- Tetikleyiciler `users`
@@ -559,16 +585,17 @@ CREATE TABLE `user_extended_details` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   `profile_completeness` decimal(5,2) DEFAULT 0.00,
   `owned_badges` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT '[]' CHECK (json_valid(`owned_badges`))
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Tablo döküm verisi `user_extended_details`
 --
 
 INSERT INTO `user_extended_details` (`detail_id`, `user_id`, `profile_photo_url`, `cover_photo_url`, `basic_info`, `education_history`, `work_experience`, `skills_matrix`, `portfolio_showcase`, `professional_profile`, `network_links`, `achievements`, `community_engagement`, `performance_metrics`, `created_at`, `updated_at`, `profile_completeness`, `owned_badges`) VALUES
-(10, 633509523, 'profile/avatars/633509523.jpg', 'profile/covers/633509523.jpg', '{\"full_name\":\"Osman Taha Anlat\\u0131c\\u0131\",\"age\":20,\"biography\":\"Osman\",\"location\":{\"city\":\"Bursa\",\"country\":\"T\\u00fcrkiye\"},\"contact\":{\"email\":\"osmananlatici@gmail.com\",\"website\":\"osman.com\"},\"languages\":[\"T\\u00fcrk\\u00e7e\"]}', '[]', '[]', '{\"technical_skills\":[],\"soft_skills\":[],\"tools\":[]}', '[]', '{\"summary\":\"\",\"expertise_areas\":[],\"certifications\":[]}', '{\"professional\":[],\"social\":[],\"portfolio_sites\":[]}', '[]', NULL, NULL, '2024-11-22 23:06:14', '2024-11-24 03:33:21', 25.00, '[]'),
-(13, 651413290, 'profile/avatars/651413290.jpg', 'profile/covers/651413290.jpg', '{\"full_name\":\"Can Y\\u0131lmaz\",\"age\":20,\"biography\":\"LureID Founder\",\"location\":{\"city\":\"Antalya\",\"country\":\"T\\u00fcrkiye\"},\"contact\":{\"email\":\"cnylmz735@gmail.com\",\"website\":\"https:\\/\\/can.com\"},\"languages\":[\"T\\u00fcrk\\u00e7e\",\"\\u0130ngilizce\"]}', '[{\"level\":\"phd\",\"institution\":\"fwe\",\"degree\":\"Say\\u0131sal\",\"gpa\":12,\"start_date\":\"2024-08\",\"end_date\":\"2024-05\"}]', '[{\"company\":\"fweq\",\"position\":\"fwqe\",\"start_date\":\"2024-06\",\"end_date\":null,\"description\":\"feqfewqfqw\"}]', '{\"technical_skills\":[\"few\"],\"soft_skills\":[\"few\"],\"tools\":[\"wq\"]}', '[{\"title\":\"few\",\"description\":\"few\",\"url\":\"fewd\"}]', '{\"summary\":\"few\",\"expertise_areas\":[\"few\"],\"certifications\":[\"few\"]}', '{\"professional\":{\"devto\":\"few\",\"behance\":\"few\"},\"social\":{\"pinterest\":\"fwe\",\"twitch\":\"few\"},\"portfolio_sites\":{\"few\":\"few\"}}', '[{\"title\":\"denem\",\"issuer\":\"deneme\",\"date\":\"0021-11\",\"description\":\"fewfew\"}]', NULL, NULL, '2024-11-24 17:15:31', '2024-11-24 19:10:33', 56.50, '[]'),
-(14, 464470963, 'profile/avatars/464470963.jpg', 'undefined', '{\"full_name\": \"Can\", \"age\": null, \"biography\": null, \"location\": {\"city\": null, \"country\": null}, \"contact\": {\"email\": null, \"website\": null}, \"languages\": []}', NULL, NULL, '{\"technical_skills\": [], \"soft_skills\": [], \"tools\": []}', NULL, NULL, '{\"professional\": {}, \"social\": {}, \"portfolio_sites\": {}}', NULL, NULL, NULL, '2024-11-24 19:27:47', '2024-11-24 19:27:50', 0.00, '[]');
+(24, 113691405, 'undefined', 'undefined', '{\"full_name\": \"Can\", \"age\": null, \"biography\": null, \"location\": {\"city\": null, \"country\": null}, \"contact\": {\"email\": null, \"website\": null}, \"languages\": []}', NULL, NULL, '{\"technical_skills\": [], \"soft_skills\": [], \"tools\": []}', NULL, NULL, '{\"professional\": {}, \"social\": {}, \"portfolio_sites\": {}}', NULL, NULL, NULL, '2024-12-02 13:29:26', NULL, 0.00, '[]'),
+(25, 395548956, 'profile/avatars/395548956.jpg', 'undefined', '{\"full_name\": \"osman\", \"age\": null, \"biography\": null, \"location\": {\"city\": null, \"country\": null}, \"contact\": {\"email\": null, \"website\": null}, \"languages\": []}', NULL, NULL, '{\"technical_skills\": [], \"soft_skills\": [], \"tools\": []}', NULL, NULL, '{\"professional\": {}, \"social\": {}, \"portfolio_sites\": {}}', NULL, NULL, NULL, '2024-12-02 13:30:50', '2024-12-04 06:28:18', 12.50, '[]'),
+(26, 768556619, 'profile/avatars/768556619.jpg', 'undefined', '{\"full_name\":\"emir\",\"age\":20,\"biography\":\"kemrogkreg\",\"location\":{\"city\":\"ferreg\",\"country\":\"qrgefwe\"},\"contact\":{\"email\":\"fewfew@f.f\",\"website\":\"efwefw.c\"},\"languages\":[\"T\\u00fcrk\\u00e7e\",\"\\u0130ngilizce\",\"Rus\\u00e7a\"]}', '[]', '[]', '{\"technical_skills\":[],\"soft_skills\":[],\"tools\":[]}', '[]', '{\"summary\":\"\",\"expertise_areas\":[],\"certifications\":[]}', '{\"professional\":[],\"social\":[],\"portfolio_sites\":[]}', '[]', NULL, NULL, '2024-12-04 14:26:39', '2024-12-04 14:31:13', 20.00, '[]'),
+(27, 384546394, 'profile/avatars/384546394.jpg', 'undefined', '{\"full_name\":\"Can Y\\u0131lmaz\",\"age\":20,\"biography\":\"efwfew\",\"location\":{\"city\":\"fewfew\",\"country\":\"ewffew\"},\"contact\":{\"email\":\"fewfew\",\"website\":\"fewfew\"},\"languages\":[\"fewfew\"]}', '[]', '[]', '{\"technical_skills\":[],\"soft_skills\":[],\"tools\":[]}', '[]', '{\"summary\":\"\",\"expertise_areas\":[],\"certifications\":[]}', '{\"professional\":[],\"social\":[],\"portfolio_sites\":[]}', '[]', NULL, NULL, '2024-12-04 20:41:47', '2024-12-04 22:13:19', 20.00, '[]');
 
 -- --------------------------------------------------------
 
@@ -595,9 +622,10 @@ CREATE TABLE `user_settings` (
 --
 
 INSERT INTO `user_settings` (`setting_id`, `user_id`, `language`, `timezone`, `region`, `date_format`, `time_format`, `created_at`, `updated_at`, `theme`, `font_family`) VALUES
-(2, 633509523, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-11-24 03:32:45', '2024-11-24 04:10:45', 'light', 'Inter'),
-(3, 651413290, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-11-24 17:15:30', '2024-11-24 19:01:13', 'light', 'Inter'),
-(4, 464470963, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-11-24 19:27:45', NULL, 'light', 'Inter');
+(18, 113691405, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-12-02 13:29:24', NULL, 'light', 'Inter'),
+(19, 395548956, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-12-02 13:30:48', NULL, 'light', 'Inter'),
+(20, 768556619, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-12-04 14:26:37', '2024-12-04 14:30:43', 'light', 'Inter'),
+(21, 384546394, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-12-04 20:41:47', NULL, 'light', 'Inter');
 
 -- --------------------------------------------------------
 
@@ -635,9 +663,10 @@ CREATE TABLE `wallet` (
 --
 
 INSERT INTO `wallet` (`wallet_id`, `user_id`, `balance`, `coins`, `created_at`, `updated_at`, `last_transaction_date`) VALUES
-(50, 633509523, 1400.00, 25, '2024-11-22 23:06:12', '2024-11-23 23:54:07', '2024-11-23 23:54:07'),
-(51, 651413290, 0.00, 0, '2024-11-24 19:03:10', NULL, NULL),
-(52, 464470963, 0.00, 0, '2024-11-24 19:27:45', NULL, '2024-11-24 19:27:45');
+(70, 113691405, 0.00, 100, '2024-12-02 13:29:24', '2024-12-04 14:26:37', '2024-12-04 14:26:37'),
+(71, 395548956, 0.00, 25, '2024-12-02 13:30:48', NULL, '2024-12-02 13:30:48'),
+(72, 768556619, 0.00, 25, '2024-12-04 14:26:37', NULL, '2024-12-04 14:26:37'),
+(73, 384546394, 1400.00, 25, '2024-12-04 20:41:47', '2024-12-04 23:02:02', '2024-12-04 23:02:02');
 
 --
 -- Dökümü yapılmış tablolar için indeksler
@@ -677,26 +706,22 @@ ALTER TABLE `gig_categories`
   ADD KEY `parent_id` (`parent_id`);
 
 --
--- Tablo için indeksler `gig_milestones`
---
-ALTER TABLE `gig_milestones`
-  ADD PRIMARY KEY (`milestone_id`),
-  ADD KEY `gig_id` (`gig_id`);
-
---
--- Tablo için indeksler `gig_nda_requirements`
---
-ALTER TABLE `gig_nda_requirements`
-  ADD PRIMARY KEY (`nda_id`),
-  ADD KEY `gig_id` (`gig_id`);
-
---
 -- Tablo için indeksler `invitations`
 --
 ALTER TABLE `invitations`
   ADD PRIMARY KEY (`invitation_id`),
   ADD KEY `invitations_ibfk_1` (`inviter_id`),
   ADD KEY `invitations_ibfk_2` (`invited_user_id`);
+
+--
+-- Tablo için indeksler `jobs`
+--
+ALTER TABLE `jobs`
+  ADD PRIMARY KEY (`job_id`),
+  ADD KEY `gig_id` (`gig_id`),
+  ADD KEY `client_id` (`client_id`),
+  ADD KEY `freelancer_id` (`freelancer_id`),
+  ADD KEY `transaction_id` (`transaction_id`);
 
 --
 -- Tablo için indeksler `login_attempts`
@@ -728,6 +753,13 @@ ALTER TABLE `staff_login_attempts`
   ADD KEY `staff_id` (`staff_id`);
 
 --
+-- Tablo için indeksler `subscriptions`
+--
+ALTER TABLE `subscriptions`
+  ADD PRIMARY KEY (`subscription_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
 -- Tablo için indeksler `temp_gigs`
 --
 ALTER TABLE `temp_gigs`
@@ -747,7 +779,8 @@ ALTER TABLE `temp_users`
 ALTER TABLE `transactions`
   ADD PRIMARY KEY (`transaction_id`),
   ADD KEY `transactions_ibfk_1` (`sender_id`),
-  ADD KEY `transactions_ibfk_2` (`receiver_id`);
+  ADD KEY `transactions_ibfk_2` (`receiver_id`),
+  ADD KEY `idx_transaction_type` (`transaction_type`);
 
 --
 -- Tablo için indeksler `users`
@@ -800,13 +833,13 @@ ALTER TABLE `badges`
 -- Tablo için AUTO_INCREMENT değeri `freelancers`
 --
 ALTER TABLE `freelancers`
-  MODIFY `freelancer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `freelancer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `gigs`
 --
 ALTER TABLE `gigs`
-  MODIFY `gig_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `gig_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `gig_categories`
@@ -815,34 +848,28 @@ ALTER TABLE `gig_categories`
   MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=111;
 
 --
--- Tablo için AUTO_INCREMENT değeri `gig_milestones`
---
-ALTER TABLE `gig_milestones`
-  MODIFY `milestone_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
-
---
--- Tablo için AUTO_INCREMENT değeri `gig_nda_requirements`
---
-ALTER TABLE `gig_nda_requirements`
-  MODIFY `nda_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
 -- Tablo için AUTO_INCREMENT değeri `invitations`
 --
 ALTER TABLE `invitations`
-  MODIFY `invitation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `invitation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `jobs`
+--
+ALTER TABLE `jobs`
+  MODIFY `job_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `login_attempts`
 --
 ALTER TABLE `login_attempts`
-  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
+  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=93;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `referral_sources`
 --
 ALTER TABLE `referral_sources`
-  MODIFY `source_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+  MODIFY `source_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `staff`
@@ -854,37 +881,43 @@ ALTER TABLE `staff`
 -- Tablo için AUTO_INCREMENT değeri `staff_login_attempts`
 --
 ALTER TABLE `staff_login_attempts`
-  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `subscriptions`
+--
+ALTER TABLE `subscriptions`
+  MODIFY `subscription_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `temp_gigs`
 --
 ALTER TABLE `temp_gigs`
-  MODIFY `temp_gig_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `temp_gig_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `temp_users`
 --
 ALTER TABLE `temp_users`
-  MODIFY `temp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=108;
+  MODIFY `temp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=126;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=996326877;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=997949467;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `user_extended_details`
 --
 ALTER TABLE `user_extended_details`
-  MODIFY `detail_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `user_settings`
 --
 ALTER TABLE `user_settings`
-  MODIFY `setting_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `setting_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `verification`
@@ -896,7 +929,7 @@ ALTER TABLE `verification`
 -- Tablo için AUTO_INCREMENT değeri `wallet`
 --
 ALTER TABLE `wallet`
-  MODIFY `wallet_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `wallet_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
 
 --
 -- Dökümü yapılmış tablolar için kısıtlamalar
@@ -927,23 +960,20 @@ ALTER TABLE `gig_categories`
   ADD CONSTRAINT `gig_categories_ibfk_1` FOREIGN KEY (`parent_id`) REFERENCES `gig_categories` (`category_id`) ON DELETE SET NULL;
 
 --
--- Tablo kısıtlamaları `gig_milestones`
---
-ALTER TABLE `gig_milestones`
-  ADD CONSTRAINT `gig_milestones_ibfk_1` FOREIGN KEY (`gig_id`) REFERENCES `gigs` (`gig_id`) ON DELETE CASCADE;
-
---
--- Tablo kısıtlamaları `gig_nda_requirements`
---
-ALTER TABLE `gig_nda_requirements`
-  ADD CONSTRAINT `gig_nda_requirements_ibfk_1` FOREIGN KEY (`gig_id`) REFERENCES `gigs` (`gig_id`) ON DELETE CASCADE;
-
---
 -- Tablo kısıtlamaları `invitations`
 --
 ALTER TABLE `invitations`
   ADD CONSTRAINT `invitations_ibfk_1` FOREIGN KEY (`inviter_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `invitations_ibfk_2` FOREIGN KEY (`invited_user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `jobs`
+--
+ALTER TABLE `jobs`
+  ADD CONSTRAINT `jobs_ibfk_1` FOREIGN KEY (`gig_id`) REFERENCES `gigs` (`gig_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `jobs_ibfk_2` FOREIGN KEY (`client_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `jobs_ibfk_3` FOREIGN KEY (`freelancer_id`) REFERENCES `freelancers` (`freelancer_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `jobs_ibfk_4` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`transaction_id`) ON DELETE SET NULL;
 
 --
 -- Tablo kısıtlamaları `login_attempts`
@@ -962,6 +992,12 @@ ALTER TABLE `referral_sources`
 --
 ALTER TABLE `staff_login_attempts`
   ADD CONSTRAINT `staff_login_attempts_ibfk_1` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`) ON DELETE CASCADE;
+
+--
+-- Tablo kısıtlamaları `subscriptions`
+--
+ALTER TABLE `subscriptions`
+  ADD CONSTRAINT `subscriptions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 
 --
 -- Tablo kısıtlamaları `temp_gigs`

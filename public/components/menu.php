@@ -127,11 +127,11 @@ if (isset($_SESSION['user_id'])) {
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            font-family: 'Bebas Neue', sans-serif;
             font-size: 20px;
             color: #000;
             opacity: 0;
             padding: 0 5px;
+            font-family: 'Bebas Neue', sans-serif;
             letter-spacing: 2px;
             white-space: nowrap;
             height: 60px;
@@ -2066,7 +2066,6 @@ if (isset($_SESSION['user_id'])) {
                 });
             });
 
-            // Wallet data update function
             function updateWalletData() {
                 return fetch('components/wallet/get_wallet_data.php')
                     .then(response => response.json())
@@ -2083,81 +2082,81 @@ if (isset($_SESSION['user_id'])) {
                         const transactionsHtml = data.recent_transactions
                             .slice(0, 3)
                             .map(transaction => {
-                                let icon, amountClass, amountPrefix, description, currency;
+                                let icon, amountClass, amountPrefix, description;
 
-                                const isCoinsTransaction =
-                                    transaction.transaction_type === 'REFERRAL_REWARD' ||
-                                    (transaction.description &&
-                                        (transaction.description.toLowerCase().includes('referral') ||
-                                            transaction.description.toLowerCase().includes('coins')));
+                                const isCoinTransaction = ['COINS_RECEIVED', 'COINS_USED'].includes(transaction.transaction_type);
 
-                                if (isCoinsTransaction) {
-                                    icon = 'medal-star';
-                                    amountClass = 'positive';
-                                    amountPrefix = '+';
-                                    currency = ' 🪙';
-                                    description = transaction.description;
-                                } else {
-                                    currency = '₺';
-                                    switch (transaction.transaction_type) {
-                                        case 'DEPOSIT':
-                                            icon = 'arrow-down';
-                                            amountClass = 'positive';
-                                            amountPrefix = '+';
-                                            description = 'Deposit to Wallet';
-                                            break;
-                                        case 'WITHDRAWAL':
-                                            icon = 'arrow-up';
+                                switch (transaction.transaction_type) {
+                                    case 'COINS_RECEIVED':
+                                        icon = 'coin';
+                                        amountClass = 'positive';
+                                        amountPrefix = '+';
+                                        description = 'Jeton Alındı';
+                                        break;
+                                    case 'COINS_USED':
+                                        icon = 'coin';
+                                        amountClass = 'negative';
+                                        amountPrefix = '-';
+                                        description = 'Jeton Kullanıldı';
+                                        break;
+                                    case 'DEPOSIT':
+                                        icon = 'arrow-down';
+                                        amountClass = 'positive';
+                                        amountPrefix = '+';
+                                        description = 'Para Yatırma';
+                                        break;
+                                    case 'WITHDRAWAL':
+                                        icon = 'arrow-up';
+                                        amountClass = 'negative';
+                                        amountPrefix = '-';
+                                        description = 'Para Çekme';
+                                        break;
+                                    case 'TRANSFER':
+                                        if (transaction.sender_id == data.user_id) {
+                                            icon = 'export';
                                             amountClass = 'negative';
                                             amountPrefix = '-';
-                                            description = 'Withdrawal from Wallet';
-                                            break;
-                                        case 'TRANSFER':
-                                            if (transaction.sender_id == data.user_id) {
-                                                icon = 'export';
-                                                amountClass = 'negative';
-                                                amountPrefix = '-';
-                                                description = `Transfer to ${transaction.receiver_username}`;
-                                            } else {
-                                                icon = 'import';
-                                                amountClass = 'positive';
-                                                amountPrefix = '+';
-                                                description = `Transfer from ${transaction.sender_username}`;
-                                            }
-                                            break;
-                                        case 'PAYMENT':
-                                            icon = 'card';
-                                            amountClass = transaction.sender_id == data.user_id ? 'negative' : 'positive';
-                                            amountPrefix = transaction.sender_id == data.user_id ? '-' : '+';
-                                            description = transaction.description;
-                                            break;
-                                        default:
-                                            icon = 'refresh';
-                                            amountClass = transaction.sender_id == data.user_id ? 'negative' : 'positive';
-                                            amountPrefix = transaction.sender_id == data.user_id ? '-' : '+';
-                                            description = transaction.description;
-                                    }
+                                            description = `Transfer: ${transaction.receiver_username}`;
+                                        } else {
+                                            icon = 'import';
+                                            amountClass = 'positive';
+                                            amountPrefix = '+';
+                                            description = `Transfer: ${transaction.sender_username}`;
+                                        }
+                                        break;
+                                    case 'PAYMENT':
+                                        icon = 'card';
+                                        amountClass = transaction.sender_id == data.user_id ? 'negative' : 'positive';
+                                        amountPrefix = transaction.sender_id == data.user_id ? '-' : '+';
+                                        description = transaction.description || 'Ödeme';
+                                        break;
+                                    default:
+                                        icon = 'refresh';
+                                        amountClass = transaction.sender_id == data.user_id ? 'negative' : 'positive';
+                                        amountPrefix = transaction.sender_id == data.user_id ? '-' : '+';
+                                        description = transaction.description || 'Diğer İşlem';
                                 }
 
+                                const formattedAmount = isCoinTransaction
+                                    ? `${amountPrefix}${parseInt(transaction.amount).toString()} 🪙`
+                                    : `${amountPrefix}₺${parseFloat(transaction.amount).toFixed(2)}`;
+
                                 return `
-                           <div class="transaction-item">
-                               <div class="transaction-info">
-                                   <img src="/sources/icons/bulk/${icon}.svg" alt="${transaction.transaction_type}" class="transaction-icon white-icon">
-                                   <div>
-                                       <span class="transaction-description">${description}</span>
-                                       <div class="transaction-date text-xs text-gray-500">
-                                           ${new Date(transaction.transaction_date).toLocaleString('tr-TR')}
-                                       </div>
-                                   </div>
-                               </div>
-                               <div class="transaction-amount ${amountClass}">
-                                   ${amountPrefix}${currency}${isCoinsTransaction
-                                        ? parseInt(transaction.amount).toString()
-                                        : parseFloat(transaction.amount).toFixed(2)
-                                    }
-                               </div>
-                           </div>
-                       `;
+            <div class="transaction-item">
+                <div class="transaction-info">
+                    <img src="/sources/icons/bulk/${icon}.svg" alt="${transaction.transaction_type}" class="transaction-icon white-icon">
+                    <div>
+                        <span class="transaction-description">${description}</span>
+                        <div class="transaction-date text-xs text-gray-500">
+                            ${new Date(transaction.created_at).toLocaleString('tr-TR')}
+                        </div>
+                    </div>
+                </div>
+                <div class="transaction-amount ${amountClass}">
+                    ${formattedAmount}
+                </div>
+            </div>
+        `;
                             }).join('');
 
                         document.getElementById('dropdownTransactions').innerHTML = transactionsHtml;
