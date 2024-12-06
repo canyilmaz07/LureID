@@ -1,4 +1,5 @@
 <?php
+// gigs.php
 session_start();
 require_once 'includes/helpers.php';
 $config = require_once '../../../config/database.php';
@@ -217,6 +218,14 @@ $tempGigs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                     d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                         </button>
+                                    <?php elseif ($gig['status'] === 'DELETED' && $gig['days_until_delete'] > 0): ?>
+                                        <button onclick="updateGigStatus(<?= $gig['gig_id'] ?>, 'APPROVED')"
+                                            class="text-gray-600 hover:text-green-600" title="Geri Yükle">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                            </svg>
+                                        </button>
                                     <?php endif; ?>
 
                                     <?php if ($gig['status'] !== 'DELETED'): ?>
@@ -280,15 +289,15 @@ $tempGigs = $stmt->fetchAll(PDO::FETCH_ASSOC);
             const messages = {
                 'DELETED': 'Bu ilanı silmek istediğinizden emin misiniz? İlan 30 gün sonra kalıcı olarak silinecektir.',
                 'PAUSED': 'Bu ilanı arşivlemek istediğinizden emin misiniz?',
-                'APPROVED': 'Bu ilanı tekrar yayına almak istediğinizden emin misiniz?'
+                'APPROVED': status === 'DELETED' ? 'Bu ilanı geri yüklemek istediğinizden emin misiniz?' : 'Bu ilanı tekrar yayına almak istediğinizden emin misiniz?'
             };
 
             if (confirm(messages[status])) {
-                // API yolunu düzelttim
                 fetch('api/gigs/update_status.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({
                         gig_id: gigId,
@@ -296,17 +305,27 @@ $tempGigs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         freelancer_id: <?= $freelancer_id ?>
                     })
                 })
-                    .then(response => response.json())
+                    .then(response => {
+                        // Response'u önce text olarak alıp kontrol edelim
+                        return response.text().then(text => {
+                            try {
+                                return JSON.parse(text);
+                            } catch (e) {
+                                console.error('Invalid JSON response:', text);
+                                throw new Error('Sunucudan geçersiz yanıt alındı');
+                            }
+                        });
+                    })
                     .then(data => {
                         if (data.success) {
-                            window.location.reload();
+                            location.reload();
                         } else {
-                            alert(data.message || 'Bir hata oluştu');
+                            alert(data.message || 'İşlem başarısız oldu');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('İşlem sırasında bir hata oluştu');
+                        alert('İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.');
                     });
             }
         }
@@ -317,7 +336,7 @@ $tempGigs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         function deleteGig(gigId) {
             if (confirm('<?= __("Bu ilanı silmek istediğinizden emin misiniz?") ?>')) {
-                fetch('/api/gigs/update_status.php', {
+                fetch('api/gigs/update_status.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

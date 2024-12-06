@@ -69,30 +69,45 @@ if (isset($_POST['ajax_upload'])) {
 
     // Medya silme işlemleri
     if (isset($_POST['action'])) {
-        if ($_POST['action'] === 'remove_image') {
-            $index = $_POST['index'] ?? -1;
-            if ($index >= 0 && isset($mediaData['images'][$index])) {
-                // Dosyayı fiziksel olarak sil
-                if (file_exists($mediaData['images'][$index])) {
-                    unlink($mediaData['images'][$index]);
-                }
-                // Diziyi güncelle
-                array_splice($mediaData['images'], $index, 1);
-                $response['status'] = 'success';
-            }
-        } elseif ($_POST['action'] === 'remove_video') {
-            if (!empty($mediaData['video']) && file_exists($mediaData['video'])) {
-                unlink($mediaData['video']);
-                $mediaData['video'] = null;
-                $response['status'] = 'success';
-            }
-        }
+        $response = ['status' => 'error', 'message' => ''];
 
-        // Temp_gigs tablosunu güncelle
-        if ($temp_id && $response['status'] === 'success') {
-            $updateQuery = "UPDATE temp_gigs SET media_data = ? WHERE temp_gig_id = ?";
-            $stmt = $db->prepare($updateQuery);
-            $stmt->execute([json_encode($mediaData), $temp_id]);
+        try {
+            if ($_POST['action'] === 'remove_image') {
+                $index = $_POST['index'] ?? -1;
+                if ($index >= 0 && isset($mediaData['images'][$index])) {
+                    $filePath = $mediaData['images'][$index];
+                    if (file_exists($filePath)) {
+                        if (!unlink($filePath)) {
+                            throw new Exception('Dosya sistemden silinemedi');
+                        }
+                    }
+                    array_splice($mediaData['images'], $index, 1);
+                    $response['status'] = 'success';
+                } else {
+                    throw new Exception('Geçersiz fotoğraf indeksi');
+                }
+            } elseif ($_POST['action'] === 'remove_video') {
+                if (!empty($mediaData['video']) && file_exists($mediaData['video'])) {
+                    if (!unlink($mediaData['video'])) {
+                        throw new Exception('Video dosyası sistemden silinemedi');
+                    }
+                    $mediaData['video'] = null;
+                    $response['status'] = 'success';
+                } else {
+                    throw new Exception('Video dosyası bulunamadı');
+                }
+            }
+
+            // Temp_gigs tablosunu güncelle
+            if ($temp_id && $response['status'] === 'success') {
+                $updateQuery = "UPDATE temp_gigs SET media_data = ? WHERE temp_gig_id = ?";
+                $stmt = $db->prepare($updateQuery);
+                if (!$stmt->execute([json_encode($mediaData), $temp_id])) {
+                    throw new Exception('Veritabanı güncellenemedi');
+                }
+            }
+        } catch (Exception $e) {
+            $response['message'] = $e->getMessage();
         }
 
         echo json_encode($response);
@@ -154,13 +169,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
     $formData = $_POST;
     unset($formData['step']);
 
+    if (isset($_POST['deliverables'])) {
+        // Virgülle ayrılmış dosya formatlarını diziye çevir ve boşlukları temizle
+        $deliverables = array_map('trim', explode(',', $_POST['deliverables']));
+        // Boş elemanları filtrele
+        $deliverables = array_filter($deliverables);
+        // JSON formatına çevir
+        $formData['deliverables'] = json_encode($deliverables, JSON_UNESCAPED_UNICODE);
+    }
+
     try {
         $db->beginTransaction();
 
         if ($temp_id) {
-            // Mevcut form verilerini al
-// Mevcut form verilerini al
-            $tempGigQuery = "SELECT form_data, media_data FROM temp_gigs WHERE temp_gig_id = ? AND freelancer_id = ?";
+            $tempGigQuery = "SELECT form_data FROM temp_gigs WHERE temp_gig_id = ? AND freelancer_id = ?";
             $stmt = $db->prepare($tempGigQuery);
             $stmt->execute([$temp_id, $freelancer_id]);
             $tempGigData = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -168,15 +190,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
             $existingFormData = json_decode($tempGigData['form_data'], true) ?? [];
             $formData = array_merge($existingFormData, $formData);
 
-            if ($step == 6) {
-                // Anlaşma kontrolü
-                if (!isset($_POST['agreement_accepted'])) {
-                    throw new Exception(__('Lütfen iş süreci anlaşmasını kabul edin.'));
+            if ($tempGigData) {
+                $existingFormData = json_decode($tempGigData['form_data'], true) ?? [];
+
+                // Yeni form verilerini ekle ama var olanları silme
+                foreach ($formData as $key => $value) {
+                    if (!empty($value)) {  // Yeni veri boş değilse güncelle
+                        $existingFormData[$key] = $value;
+                    }
+                }
+                $formData = $existingFormData;
+            }
+
+            if ($step == 2) {
+                $description = $_POST['description'] ?? '';
+                // HTML içeriğinden text'i çıkartıyoruz
+                $plainText = strip_tags($description);
+                // Karakterleri sayıyoruz
+                $charCount = mb_strlen($plainText);
+
+                if ($charCount < 1000) {
+                    throw new Exception('Detaylı açıklama en az 1000 karakter olmalıdır. Şu an: ' . $charCount . ' karakter');
                 }
 
-                $mediaData = json_decode($tempGigData['media_data'], true) ?? ['images' => [], 'video' => null];
-                $finalMediaData = ['images' => [], 'video' => null];
+                // Deliverables kontrolü
+                $deliverables = array_filter(array_map('trim', explode(',', $_POST['deliverables'] ?? '')));
+                if (empty($deliverables)) {
+                    throw new Exception('En az bir teslim edilecek dosya formatı eklemelisiniz.');
+                }
+                $formData['deliverables'] = json_encode($deliverables);
+                $formData['description'] = $description; // HTML içeriğini olduğu gibi kaydediyoruz
+            }
 
+            if ($step == 4) {
+                $price = (int) $formData['price'];
+                if ($price < 100 || $price > 30000) {
+                    throw new Exception('Fiyat 100₺ ile 30.000₺ arasında olmalıdır.');
+                }
+                if ($price % 10 !== 0) {
+                    throw new Exception('Fiyat 10\'un katları olmalıdır.');
+                }
+            }
+
+            if ($step == 6) {
                 // Uploads klasörlerini kontrol et ve oluştur
                 if (!is_dir('uploads/photos')) {
                     mkdir('uploads/photos', 0777, true);
@@ -184,6 +240,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                 if (!is_dir('uploads/videos')) {
                     mkdir('uploads/videos', 0777, true);
                 }
+
+                // Temp medya verilerini al
+                $tempGigQuery = "SELECT media_data FROM temp_gigs WHERE temp_gig_id = ? AND freelancer_id = ?";
+                $stmt = $db->prepare($tempGigQuery);
+                $stmt->execute([$temp_id, $freelancer_id]);
+                $tempGigData = $stmt->fetch(PDO::FETCH_ASSOC);
+                $mediaData = json_decode($tempGigData['media_data'], true) ?? ['images' => [], 'video' => null];
+                $finalMediaData = ['images' => [], 'video' => null];
 
                 // Fotoğrafları taşı
                 if (!empty($mediaData['images'])) {
@@ -211,31 +275,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                     }
                 }
 
-                // Milestone ve NDA verilerini hazırla
-                $milestones = [];
-                $milestoneTitles = $_POST['milestone_titles'] ?? [];
-                $milestoneDescriptions = $_POST['milestone_descriptions'] ?? [];
-
-                for ($i = 0; $i < count($milestoneTitles); $i++) {
-                    $milestones[] = [
-                        'title' => $milestoneTitles[$i],
-                        'description' => $milestoneDescriptions[$i],
-                        'order_number' => $i + 1
-                    ];
-                }
-
-                $ndaData = [
-                    'required' => isset($_POST['nda_required']),
-                    'text' => $_POST['nda_text'] ?? ''
-                ];
-
-                // Gig oluştur - media_data olarak $finalMediaData'yı kullan
+                // Gig oluştur
                 $insertGigQuery = "INSERT INTO gigs (
-    freelancer_id, title, category, subcategory, description,
-    requirements, price, pricing_type, delivery_time, revision_count,
-    media_data, milestones_data, nda_data, status, agreement_accepted, 
-    created_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_REVIEW', ?, NOW())";
+                    freelancer_id, title, category, subcategory, description,
+                    requirements, price, pricing_type, delivery_time, revision_count,
+                    media_data, milestones_data, nda_data, status, agreement_accepted,
+                    deliverables, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_REVIEW', ?, ?, NOW())";
 
                 $stmt = $db->prepare($insertGigQuery);
                 $stmt->execute([
@@ -249,23 +295,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                     $formData['pricing_type'],
                     $formData['delivery_time'],
                     $formData['revision_count'],
-                    json_encode($finalMediaData), // Taşınmış medya verilerini kullan
+                    json_encode($finalMediaData),
                     json_encode($milestones),
                     json_encode($ndaData),
-                    true
+                    true,
+                    $formData['deliverables']
                 ]);
 
-                // Temp gig'i sil
+                $gigId = $db->lastInsertId();
+
+                // Temp gig'i ve temp dosyaları temizle
                 $deleteQuery = "DELETE FROM temp_gigs WHERE temp_gig_id = ? AND freelancer_id = ?";
                 $stmt = $db->prepare($deleteQuery);
                 $stmt->execute([$temp_id, $freelancer_id]);
 
-                $gigId = $db->lastInsertId();
-
-                // Gig medya verilerini güncelle
-                $updateGigQuery = "UPDATE gigs SET media_data = ? WHERE gig_id = ?";
-                $stmt = $db->prepare($updateGigQuery);
-                $stmt->execute([json_encode($finalMediaData), $gigId]);
+                // Temp klasöründeki kullanılmayan dosyaları temizle
+                if (!empty($mediaData['images'])) {
+                    foreach ($mediaData['images'] as $tempPath) {
+                        if (file_exists($tempPath) && !in_array($tempPath, $finalMediaData['images'])) {
+                            unlink($tempPath);
+                        }
+                    }
+                }
+                if (!empty($mediaData['video']) && file_exists($mediaData['video']) && $mediaData['video'] !== $finalMediaData['video']) {
+                    unlink($mediaData['video']);
+                }
 
                 $db->commit();
                 $_SESSION['success'] = __('İlanınız başarıyla oluşturuldu ve onay sürecine alındı.');
@@ -308,6 +362,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= __('Yeni İş İlanı Oluştur') ?></title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
 </head>
 
@@ -393,9 +448,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                         <div>
                             <label
                                 class="block text-sm font-medium text-gray-700 mb-1"><?= __('Detaylı Açıklama') ?></label>
-                            <textarea name="description" rows="6"
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                required><?= htmlspecialchars($formData['description'] ?? '') ?></textarea>
+                            <div class="relative">
+                                <textarea id="description"
+                                    name="description"><?= htmlspecialchars($formData['description'] ?? '') ?></textarea>
+                                <p id="char-count-message" class="mt-1 text-sm text-gray-500">0 / 1000 karakter</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <?= __('Teslim Edilecek Dosyalar') ?>
+                            </label>
+                            <div class="relative">
+                                <input type="text" name="deliverables"
+                                    value="<?= htmlspecialchars($formData['deliverables'] ?? '') ?>"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    placeholder=".psd, .html, .css, .js" required>
+                                <p class="mt-1 text-sm text-gray-500">
+                                    Teslim edilecek dosya formatlarını virgülle ayırarak yazın. Örnek: .psd, .html, .css
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -435,7 +507,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                             <label class="block text-sm font-medium text-gray-700 mb-1"><?= __('Fiyat (₺)') ?></label>
                             <input type="number" name="price" value="<?= htmlspecialchars($formData['price'] ?? '') ?>"
                                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                required>
+                                required min="100" max="30000" step="10" oninput="validatePrice(this)">
+                            <p class="mt-1 text-sm text-gray-500">Fiyat 100₺ ile 30.000₺ arasında ve 10'un katları
+                                olmalıdır.</p>
                         </div>
 
                         <div>
@@ -455,6 +529,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                                 required>
                         </div>
                     </div>
+
+                    <script>
+                        function validatePrice(input) {
+                            const value = parseInt(input.value);
+                            if (value % 10 !== 0) {
+                                input.setCustomValidity('Fiyat 10\'un katları olmalıdır');
+                            } else if (value < 100 || value > 30000) {
+                                input.setCustomValidity('Fiyat 100₺ ile 30.000₺ arasında olmalıdır');
+                            } else {
+                                input.setCustomValidity('');
+                            }
+                        }
+                    </script>
 
                 <?php elseif ($currentStep == 5): ?>
                     <!-- Medya -->
@@ -675,6 +762,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                     </div>
 
                     <script>
+                        function validateDescription() {
+                            const content = tinymce.get('description').getContent({ format: 'text' });
+                            const submitButton = document.getElementById('submitButton');
+                            const charCount = content.length;
+
+                            if (charCount < 1000) {
+                                submitButton.disabled = true;
+                                document.querySelector('.text-gray-500').textContent =
+                                    `Minimum 1000 karakter gereklidir. Şu an: ${charCount} karakter`;
+                            } else {
+                                submitButton.disabled = false;
+                                document.querySelector('.text-gray-500').textContent =
+                                    `Karakter sayısı yeterli: ${charCount} karakter`;
+                            }
+                        }
+
+                        function addDeliverable() {
+                            const input = document.getElementById('deliverable-input');
+                            const value = input.value.trim();
+
+                            if (!value) return;
+
+                            const deliverablesList = document.getElementById('deliverables-list');
+                            const span = document.createElement('span');
+                            span.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-700';
+                            span.innerHTML = `
+                                                                                                                                ${value}
+                                                                                                                                <button type="button" onclick="removeDeliverable(this)" class="ml-2 text-blue-500 hover:text-blue-700">×</button>
+                                                                                                                                <input type="hidden" name="deliverables[]" value="${value}">
+                                                                                                                            `;
+
+                            deliverablesList.appendChild(span);
+                            input.value = '';
+                        }
+
+                        function removeDeliverable(button) {
+                            button.closest('span').remove();
+                        }
+
                         function addMilestone() {
                             const container = document.getElementById('dynamic-milestones');
                             const milestoneCount = container.children.length + 2; // +2 for start and end milestones
@@ -682,23 +808,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                             const newMilestone = document.createElement('div');
                             newMilestone.className = 'milestone-item p-4 rounded-lg border';
                             newMilestone.innerHTML = `
-                                                                        <div class="flex items-center gap-4">
-                                                                            <input type="text" name="milestone_titles[]" 
-                                                                                   placeholder="<?= __('Aşama başlığı') ?>"
-                                                                                   class="w-1/3 rounded-md border-gray-300"
-                                                                                   required>
-                                                                            <input type="text" name="milestone_descriptions[]" 
-                                                                                   placeholder="<?= __('Aşama açıklaması') ?>"
-                                                                                   class="flex-1 rounded-md border-gray-300"
-                                                                                   required>
-                                                                            <button type="button" onclick="removeMilestone(this)" 
-                                                                                    class="text-red-600 hover:text-red-800">
-                                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                                                </svg>
-                                                                            </button>
-                                                                        </div>
-                                                                    `;
+                                                                                                                                                                                                    <div class="flex items-center gap-4">
+                                                                                                                                                                                                        <input type="text" name="milestone_titles[]" 
+                                                                                                                                                                                                               placeholder="<?= __('Aşama başlığı') ?>"
+                                                                                                                                                                                                               class="w-1/3 rounded-md border-gray-300"
+                                                                                                                                                                                                               required>
+                                                                                                                                                                                                        <input type="text" name="milestone_descriptions[]" 
+                                                                                                                                                                                                               placeholder="<?= __('Aşama açıklaması') ?>"
+                                                                                                                                                                                                               class="flex-1 rounded-md border-gray-300"
+                                                                                                                                                                                                               required>
+                                                                                                                                                                                                        <button type="button" onclick="removeMilestone(this)" 
+                                                                                                                                                                                                                class="text-red-600 hover:text-red-800">
+                                                                                                                                                                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                                                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                                                                                                                                            </svg>
+                                                                                                                                                                                                        </button>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                `;
 
                             container.appendChild(newMilestone);
                             updateMilestoneNumbers();
@@ -707,16 +833,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                         function removeMilestone(button) {
                             button.closest('.milestone-item').remove();
                             updateMilestoneNumbers();
-                        }
-
-                        function updateMilestoneNumbers() {
-                            const milestones = document.getElementsByClassName('milestone-item');
-                            for (let i = 0; i < milestones.length; i++) {
-                                const numberElement = milestones[i].querySelector('.milestone-number');
-                                if (numberElement) {
-                                    numberElement.textContent = (i + 1) + '.';
-                                }
-                            }
                         }
                     </script>
                 <?php endif; ?>
@@ -746,6 +862,113 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
 
     <!-- Medya Yükleme JavaScript Kodu -->
     <script>
+        window.addEventListener('DOMContentLoaded', function () {
+            // Only run validation setup if we're on step 2
+            const currentStep = document.querySelector('input[name="step"]')?.value;
+            const isStep2 = currentStep === '2';
+
+            if (isStep2) {
+                // Form validation function
+                function validateForm(editor = null) {
+                    const submitButton = document.getElementById('submitButton');
+                    const deliverables = document.querySelector('input[name="deliverables"]')?.value.trim();
+                    let charCount = 0;
+                    let content = '';
+
+                    // Only try to get TinyMCE content if editor is provided
+                    if (editor) {
+                        content = editor.getContent({ format: 'text' });
+                        charCount = content.length;
+                    }
+
+                    const messageElement = document.getElementById('char-count-message');
+                    if (messageElement) {
+                        messageElement.textContent = `${charCount} / 1000 karakter`;
+                        messageElement.className = charCount >= 1000 ?
+                            'mt-1 text-sm text-green-500' :
+                            'mt-1 text-sm text-gray-500';
+
+                        if (charCount < 1000) {
+                            messageElement.textContent += ' (Minimum 1000 karakter gerekli)';
+                        }
+                    }
+
+                    if (submitButton) {
+                        submitButton.disabled = charCount < 1000 || !deliverables;
+                    }
+                }
+
+                // Initialize TinyMCE
+                if (typeof tinymce !== 'undefined' && document.getElementById('description')) {
+                    tinymce.init({
+                        selector: '#description',
+                        height: 400,
+                        menubar: false,
+                        plugins: [
+                            'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
+                            'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                            'insertdatetime', 'table', 'wordcount'
+                        ],
+                        toolbar: 'undo redo | formatselect | ' +
+                            'bold italic backcolor | alignleft aligncenter ' +
+                            'alignright alignjustify | bullist numlist outdent indent | ' +
+                            'removeformat',
+                        setup: function (editor) {
+                            editor.on('keyup', function () {
+                                validateForm(editor);
+                            });
+                            editor.on('change', function () {
+                                validateForm(editor);
+                            });
+                        },
+                        init_instance_callback: function (editor) {
+                            // Editör yüklendiğinde mevcut içeriği ayarla
+                            const savedContent = <?= json_encode($formData['description'] ?? '') ?>;
+                            if (savedContent) {
+                                editor.setContent(savedContent);
+                            }
+                            // İlk yüklemede form validasyonunu çalıştır
+                            validateForm(editor);
+                        }
+                    });
+
+                    // Add listener for deliverables input
+                    const deliverablesInput = document.querySelector('input[name="deliverables"]');
+                    if (deliverablesInput) {
+                        deliverablesInput.addEventListener('input', function () {
+                            const editor = tinymce.get('description');
+                            if (editor) {
+                                validateForm(editor);
+                            }
+                        });
+                    }
+
+                    // Form submission handler
+                    document.querySelector('form')?.addEventListener('submit', function (e) {
+                        const editor = tinymce.get('description');
+                        if (!editor) return;
+
+                        const content = editor.getContent(); // HTML content
+                        const plainText = editor.getContent({ format: 'text' });
+                        const deliverables = document.querySelector('input[name="deliverables"]')?.value.trim();
+
+                        if (plainText.length < 1000 || !deliverables) {
+                            e.preventDefault();
+                            alert('Lütfen tüm gerekli alanları doldurun:\n- Detaylı açıklama en az 1000 karakter olmalıdır\n- En az bir teslim edilecek dosya formatı eklemelisiniz');
+                            return;
+                        }
+
+                        // Add HTML content as hidden input
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'description';
+                        hiddenInput.value = content;
+                        this.appendChild(hiddenInput);
+                    });
+                }
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', function () {
             // Fotoğraf yükleme işlemleri
             const imageUpload = document.getElementById('imageUpload');
@@ -936,33 +1159,120 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                     });
             }
 
+            // Formun gönderilmeden önce kontrol edilmesi
             document.querySelector('form').addEventListener('submit', function (e) {
-                const ndaRequired = document.querySelector('input[name="nda_required"]');
-                const ndaText = document.querySelector('textarea[name="nda_text"]');
+                if (document.querySelector('input[name="step"]').value === '2') {
+                    const editor = tinymce.get('description');
+                    const content = editor.getContent(); // Get HTML content
+                    const plainText = editor.getContent({ format: 'text' });
+                    const deliverables = document.querySelector('input[name="deliverables"]').value.trim();
 
-                if (ndaRequired && ndaRequired.checked && (!ndaText.value.trim())) {
-                    e.preventDefault();
-                    alert('NDA gerekli olarak işaretlendiğinde NDA metni de girilmelidir.');
-                    ndaText.focus();
+                    if (plainText.length < 1000 || !deliverables) {
+                        e.preventDefault();
+                        alert('Lütfen tüm gerekli alanları doldurun:\n- Detaylı açıklama en az 1000 karakter olmalıdır\n- En az bir teslim edilecek dosya formatı eklemelisiniz');
+                        return;
+                    }
+
+                    // Create hidden input for HTML content
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'description';
+                    hiddenInput.value = content; // Store HTML content
+                    this.appendChild(hiddenInput);
+                }
+
+                if (currentStep == 2) {
+                    if (typeof tinymce !== 'undefined' && tinymce.get('description')) {
+                        const editor = tinymce.get('description');
+                        const content = editor.getContent();
+                        const plainText = editor.getContent({ format: 'text' });
+
+                        if (plainText.length < 1000) {
+                            e.preventDefault();
+                            alert('Detaylı açıklama en az 1000 karakter olmalıdır.');
+                            return;
+                        }
+
+                        // TinyMCE içeriğini form data'ya ekle
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'description';
+                        hiddenInput.value = content;
+                        this.appendChild(hiddenInput);
+                    }
+
+                    // Deliverables kontrolü
+                    const deliverables = document.querySelector('input[name="deliverables"]').value;
+                    if (!deliverables.trim()) {
+                        e.preventDefault();
+                        alert('En az bir teslim edilecek dosya formatı eklemelisiniz.');
+                        return;
+                    }
+                }
+
+                // Fiyat kontrolü
+                if (currentStep == 4) {
+                    const price = parseInt(document.querySelector('input[name="price"]').value);
+                    if (price % 10 !== 0 || price < 100 || price > 30000) {
+                        e.preventDefault();
+                        alert('Fiyat 100₺ ile 30.000₺ arasında ve 10\'un katları olmalıdır.');
+                        return;
+                    }
                 }
             });
+
+            // Medya silme fonksiyonu
+            async function removeMedia(type, index, tempId) {
+                try {
+                    const response = await fetch('/api/gigs/delete_media.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            type: type,
+                            index: index,
+                            temp_id: tempId
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        if (type === 'image') {
+                            document.getElementById(`image-container-${index}`).remove();
+                            // Fotoğraf ekleme butonunu göster
+                            const imageCount = document.getElementById('uploadedImages').children.length;
+                            if (imageCount < 3) {
+                                document.getElementById('imageUploadContainer').style.display = 'block';
+                            }
+                        } else if (type === 'video') {
+                            document.getElementById('video-container').remove();
+                            document.getElementById('videoUploadContainer').style.display = 'block';
+                        }
+                    } else {
+                        alert(data.message || 'Medya silinirken bir hata oluştu.');
+                    }
+                } catch (error) {
+                    alert('Bir hata oluştu: ' + error.message);
+                }
+            }
         });
 
+        // Fotoğraf silme fonksiyonu
         // Fotoğraf silme fonksiyonu
         function removeImage(index) {
             const container = document.getElementById(`image-container-${index}`);
             if (container) {
+                const formData = new FormData();
+                formData.append('ajax_upload', '1');
+                formData.append('action', 'remove_image');
+                formData.append('index', index);
+
                 // Ajax ile sunucuya silme isteği gönder
                 fetch(window.location.href, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        ajax_upload: 1,
-                        action: 'remove_image',
-                        index: index
-                    })
+                    body: formData
                 })
                     .then(response => response.json())
                     .then(data => {
@@ -974,11 +1284,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
                             const uploadedImages = document.getElementById('uploadedImages');
                             const submitButton = document.getElementById('submitButton');
                             submitButton.disabled = uploadedImages.children.length === 0;
+                        } else {
+                            throw new Error(data.message || 'Silme işlemi başarısız');
                         }
                     })
                     .catch(error => {
                         console.error('Fotoğraf silinirken hata:', error);
-                        alert('Fotoğraf silinirken bir hata oluştu.');
+                        alert('Fotoğraf silinirken bir hata oluştu: ' + error.message);
                     });
             }
         }
@@ -987,39 +1299,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_upload'])) {
         function removeVideo() {
             const container = document.getElementById('video-container');
             if (container) {
+                const formData = new FormData();
+                formData.append('ajax_upload', '1');
+                formData.append('action', 'remove_video');
+
                 // Ajax ile sunucuya silme isteği gönder
                 fetch(window.location.href, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        ajax_upload: 1,
-                        action: 'remove_video'
-                    })
+                    body: formData
                 })
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
                             container.remove();
                             document.getElementById('videoUploadContainer').style.display = 'block';
+                        } else {
+                            throw new Error(data.message || 'Silme işlemi başarısız');
                         }
                     })
                     .catch(error => {
                         console.error('Video silinirken hata:', error);
-                        alert('Video silinirken bir hata oluştu.');
+                        alert('Video silinirken bir hata oluştu: ' + error.message);
                     });
             }
         }
 
         // Milestone numaralandırma güncellemesi
         function updateMilestoneNumbers() {
-            const dynamicMilestones = document.getElementById('dynamic-milestones').children;
+            const dynamicMilestonesContainer = document.getElementById('dynamic-milestones');
+            if (!dynamicMilestonesContainer) return; // Container yoksa fonksiyondan çık
+
+            const dynamicMilestones = dynamicMilestonesContainer.children;
             const endNumberElement = document.querySelector('.milestone-end-number');
 
-            // Dinamik aşamaların sayısına göre son numarayı güncelle
             if (endNumberElement) {
-                const totalSteps = dynamicMilestones.length + 2; // +2 for start and end
+                const totalSteps = dynamicMilestones.length + 2;
                 endNumberElement.textContent = `${totalSteps}. Teslim`;
             }
         }
