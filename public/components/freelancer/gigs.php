@@ -48,6 +48,7 @@ $filter = $_GET['filter'] ?? 'all';
 $gigsQuery = "SELECT g.*, 
     JSON_EXTRACT(g.milestones_data, '$') as milestones,
     JSON_EXTRACT(g.nda_data, '$') as nda,
+    JSON_EXTRACT(g.deliverables, '$') as deliverables,
     CASE 
         WHEN g.status = 'APPROVED' THEN 'Aktif'
         WHEN g.status = 'PENDING_REVIEW' THEN 'Onay Bekliyor'
@@ -106,254 +107,492 @@ $tempGigs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>İlanlarım - LureID</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
+
+    <style>
+        *,
+        body,
+        html {
+            padding: 0;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .page-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            margin-left: 280px;
+            padding: 40px 0 40px 50px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-container {
+            width: 100%;
+        }
+
+        .header {
+            margin-bottom: 2rem;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .filters-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .filter-button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 22px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-button.active {
+            background-color: #4F46E5;
+            color: white;
+        }
+
+        .filter-button:not(.active) {
+            background-color: white;
+            color: #4B5563;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .new-gig-button {
+            padding: 0.5rem 1rem;
+            background-color: #4F46E5;
+            color: white;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-left: auto;
+            margin-right: 50px;
+        }
+
+        .new-gig-button:hover {
+            opacity: 0.9;
+        }
+
+        .gigs-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            padding-right: 50px;
+        }
+
+        .gig-card {
+            background: white;
+            border-radius: 15px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 22px 40px rgba(0, 0, 0, 0.1);
+            min-height: 380px;
+            width: 400px;
+        }
+
+        .gig-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .category-icon {
+            width: 32px;
+            height: 32px;
+            opacity: 1;
+            /* Tam siyah için opacity 1 yapıldı */
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .action-button img {
+            width: 20px;
+            height: 20px;
+            transition: all 0.3s;
+        }
+
+        .action-button.delete img {
+            opacity: 1;
+            filter: invert(22%) sepia(78%) saturate(6123%) hue-rotate(355deg) brightness(94%) contrast(121%);
+        }
+
+        .action-button.archive img {
+            opacity: 1;
+            filter: invert(71%) sepia(78%) saturate(1261%) hue-rotate(339deg) brightness(101%) contrast(96%);
+        }
+
+        .action-button.restore img {
+            opacity: 1;
+            filter: invert(57%) sepia(82%) saturate(2273%) hue-rotate(87deg) brightness(119%) contrast(119%);
+        }
+
+        .action-button:hover img {
+            opacity: 1;
+        }
+
+        .created-at {
+            color: #6b7280;
+            font-size: 13px;
+            margin: 12px 0;
+        }
+
+        .gig-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .gig-description {
+            color: #4b5563;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: auto;
+            /* Aşağıdaki içeriği alta sabitlemek için */
+            min-height: 80px;
+            /* Minimum açıklama yüksekliği */
+        }
+
+        .divider {
+            height: 1px;
+            background: #bebebe;
+        }
+
+        .price-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-top: auto;
+            /* Üstteki içeriğe göre otomatik boşluk */
+        }
+
+        .price-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .price {
+            font-weight: 600;
+            font-size: 18px;
+            color: #111827;
+        }
+
+        .price-type {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .deliverables {
+            color: #4b5563;
+            font-size: 13px;
+        }
+
+        .edit-button {
+            background: #111827;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .edit-button:hover {
+            opacity: 0.9;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100">
-    <?php include 'components/freelancer_header.php'; ?>
+<body>
+    <div class="page-container">
+        <?php include 'components/menu.php'; ?>
 
-    <div class="p-4 sm:ml-64 pt-20">
-        <div class="max-w-7xl mx-auto">
-            <!-- Başlık ve Filtreler -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h2 class="text-2xl font-bold text-gray-900">İş İlanlarım</h2>
+        <div class="content-wrapper">
+            <div class="content-container">
+                <!-- Başlık ve Filtreler -->
+                <div class="header">
+                    <div>
+                        <h1 class="title">İş İlanlarım</h1>
 
-                <div class="flex flex-wrap gap-2">
-                    <!-- Filtre Butonları -->
-                    <a href="?filter=all"
-                        class="px-4 py-2 rounded-lg text-sm font-medium <?= $filter == 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' ?>">
-                        Tümü
-                    </a>
-                    <a href="?filter=active"
-                        class="px-4 py-2 rounded-lg text-sm font-medium <?= $filter == 'active' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' ?>">
-                        Aktif
-                    </a>
-                    <a href="?filter=pending"
-                        class="px-4 py-2 rounded-lg text-sm font-medium <?= $filter == 'pending' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' ?>">
-                        Onay Bekleyen
-                    </a>
-                    <a href="?filter=rejected"
-                        class="px-4 py-2 rounded-lg text-sm font-medium <?= $filter == 'rejected' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' ?>">
-                        Reddedilen
-                    </a>
-                    <a href="?filter=archived"
-                        class="px-4 py-2 rounded-lg text-sm font-medium <?= $filter == 'archived' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' ?>">
-                        Arşivlenen İlanlar
-                    </a>
-                    <a href="?filter=deleted"
-                        class="px-4 py-2 rounded-lg text-sm font-medium <?= $filter == 'deleted' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' ?>">
-                        Silinen İlanlar
-                    </a>
+                        <div class="filters-container">
+                            <a href="?filter=all" class="filter-button <?= $filter == 'all' ? 'active' : '' ?>">
+                                Tümü
+                            </a>
+                            <a href="?filter=active" class="filter-button <?= $filter == 'active' ? 'active' : '' ?>">
+                                Aktif
+                            </a>
+                            <a href="?filter=pending" class="filter-button <?= $filter == 'pending' ? 'active' : '' ?>">
+                                Onay Bekleyen
+                            </a>
+                            <a href="?filter=rejected"
+                                class="filter-button <?= $filter == 'rejected' ? 'active' : '' ?>">
+                                Reddedilen
+                            </a>
+                            <a href="?filter=archived"
+                                class="filter-button <?= $filter == 'archived' ? 'active' : '' ?>">
+                                Arşivlenen İlanlar
+                            </a>
+                            <a href="?filter=deleted" class="filter-button <?= $filter == 'deleted' ? 'active' : '' ?>">
+                                Silinen İlanlar
+                            </a>
+                        </div>
+                    </div>
 
-                    <a href="new_gig.php"
-                        class="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 ml-2">
+                    <a href="new_gig.php" class="new-gig-button">
                         + Yeni İlan
                     </a>
                 </div>
-            </div>
 
-            <!-- İlanlar Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <?php foreach ($gigs as $gig):
-                    $statusColorClass = match ($gig['status']) {
-                        'APPROVED' => 'bg-green-100 text-green-800',
-                        'PENDING_REVIEW' => 'bg-yellow-100 text-yellow-800',
-                        'REJECTED' => 'bg-red-100 text-red-800',
-                        'PAUSED' => 'bg-gray-100 text-gray-800',
-                        default => 'bg-gray-100 text-gray-800'
-                    };
-                    ?>
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <?php
-                        $mediaData = json_decode($gig['media_data'], true);
-                        if (empty($mediaData['images'][0])) {
-                            continue; // Bu gig'i gösterme
+                <!-- İlanlar Grid -->
+                <div class="gigs-grid">
+                    <?php foreach ($gigs as $gig):
+                        // Kategori ikonunu belirle
+                        $categoryIcon = match ($gig['category']) {
+                            'Web, Yazılım & Teknoloji' => 'code.svg',
+                            'Grafik & Tasarım' => 'brush.svg',
+                            'Dijital Pazarlama' => 'chart.svg',
+                            'Yazı & Çeviri' => 'document-text.svg',
+                            'Video & Animasyon' => 'video-play.svg',
+                            'Müzik & Ses' => 'music.svg',
+                            'İş & Yönetim' => 'briefcase.svg',
+                            'Veri & Analiz' => 'data.svg',
+                            'Eğitim & Öğretim' => 'book.svg',
+                            'Danışmanlık & Hukuk' => 'shield.svg',
+                            default => 'document.svg'
+                        };
+
+                        // Oluşturulma zamanını hesapla
+                        $created = new DateTime($gig['created_at']);
+                        $now = new DateTime();
+                        $interval = $created->diff($now);
+
+                        if ($interval->y > 0) {
+                            $timeAgo = $interval->y . ' yıl önce';
+                        } elseif ($interval->m > 0) {
+                            $timeAgo = $interval->m . ' ay önce';
+                        } elseif ($interval->d > 0) {
+                            $timeAgo = $interval->d . ' gün önce';
+                        } elseif ($interval->h > 0) {
+                            $timeAgo = $interval->h . ' saat önce';
+                        } else {
+                            $timeAgo = 'Az önce';
                         }
-                        $firstImage = $mediaData['images'][0];
+
+                        // Fiyatlandırma tipini düzenle
+                        $pricingTypeText = match ($gig['pricing_type']) {
+                            'ONE_TIME' => 'Tek Seferlik',
+                            'DAILY' => 'Günlük',
+                            'WEEKLY' => 'Haftalık',
+                            'MONTHLY' => 'Aylık',
+                            default => ''
+                        };
+
+                        // Deliverables'ları parse et
+                        $mediaData = json_decode($gig['media_data'], true);
+                        $deliverables = json_decode($gig['deliverables'], true);
+                        $deliverablesText = !empty($deliverables) ? implode(', ', $deliverables) . ' içerir.' : 'Teslimat içeriği belirtilmemiş.';
+
+                        // Debug için
+                        error_log('Media Data: ' . print_r($mediaData, true));
+                        error_log('Deliverables: ' . print_r($deliverables, true));
                         ?>
-                        <img src="<?= htmlspecialchars($firstImage) ?>" alt="<?= htmlspecialchars($gig['title']) ?>"
-                            class="w-full h-48 object-cover">
-
-                        <div class="p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <h3 class="text-lg font-semibold text-gray-900">
-                                    <?= htmlspecialchars($gig['title']) ?>
-                                </h3>
-                                <span class="px-2 py-1 text-xs font-medium rounded-full <?= $statusColorClass ?>">
-                                    <?= $gig['status_text'] ?>
-                                </span>
-                            </div>
-
-                            <p class="text-gray-600 text-sm mb-4">
-                                <?= substr(htmlspecialchars($gig['description']), 0, 100) ?>...
-                            </p>
-
-                            <div class="flex justify-between items-center mt-2">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-blue-600 font-bold">
-                                        ₺<?= number_format($gig['price'], 2) ?>
-                                    </span>
-                                    <?php if ($gig['status'] === 'DELETED'): ?>
-                                        <span class="text-red-500 text-xs">
-                                            Kalıcı silinmeye <?= $gig['days_until_delete'] ?> gün kaldı
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
-
-                                <div class="flex space-x-2">
+                        <div class="gig-card">
+                            <div class="gig-card-header">
+                                <img src="/sources/icons/bulk/<?= $categoryIcon ?>" alt="<?= $gig['category'] ?>"
+                                    class="category-icon">
+                                <div class="action-buttons">
                                     <?php if ($gig['status'] === 'APPROVED'): ?>
                                         <button onclick="updateGigStatus(<?= $gig['gig_id'] ?>, 'PAUSED')"
-                                            class="text-gray-600 hover:text-yellow-600" title="Arşivle">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                                            </svg>
-                                        </button>
-                                    <?php elseif ($gig['status'] === 'PAUSED'): ?>
-                                        <button onclick="updateGigStatus(<?= $gig['gig_id'] ?>, 'APPROVED')"
-                                            class="text-gray-600 hover:text-green-600" title="Yayına Al">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
+                                            class="action-button archive" title="Arşivle">
+                                            <img src="/sources/icons/bulk/archive-add.svg" alt="Arşivle">
                                         </button>
                                     <?php elseif ($gig['status'] === 'DELETED' && $gig['days_until_delete'] > 0): ?>
                                         <button onclick="updateGigStatus(<?= $gig['gig_id'] ?>, 'APPROVED')"
-                                            class="text-gray-600 hover:text-green-600" title="Geri Yükle">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                                            </svg>
+                                            class="action-button restore" title="Geri Yükle">
+                                            <img src="/sources/icons/bulk/rotate-left.svg" alt="Geri Yükle">
                                         </button>
                                     <?php endif; ?>
 
                                     <?php if ($gig['status'] !== 'DELETED'): ?>
                                         <button onclick="updateGigStatus(<?= $gig['gig_id'] ?>, 'DELETED')"
-                                            class="text-gray-600 hover:text-red-600" title="Sil">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
+                                            class="action-button delete" title="Sil">
+                                            <img src="/sources/icons/bulk/trash.svg" alt="Sil">
                                         </button>
                                     <?php endif; ?>
                                 </div>
                             </div>
+
+                            <div class="created-at"><?= $timeAgo ?></div>
+                            <h3 class="gig-title"><?= htmlspecialchars($gig['title']) ?></h3>
+                            <p class="gig-description"><?= substr(strip_tags($gig['description']), 0, 100) ?>...</p>
+
+                            <div class="divider"></div>
+
+                            <div class="price-section">
+                                <div class="price-info">
+                                    <div class="price-row">
+                                        <span class="price">₺<?= number_format($gig['price'], 2) ?></span>
+                                        <span class="price-type">/ <?= $pricingTypeText ?></span>
+                                    </div>
+                                    <span class="deliverables"><?= $deliverablesText ?></span>
+                                </div>
+
+                                <button onclick="editGig(<?= $gig['gig_id'] ?>)" class="edit-button">
+                                    Düzenle
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <!-- Yarım Kalan İlanlar -->
+                <?php if (count($tempGigs) > 0): ?>
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Yarım Kalan İlanlar</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <?php foreach ($tempGigs as $tempGig):
+                                $formData = json_decode($tempGig['form_data'], true);
+                                $stepText = match ($tempGig['current_step']) {
+                                    1 => 'Temel Bilgiler',
+                                    2 => 'Detaylar',
+                                    3 => 'Gereksinimler',
+                                    4 => 'Fiyat ve Teslimat',
+                                    5 => 'Medya',
+                                    6 => 'İş Süreci ve Anlaşma',
+                                    default => 'Bilinmeyen Adım'
+                                };
+                                ?>
+                                <div class="bg-white rounded-lg shadow-md p-4">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-2">
+                                        <?= htmlspecialchars($formData['title'] ?? 'Başlıksız İlan') ?>
+                                    </h4>
+                                    <p class="text-sm text-gray-600 mb-4">
+                                        Son düzenleme: <?= timeAgo($tempGig['updated_at']) ?>
+                                    </p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-blue-600">Kalan Adım: <?= $stepText ?></span>
+                                        <a href="new_gig.php?temp_id=<?= $tempGig['temp_gig_id'] ?>"
+                                            class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                            Devam Et
+                                        </a>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
-                <?php endforeach; ?>
+                <?php endif; ?>
             </div>
-
-            <!-- Yarım Kalan İlanlar -->
-            <?php if (count($tempGigs) > 0): ?>
-                <div class="mt-8">
-                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Yarım Kalan İlanlar</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <?php foreach ($tempGigs as $tempGig):
-                            $formData = json_decode($tempGig['form_data'], true);
-                            $stepText = match ($tempGig['current_step']) {
-                                1 => 'Temel Bilgiler',
-                                2 => 'Detaylar',
-                                3 => 'Gereksinimler',
-                                4 => 'Fiyat ve Teslimat',
-                                5 => 'Medya',
-                                6 => 'İş Süreci ve Anlaşma',
-                                default => 'Bilinmeyen Adım'
-                            };
-                            ?>
-                            <div class="bg-white rounded-lg shadow-md p-4">
-                                <h4 class="text-lg font-semibold text-gray-900 mb-2">
-                                    <?= htmlspecialchars($formData['title'] ?? 'Başlıksız İlan') ?>
-                                </h4>
-                                <p class="text-sm text-gray-600 mb-4">
-                                    Son düzenleme: <?= timeAgo($tempGig['updated_at']) ?>
-                                </p>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-sm text-blue-600">Kalan Adım: <?= $stepText ?></span>
-                                    <a href="new_gig.php?temp_id=<?= $tempGig['temp_gig_id'] ?>"
-                                        class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
-                                        Devam Et
-                                    </a>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
         </div>
-    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
-    <script>
-        function updateGigStatus(gigId, status) {
-            const messages = {
-                'DELETED': 'Bu ilanı silmek istediğinizden emin misiniz? İlan 30 gün sonra kalıcı olarak silinecektir.',
-                'PAUSED': 'Bu ilanı arşivlemek istediğinizden emin misiniz?',
-                'APPROVED': status === 'DELETED' ? 'Bu ilanı geri yüklemek istediğinizden emin misiniz?' : 'Bu ilanı tekrar yayına almak istediğinizden emin misiniz?'
-            };
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
+        <script>
+            function updateGigStatus(gigId, status) {
+                const messages = {
+                    'DELETED': 'Bu ilanı silmek istediğinizden emin misiniz? İlan 30 gün sonra kalıcı olarak silinecektir.',
+                    'PAUSED': 'Bu ilanı arşivlemek istediğinizden emin misiniz?',
+                    'APPROVED': status === 'DELETED' ? 'Bu ilanı geri yüklemek istediğinizden emin misiniz?' : 'Bu ilanı tekrar yayına almak istediğinizden emin misiniz?'
+                };
 
-            if (confirm(messages[status])) {
-                fetch('api/gigs/update_status.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        gig_id: gigId,
-                        status: status,
-                        freelancer_id: <?= $freelancer_id ?>
+                if (confirm(messages[status])) {
+                    fetch('api/gigs/update_status.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            gig_id: gigId,
+                            status: status,
+                            freelancer_id: <?= $freelancer_id ?>
+                        })
                     })
-                })
-                    .then(response => {
-                        // Response'u önce text olarak alıp kontrol edelim
-                        return response.text().then(text => {
-                            try {
-                                return JSON.parse(text);
-                            } catch (e) {
-                                console.error('Invalid JSON response:', text);
-                                throw new Error('Sunucudan geçersiz yanıt alındı');
+                        .then(response => {
+                            // Response'u önce text olarak alıp kontrol edelim
+                            return response.text().then(text => {
+                                try {
+                                    return JSON.parse(text);
+                                } catch (e) {
+                                    console.error('Invalid JSON response:', text);
+                                    throw new Error('Sunucudan geçersiz yanıt alındı');
+                                }
+                            });
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                location.reload();
+                            } else {
+                                alert(data.message || 'İşlem başarısız oldu');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+                        });
+                }
+            }
+
+            function editGig(gigId) {
+                window.location.href = `edit_gig.php?id=${gigId}`;
+            }
+
+            function deleteGig(gigId) {
+                if (confirm('<?= __("Bu ilanı silmek istediğinizden emin misiniz?") ?>')) {
+                    fetch('api/gigs/update_status.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ gig_id: gigId })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                location.reload();
+                            } else {
+                                alert(data.message);
                             }
                         });
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert(data.message || 'İşlem başarısız oldu');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.');
-                    });
+                }
             }
-        }
-
-        function editGig(gigId) {
-            window.location.href = `edit_gig.php?id=${gigId}`;
-        }
-
-        function deleteGig(gigId) {
-            if (confirm('<?= __("Bu ilanı silmek istediğinizden emin misiniz?") ?>')) {
-                fetch('api/gigs/update_status.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ gig_id: gigId })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert(data.message);
-                        }
-                    });
-            }
-        }
-    </script>
+        </script>
 </body>
 
 </html>

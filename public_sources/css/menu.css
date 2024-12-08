@@ -1,0 +1,677 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background: #fff;
+}
+
+/* Menu Wrapper & Container */
+.menu-wrapper {
+    position: fixed;
+    top: 0;
+    /* -80px yerine 0 yapıyoruz */
+    left: 0;
+    width: 100%;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    z-index: 1000;
+    background: white;
+    opacity: 0;
+    /* Görünmezlik için opacity kullanıyoruz */
+    transform: translateY(-80px);
+    /* Position yerine transform kullanıyoruz */
+}
+
+.menu-container {
+    width: 100%;
+    max-width: 95%;
+    height: 60px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: visible;
+}
+
+.main-menu {
+    width: 100%;
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
+    position: relative;
+    z-index: 2;
+}
+
+.left-menu {
+    display: flex;
+    gap: 24px;
+    visibility: hidden;
+    align-items: center;
+    opacity: 0;
+}
+
+.menu-item {
+    color: #000;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 10px;
+    transition: background 0.3s;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(-20px);
+    font-size: 12px;
+    font-weight: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.menu-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.menu-item.active {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.lure-text {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    color: #000;
+    opacity: 0;
+    padding: 0 5px;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    white-space: nowrap;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+
+.center-search {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.ctrl-box {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Right Icons */
+.right-icons {
+    display: flex;
+    gap: 24px;
+    align-items: baseline;
+    visibility: hidden;
+}
+
+.icon-item {
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(-20px);
+}
+
+.submenu-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    border: 1px solid #dedede;
+    overflow: hidden;
+    border-radius: 20px;
+    opacity: 0;
+    height: 0;
+    box-shadow: 0 22px 40px rgba(0, 0, 0, 0.1);
+}
+
+.submenu {
+    padding: 24px;
+    opacity: 0;
+    transform: translateY(20px);
+    max-width: 1200px;
+}
+
+.submenu-layout {
+    display: none;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+}
+
+.submenu-layout.active {
+    display: grid;
+}
+
+/* Submenu Column */
+.submenu-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.submenu-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111;
+    padding: 0 12px;
+    margin-bottom: 4px;
+    opacity: 0;
+    transform: translateY(-10px);
+    text-align: left;
+    /* Sol hizalama için */
+}
+
+.submenu-header i {
+    font-size: 20px;
+    opacity: 0.8;
+}
+
+/* Submenu Items */
+.submenu-items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.submenu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0;
+    transform: translateY(-10px);
+    text-decoration: none;
+    color: inherit;
+    text-align: left;
+    /* Sol hizalama için */
+}
+
+.submenu-item:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.submenu-item i {
+    font-size: 20px;
+    opacity: 0.7;
+}
+
+.submenu-content {
+    flex: 1;
+    text-align: left;
+}
+
+.submenu-content h4 {
+    font-size: 13px;
+    font-weight: 500;
+    color: #111;
+    margin-bottom: 2px;
+    text-align: left;
+}
+
+.submenu-content p {
+    font-size: 11px;
+    color: #666;
+    text-align: left;
+}
+
+/* Profile & Settings Styles */
+.profile {
+    padding-left: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    text-align: right;
+}
+
+.profile img.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.profile .icon {
+    transition: transform 0.3s ease;
+}
+
+.profile.active .icon {
+    transform: rotate(180deg);
+}
+
+/* Profile Dropdown */
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 240px;
+    padding: 13px;
+    background: #fff;
+    border-radius: 15px;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.95);
+    transform-origin: top right;
+    border: 1px solid #dedede;
+    box-shadow: 0px 22px 40px rgba(0, 0, 0, 0.1);
+}
+
+.profile-menu-item {
+    padding: 8px 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(-10px);
+    margin: 4px 0;
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.profile-menu-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Settings Dropdown */
+.settings-dropdown {
+    background: rgba(0, 0, 0, 0.02);
+    overflow: hidden;
+    height: 0;
+}
+
+.setting-item {
+    padding: 8px 15px;
+    font-size: 12px;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(-10px);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: rgba(0, 0, 0, 0.6);
+    text-decoration: none;
+}
+
+.setting-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.8);
+}
+
+/* Icon Styles */
+.icon {
+    width: 24px;
+    height: 24px;
+    filter: brightness(0);
+}
+
+.white-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.setting-item .white-icon {
+    opacity: 0.6;
+}
+
+.setting-item:hover .white-icon {
+    opacity: 0.8;
+}
+
+/* Wallet Dropdown */
+.wallet-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 210px;
+    width: 350px;
+    padding: 13px;
+    background: #fff;
+    border: 1px solid #dedede;
+    border-radius: 15px;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.95);
+    transform-origin: top right;
+    box-shadow: 0px 22px 40px rgba(0, 0, 0, 0.1);
+}
+
+.wallet-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 10px;
+}
+
+.wallet-balance {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    margin: 4px 0;
+    border-radius: 10px;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.wallet-balance:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Wallet Components */
+.balance-info {
+    display: flex;
+    flex-direction: column;
+    margin-left: 12px;
+}
+
+.balance-item {
+    display: flex;
+    align-items: center;
+}
+
+.white-icon.balance-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.balance-label {
+    font-size: 12px;
+    color: #666;
+}
+
+.balance-amount {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Transaction Styles */
+.recent-transactions-title {
+    padding: 10px 15px;
+    font-size: 12px;
+    color: #666;
+    border-top: 1px solid #f0f0f0;
+    margin-top: 10px;
+}
+
+.transaction-item {
+    padding: 8px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    opacity: 0;
+    transform: translateY(-10px);
+    border-radius: 10px;
+}
+
+.transaction-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.transaction-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.transaction-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.transaction-amount {
+    font-weight: 600;
+}
+
+.transaction-amount.positive {
+    color: #22c55e;
+}
+
+.transaction-amount.negative {
+    color: #ef4444;
+}
+
+/* View All Link */
+.view-all-link {
+    display: block;
+    text-align: center;
+    padding: 10px 15px;
+    color: #3b82f6;
+    font-size: 12px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: 10px;
+    text-decoration: none;
+}
+
+.view-all-link:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 10px;
+}
+
+/* Special States */
+.settings-arrow {
+    margin-left: auto;
+    transition: transform 0.3s ease;
+}
+
+.settings-arrow.active {
+    transform: rotate(180deg);
+}
+
+.logout-item {
+    color: #ff4757;
+}
+
+.logout-item .white-icon {
+    filter: invert(48%) sepia(54%) saturate(2673%) hue-rotate(325deg) brightness(101%) contrast(101%);
+}
+
+.logout-item:hover {
+    background: rgba(255, 71, 87, 0.1);
+}
+
+.search-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    background: #fff;
+    border-radius: 15px;
+    opacity: 0;
+    visibility: hidden;
+    box-shadow: 0px 22px 40px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 8px;
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.search-result-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+    transform: scale(1.02);
+}
+
+
+.search-result-item:first-child {
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+}
+
+.search-result-item:last-child {
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+.search-result-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.search-result-info {
+    flex: 1;
+}
+
+.search-result-name {
+    font-weight: 800;
+    font-size: 12px;
+    color: #000;
+}
+
+.search-result-username {
+    font-size: 12px;
+    color: #bebebe;
+}
+
+.no-results {
+    padding: 16px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+}
+
+.search-result-arrow {
+    width: 20px;
+    height: 20px;
+    opacity: 0.6;
+}
+
+.search-result-divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.05);
+    margin: 0 8px;
+}
+
+.right-menu {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.register-btn {
+    color: #000;
+    text-decoration: none;
+    font-size: 12px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+
+.login-btn {
+    color: #000;
+    text-decoration: none;
+    font-size: 12px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: #c3ff00;
+    transition: background 0.3s;
+}
+
+.register-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.login-btn:hover {
+    background: #b3e600;
+}
+
+/* Hover Effect için gerekli stiller */
+.menu-item,
+.register-btn,
+.login-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.menu-item::after,
+.register-btn::after,
+.login-btn::after {
+    content: attr(data-hover);
+    position: absolute;
+    top: 150%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-font-smoothing: subpixel-antialiased;
+}
+
+.menu-item>span,
+.register-btn>span,
+.login-btn>span {
+    display: inline-block;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+
+.menu-item:hover>span,
+.register-btn:hover>span,
+.login-btn:hover>span {
+    transform: translateY(-200%);
+}
+
+.menu-item:hover::after,
+.register-btn:hover::after,
+.login-btn:hover::after {
+    transform: translateY(-150%);
+}

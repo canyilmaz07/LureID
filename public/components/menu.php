@@ -55,7 +55,7 @@ if (isset($_SESSION['user_id'])) {
             display: flex;
             justify-content: center;
             z-index: 1000;
-            background: transparent;
+            background: white;
             opacity: 0;
             /* Görünmezlik için opacity kullanıyoruz */
             transform: translateY(-80px);
@@ -72,17 +72,13 @@ if (isset($_SESSION['user_id'])) {
             overflow: visible;
         }
 
-        /* Main Menu */
         .main-menu {
             width: 100%;
             height: 60px;
-            /* Height düşürüldü */
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 24px;
             background: transparent;
-            /* Başlangıçta arkaplan yok */
             position: relative;
             z-index: 2;
         }
@@ -95,7 +91,6 @@ if (isset($_SESSION['user_id'])) {
             opacity: 0;
         }
 
-        /* Menu Items */
         .menu-item {
             color: #000;
             text-decoration: none;
@@ -560,7 +555,6 @@ if (isset($_SESSION['user_id'])) {
             transform: translateX(-50%);
             width: 400px;
             background: #fff;
-            border: 1px solid #dedede;
             border-radius: 15px;
             opacity: 0;
             visibility: hidden;
@@ -637,6 +631,52 @@ if (isset($_SESSION['user_id'])) {
             background: rgba(0, 0, 0, 0.05);
             margin: 0 8px;
         }
+
+        .menu-item,
+        .register-btn,
+        .login-btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::after,
+        .register-btn::after,
+        .login-btn::after {
+            content: attr(data-hover);
+            position: absolute;
+            top: 150%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backface-visibility: hidden;
+            transform: translateZ(0);
+            -webkit-font-smoothing: subpixel-antialiased;
+        }
+
+        .menu-item>span,
+        .register-btn>span,
+        .login-btn>span {
+            display: inline-block;
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            backface-visibility: hidden;
+            transform: translateZ(0);
+        }
+
+        .menu-item:hover>span,
+        .register-btn:hover>span,
+        .login-btn:hover>span {
+            transform: translateY(-200%);
+        }
+
+        .menu-item:hover::after,
+        .register-btn:hover::after,
+        .login-btn:hover::after {
+            transform: translateY(-150%);
+        }
     </style>
 </head>
 
@@ -648,11 +688,11 @@ if (isset($_SESSION['user_id'])) {
             </div>
             <div class="main-menu">
                 <div class="left-menu">
-                    <a href="/public/index.php" class="menu-item">Ana Sayfa</a>
-                    <a class="menu-item">Market</a>
-                    <a class="menu-item">Topluluk</a>
-                    <a class="menu-item">Eğitim</a>
-                    <a class="menu-item">Projeler</a>
+                    <a href="/public/index.php" class="menu-item" data-hover="Ana Sayfa"><span>Ana Sayfa</span></a>
+                    <a class="menu-item" data-hover="Market"><span>Market</span></a>
+                    <a class="menu-item" data-hover="Topluluk"><span>Topluluk</span></a>
+                    <a class="menu-item" data-hover="Eğitim"><span>Eğitim</span></a>
+                    <a class="menu-item" data-hover="Projeler"><span>Projeler</span></a>
                 </div>
 
                 <div class="lure-text">LUREID</div>
@@ -1217,6 +1257,7 @@ if (isset($_SESSION['user_id'])) {
                     </button>
                 </form>
             </div>
+
             <div class="wallet-dropdown">
                 <div class="wallet-header">
                     <h3 class="text-sm font-semibold">Cüzdan</h3>
@@ -1609,7 +1650,7 @@ if (isset($_SESSION['user_id'])) {
             }
 
             function animateSubmenu(button, layout) {
-                // Hide other layouts and show current one
+                // Layout'ları hemen gizle/göster
                 submenuLayouts.forEach(l => {
                     l.style.display = 'none';
                     l.classList.remove('active');
@@ -1621,56 +1662,47 @@ if (isset($_SESSION['user_id'])) {
                 const headers = layout.querySelectorAll('.submenu-header');
                 const items = layout.querySelectorAll('.submenu-item');
 
-                // Reset states
+                // States'i hemen set et
                 gsap.set([headers, items], {
                     opacity: 0,
                     y: -10
                 });
 
-                // Animate submenu
-                const tl = gsap.timeline();
+                // Timeline'ı hızlandır
+                const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
                 button.classList.add('active');
 
-                tl.to('.menu-container', {
+                tl.to(['.menu-container', '.main-menu'], {
                     borderRadius: '15px 15px 0 0',
-                    duration: 0.3,
-                    ease: 'power3.out'
+                    duration: 0.2, // 0.3'ten 0.2'ye düşürdük
                 })
-                    .to('.main-menu', {
-                        borderRadius: '15px 15px 0 0',
-                        duration: 0.3,
-                        ease: 'power3.out'
+                    .to(submenuContainer, {
+                        height: submenuHeight,
+                        opacity: 1,
+                        duration: 0.3, // 0.5'ten 0.3'e düşürdük
+                        ease: 'power2.out'
                     })
-                tl.to(submenuContainer, {
-                    height: submenuHeight,
-                    opacity: 1,
-                    duration: 0.5,
-                    ease: 'power3.out'
-                })
                     .to('.submenu', {
                         opacity: 1,
                         y: 0,
-                        duration: 0.3,
-                        ease: 'power3.out'
+                        duration: 0.2, // 0.3'ten 0.2'ye düşürdük
                     })
                     .to(headers, {
                         opacity: 1,
                         y: 0,
-                        duration: 0.3,
-                        stagger: 0.1,
-                        ease: 'power3.out'
+                        duration: 0.2, // 0.3'ten 0.2'ye düşürdük
+                        stagger: 0.05 // 0.1'den 0.05'e düşürdük
                     })
                     .to(items, {
                         opacity: 1,
                         y: 0,
-                        duration: 0.3,
+                        duration: 0.2, // 0.3'ten 0.2'ye düşürdük
                         stagger: {
-                            each: 0.05,
+                            each: 0.02, // 0.05'ten 0.02'ye düşürdük
                             grid: [items.length / 3, 3],
                             from: "start"
-                        },
-                        ease: 'power3.out'
-                    }, '-=0.2');
+                        }
+                    }, '-=0.1'); // Örtüşmeyi artırdık
 
                 isSubmenuOpen = true;
                 activeButton = button;
@@ -1682,34 +1714,32 @@ if (isset($_SESSION['user_id'])) {
                         submenuLayouts.forEach(layout => layout.classList.remove('active'));
                         if (button) button.classList.remove('active');
                         if (callback) callback();
-                    }
+                    },
+                    defaults: { ease: 'power3.in' }
                 });
 
                 tl.to('.submenu-item', {
                     opacity: 0,
                     y: -10,
-                    duration: 0.3,
-                    stagger: 0.03,
-                    ease: 'power3.in'
+                    duration: 0.2, // 0.3'ten 0.2'ye düşürdük
+                    stagger: 0.01 // 0.03'ten 0.01'e düşürdük
                 })
                     .to('.submenu-header', {
                         opacity: 0,
                         y: -10,
-                        duration: 0.3,
-                        stagger: 0.03,
-                        ease: 'power3.in'
-                    }, '-=0.2')
+                        duration: 0.2, // 0.3'ten 0.2'ye düşürdük
+                        stagger: 0.01 // 0.03'ten 0.01'e düşürdük
+                    }, '-=0.15')
                     .to(submenuContainer, {
                         height: 0,
                         opacity: 0,
-                        duration: 0.5,  // Süreyi arttırdım
-                        ease: 'power3.inOut'  // Ease'i değiştirdim
+                        duration: 0.3, // 0.5'ten 0.3'e düşürdük
+                        ease: 'power2.inOut'
                     })
                     .to(['.menu-container', '.main-menu'], {
                         borderRadius: '15px',
-                        duration: 0.3,
-                        ease: 'power3.out'
-                    });
+                        duration: 0.2 // 0.3'ten 0.2'ye düşürdük
+                    }, '-=0.1'); // Örtüşmeyi artırdık
 
                 isSubmenuOpen = false;
                 activeButton = null;

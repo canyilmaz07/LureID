@@ -1,4 +1,5 @@
 <?php
+// view.php
 session_start();
 require_once '../../config/database.php';
 require_once '../../languages/language_handler.php';
@@ -132,6 +133,139 @@ if (isset($_SESSION['user_id'])) {
         .toast-error {
             background-color: #EF4444;
             color: white;
+        }
+
+        .gigs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+            padding-right: 50px;
+            margin-top: 20px;
+        }
+
+        .gig-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 22px 40px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .gig-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.15);
+        }
+
+        .gig-image {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            /* 16:9 aspect ratio */
+            overflow: hidden;
+        }
+
+        .gig-image img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gig-content {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gig-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .gig-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1F2937;
+            margin-bottom: 8px;
+            line-clamp: 2;
+            -webkit-line-clamp: 2;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .gig-description {
+            color: #4B5563;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            flex-grow: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .gig-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .gig-tag {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .price-tag {
+            background-color: #EEF2FF;
+            color: #4F46E5;
+        }
+
+        .delivery-tag {
+            background-color: #F0FDF4;
+            color: #15803D;
+        }
+
+        .revision-tag {
+            background-color: #FEF3C7;
+            color: #B45309;
+        }
+
+        .gig-actions {
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .gig-date {
+            font-size: 0.875rem;
+            color: #6B7280;
+        }
+
+        .view-details {
+            padding: 8px 16px;
+            background-color: #4F46E5;
+            color: white;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .view-details:hover {
+            background-color: #4338CA;
         }
     </style>
 </head>
@@ -467,9 +601,9 @@ if (isset($_SESSION['user_id'])) {
             <?php if ($isFreelancer && !empty($gigs)): ?>
                 <div class="mb-8">
                     <h3 class="text-xl font-bold mb-4"><?= __('Gigs') ?></h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="gigs-grid">
                         <?php foreach ($gigs as $gig): ?>
-                            <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <div class="gig-card">
                                 <?php
                                 $mediaData = json_decode($gig['media_data'], true);
                                 $firstImage = null;
@@ -478,53 +612,56 @@ if (isset($_SESSION['user_id'])) {
                                 }
                                 ?>
                                 <?php if ($firstImage): ?>
-                                    <div class="relative pt-[56.25%]">
+                                    <div class="gig-image">
                                         <img src="/public/components/freelancer/<?php echo htmlspecialchars($firstImage); ?>"
-                                            alt="<?php echo htmlspecialchars($gig['title']); ?>"
-                                            class="absolute inset-0 w-full h-full object-cover">
+                                            alt="<?php echo htmlspecialchars($gig['title']); ?>">
                                     </div>
                                 <?php endif; ?>
-                                <div class="p-4">
-                                    <h4 class="font-semibold mb-2"><?php echo htmlspecialchars($gig['title']); ?></h4>
-                                    <p class="text-sm text-gray-600 mb-3 line-clamp-2">
-                                        <?php echo htmlspecialchars($gig['description']); ?>
+
+                                <div class="gig-content">
+                                    <h4 class="gig-title"><?php echo htmlspecialchars($gig['title']); ?></h4>
+                                    <p class="gig-description"><?php echo htmlspecialchars(strip_tags($gig['description'])); ?>
                                     </p>
-                                    <div class="flex items-center justify-between">
-                                        <div class="text-sm text-gray-500">
-                                            <?php echo date('M j, Y', strtotime($gig['created_at'])); ?>
-                                        </div>
-                                        <a href="/public/views/gig.php?id=<?php echo $gig['gig_id']; ?>"
-                                            class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
-                                            <?= __('View Details') ?>
-                                        </a>
-                                    </div>
-                                    <div class="mt-2 flex flex-wrap gap-2">
+
+                                    <div class="gig-meta">
                                         <?php if ($gig['pricing_type'] !== 'ONE_TIME'): ?>
-                                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                            <span class="gig-tag price-tag">
                                                 ₺<?php echo number_format($gig['price'], 2); ?>/<?php echo strtolower($gig['pricing_type']); ?>
                                             </span>
                                         <?php else: ?>
-                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                                            <span class="gig-tag price-tag">
                                                 ₺<?php echo number_format($gig['price'], 2); ?>
                                             </span>
                                         <?php endif; ?>
-                                        <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+
+                                        <span class="gig-tag delivery-tag">
                                             <?php echo $gig['delivery_time']; ?>         <?= __('days delivery') ?>
                                         </span>
+
                                         <?php if ($gig['revision_count'] > 0): ?>
-                                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
+                                            <span class="gig-tag revision-tag">
                                                 <?php echo $gig['revision_count']; ?>             <?= __('revision') ?>
                                             </span>
                                         <?php endif; ?>
+                                    </div>
+
+                                    <div class="gig-actions">
+                                        <div class="gig-date">
+                                            <?php echo date('M j, Y', strtotime($gig['created_at'])); ?>
+                                        </div>
+                                        <a href="/public/views/gig.php?id=<?php echo $gig['gig_id']; ?>" class="view-details">
+                                            <?= __('View Details') ?>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
+
                     <?php if (count($gigs) >= 6): ?>
-                        <div class="text-center mt-4">
+                        <div class="text-center mt-6">
                             <a href="/public/views/gigs.php?user=<?php echo htmlspecialchars($profile['username']); ?>"
-                                class="inline-block px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                                class="inline-block px-6 py-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
                                 <?= __('View All Gigs') ?>
                             </a>
                         </div>
