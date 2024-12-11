@@ -401,7 +401,7 @@ if (isset($_SESSION['user_id'])) {
         .wallet-dropdown {
             position: absolute;
             top: calc(100% + 10px);
-            right: 210px;
+            right: 190px;
             width: 350px;
             padding: 13px;
             background: #fff;

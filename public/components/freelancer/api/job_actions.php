@@ -1,4 +1,5 @@
 <?php
+// job_actions.php
 session_start();
 $config = require_once '../../../../config/database.php';
 
@@ -139,38 +140,53 @@ function handleDelivery($db, $jobId)
     }
 }
 
-function acceptDelivery($db, $jobId)
-{
+function acceptDelivery($db, $jobId) {
     try {
         $db->beginTransaction();
 
-        // Önce job'un bu kullanıcıya ait olduğunu kontrol edelim
+        // İş ve transaction detaylarını kontrol et
         $stmt = $db->prepare("
-            SELECT j.* 
+            SELECT j.*, t.amount, t.transaction_id, f.user_id as freelancer_user_id 
             FROM jobs j
+            JOIN transactions t ON j.transaction_id = t.transaction_id 
+            JOIN freelancers f ON j.freelancer_id = f.freelancer_id
             WHERE j.job_id = ? AND j.client_id = ? AND j.status = 'UNDER_REVIEW'
         ");
         $stmt->execute([$jobId, $_SESSION['user_id']]);
 
         $job = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$job) {
-            http_response_code(403);
-            die(json_encode(['success' => false, 'error' => 'Unauthorized']));
+            throw new Exception('Unauthorized or job not found');
         }
 
         // İşi tamamlandı olarak işaretle
-        $updateStmt = $db->prepare("
+        $updateJobStmt = $db->prepare("
             UPDATE jobs 
             SET status = 'COMPLETED',
                 completed_at = CURRENT_TIMESTAMP
             WHERE job_id = ?
         ");
+        $updateJobStmt->execute([$jobId]);
 
-        $result = $updateStmt->execute([$jobId]);
+        // Transaction'ı tamamlandı olarak işaretle
+        $updateTransactionStmt = $db->prepare("
+            UPDATE transactions 
+            SET status = 'COMPLETED'
+            WHERE transaction_id = ?
+        ");
+        $updateTransactionStmt->execute([$job['transaction_id']]);
 
-        if (!$result) {
-            throw new Exception('Could not update job status');
-        }
+        // Freelancer'ın bakiyesini güncelle
+        $updateWalletStmt = $db->prepare("
+            UPDATE wallet 
+            SET balance = balance + :amount,
+                last_transaction_date = CURRENT_TIMESTAMP
+            WHERE user_id = :user_id
+        ");
+        $updateWalletStmt->execute([
+            ':amount' => $job['amount'],
+            ':user_id' => $job['freelancer_user_id']
+        ]);
 
         // Review kaydı oluştur
         $reviewStmt = $db->prepare("

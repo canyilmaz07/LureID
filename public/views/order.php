@@ -71,12 +71,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Insufficient balance');
         }
 
-        // Generate unique transaction ID
+        // Generate unique transaction ID for client payment
         do {
-            $transactionId = generateTransactionId();
-        } while (!validateTransactionId($db, $transactionId));
+            $clientTransactionId = generateTransactionId();
+        } while (!validateTransactionId($db, $clientTransactionId));
 
-        // Process wallet payment
+        // Generate unique transaction ID for freelancer payment
+        do {
+            $freelancerTransactionId = generateTransactionId();
+        } while (!validateTransactionId($db, $freelancerTransactionId));
+
+        // Process wallet payment if selected
         if ($paymentType === 'wallet') {
             // Deduct from user's wallet
             $stmt = $db->prepare("
@@ -101,32 +106,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Create transaction records
-        // 1. Client's payment (COMPLETED)
         $stmt = $db->prepare("
-            INSERT INTO transactions (
-                transaction_id, 
-                sender_id, 
-                receiver_id, 
-                amount, 
-                transaction_type, 
-                status, 
-                description
-            ) VALUES (
-                :transaction_id,
-                :sender_id,
-                :receiver_id,
-                :amount,
-                'PAYMENT',
-                'COMPLETED',
-                :description
-            )
-        ");
+    INSERT INTO transactions (
+        transaction_id, 
+        sender_id, 
+        receiver_id, 
+        amount, 
+        transaction_type, 
+        status, 
+        description
+    ) VALUES (
+        :transaction_id,
+        :sender_id,
+        :receiver_id,
+        :amount,
+        'PAYMENT',
+        'PENDING',
+        :description
+    )
+");
 
         $stmt->execute([
-            ':transaction_id' => $transactionId,
-            ':sender_id' => $_SESSION['user_id'],
-            ':receiver_id' => $orderData['freelancer_user_id'],
+            ':transaction_id' => $clientTransactionId,
+            ':sender_id' => $_SESSION['user_id'],         // İşveren
+            ':receiver_id' => $orderData['freelancer_user_id'], // Freelancer
             ':amount' => $amount,
             ':description' => 'Payment for gig: ' . $orderData['title']
         ]);
@@ -134,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Calculate delivery deadline
         $deliveryDeadline = date('Y-m-d H:i:s', strtotime("+{$orderData['delivery_time']} days"));
 
-        // Create job record
+        // Create job record with client transaction ID
         $stmt = $db->prepare("
             INSERT INTO jobs (
                 gig_id,
@@ -182,7 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':delivery_deadline' => $deliveryDeadline,
             ':max_revisions' => $orderData['revision_count'],
             ':milestones_data' => $orderData['milestones_data'],
-            ':transaction_id' => $transactionId
+            ':transaction_id' => $clientTransactionId
         ]);
 
         $db->commit();
@@ -201,7 +204,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 }
-
 function validateTransactionId($db, $transactionId)
 {
     $stmt = $db->prepare("SELECT COUNT(*) FROM transactions WHERE transaction_id = ?");

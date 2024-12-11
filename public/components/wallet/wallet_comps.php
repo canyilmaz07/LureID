@@ -109,9 +109,29 @@ LIMIT 3
                         $sign = '+';
                         break;
                     case 'WITHDRAWAL':
-                    case 'PAYMENT':
                         $color = '#ef4444';
                         $sign = '-';
+                        break;
+                    case 'PAYMENT':
+                        // Freelancer için yeşil (+), işveren için kırmızı (-)
+                        $stmt = $db->prepare("
+                            SELECT f.user_id 
+                            FROM freelancers f 
+                            JOIN jobs j ON f.freelancer_id = j.freelancer_id 
+                            WHERE j.transaction_id = ?
+                        ");
+                        $stmt->execute([$t['transaction_id']]);
+                        $freelancerUserId = $stmt->fetchColumn();
+
+                        if ($userData['user_id'] == $freelancerUserId) {
+                            // Freelancer'sa yeşil ve artı
+                            $color = '#22c55e';
+                            $sign = '+';
+                        } else {
+                            // İşverense kırmızı ve eksi
+                            $color = '#ef4444';
+                            $sign = '-';
+                        }
                         break;
                     case 'TRANSFER':
                         if ($t['direction'] === 'incoming') {
@@ -384,8 +404,25 @@ LIMIT 3
                             break;
                         case 'WITHDRAWAL':
                         case 'PAYMENT':
-                            $color = '#ef4444';
-                            $sign = '-';
+                            // Freelancer için yeşil (+), işveren için kırmızı (-)
+                            $stmt = $db->prepare("
+                                    SELECT f.user_id 
+                                    FROM freelancers f 
+                                    JOIN jobs j ON f.freelancer_id = j.freelancer_id 
+                                    WHERE j.transaction_id = ?
+                                ");
+                            $stmt->execute([$t['transaction_id']]);
+                            $freelancerUserId = $stmt->fetchColumn();
+
+                            if ($userData['user_id'] == $freelancerUserId) {
+                                // Freelancer'sa yeşil ve artı
+                                $color = '#22c55e';
+                                $sign = '+';
+                            } else {
+                                // İşverense kırmızı ve eksi
+                                $color = '#ef4444';
+                                $sign = '-';
+                            }
                             break;
                         case 'TRANSFER':
                             if ($t['direction'] === 'incoming') {
