@@ -430,3 +430,9 @@ Ayrıca, dashboard tasarımında şunlara dikkat etmelisiniz:
 - Sezgisel kullanıcı arayüzü
 
 Bu özellikleri eklerken kullanıcılarınızdan düzenli geri bildirim almayı ve en çok kullanılan özellikleri ön plana çıkarmayı unutmayın.
+
+
+
+
+
+LureID: Üretmek, Öğrenmek, Kodlamak, Satmak, İlham Vermek ve Paylaşmak İsteyenler İçin Bir Teknoloji Üssü.

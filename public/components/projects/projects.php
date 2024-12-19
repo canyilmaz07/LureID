@@ -98,7 +98,7 @@ $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <?php if (empty($projects)): ?>
         <div class="text-center py-20">
             <img src="empty.svg" alt="No projects" class="w-64 mx-auto mb-6">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Henüz projeniz yok</h2>
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Burası çok ıssız!</h2>
             <p class="text-gray-500 mb-8">İlk projenizi oluşturarak başlayın!</p>
             <a href="create.php" class="bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors">
                 Proje Oluştur

@@ -2,9 +2,9 @@
 // ../../config/google.php
 
 return [
-    'client_id' => '367259899417-2eg0assq260iugrrpcs8sp8po7pu3cs9.apps.googleusercontent.com',
-    'client_secret' => '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',
-    'redirect_uri' => 'http://localhost/auth/login.php',
+    'client_id' => '1375906829-86splk0bdbes7joe7cbd1vcfen5onhj3.apps.googleusercontent.com',
+    'client_secret' => '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',
+    'redirect_uri' => 'https://lureid.xyz/auth/login.php',
     'scopes' => [
         'email',
         'profile',
