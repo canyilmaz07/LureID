@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Anamakine: 127.0.0.1
--- Üretim Zamanı: 19 Ara 2024, 11:57:26
+-- Üretim Zamanı: 22 Ara 2024, 12:51:03
 -- Sunucu sürümü: 10.4.32-MariaDB
 -- PHP Sürümü: 8.2.12
 
@@ -59,8 +59,8 @@ CREATE TABLE `follows` (
 INSERT INTO `follows` (`user_id`, `following`, `followers`, `created_at`, `updated_at`) VALUES
 (113691405, '[395548956]', '[395548956]', '2024-12-02 13:29:26', '2024-12-06 22:19:07'),
 (257036736, '[]', '[]', '2024-12-06 10:19:53', NULL),
-(384546394, '[395548956]', '[395548956]', '2024-12-04 20:41:47', '2024-12-06 22:19:02'),
 (395548956, '[384546394,113691405]', '[768556619,384546394,113691405]', '2024-12-02 13:30:50', '2024-12-06 22:19:07'),
+(589356038, '[]', '[]', '2024-12-19 15:57:03', NULL),
 (601838105, '[]', '[]', '2024-12-06 10:18:43', NULL),
 (768556619, '[395548956]', '[]', '2024-12-04 14:26:39', '2024-12-04 14:27:29');
 
@@ -91,7 +91,9 @@ CREATE TABLE `freelancers` (
 --
 
 INSERT INTO `freelancers` (`freelancer_id`, `user_id`, `phone`, `identity_number`, `profile_data`, `professional_data`, `financial_data`, `additional_data`, `approval_status`, `status`, `created_at`, `updated_at`, `mod_note`) VALUES
-(18, 395548956, '0542730194', '10622652464', '{\"phone\":\"0542730194\",\"identity_number\":\"10622652464\",\"birth_year\":null,\"location\":{\"country\":null,\"city\":null}}', '{\"experience\":null,\"skills\":[\"\"],\"education\":null,\"certifications\":null,\"portfolio\":null,\"references\":null}', '{\"account_holder\":\"sjkl\\u015fi,dfghjkl\\u015fi,\",\"bank_name\":\"Garanti\",\"iban\":\"23 4567 8902 3456 7892 3456 78\",\"tax_number\":\"7418520963\",\"daily_rate\":\"500\"}', NULL, 'APPROVED', 'ACTIVE', '2024-12-06 22:46:00', NULL, NULL);
+(18, 395548956, '0542730194', '10622652464', '{\"phone\":\"0542730194\",\"identity_number\":\"10622652464\",\"birth_year\":null,\"location\":{\"country\":null,\"city\":null}}', '{\"experience\":null,\"skills\":[\"\"],\"education\":null,\"certifications\":null,\"portfolio\":null,\"references\":null}', '{\"account_holder\":\"sjkl\\u015fi,dfghjkl\\u015fi,\",\"bank_name\":\"Garanti\",\"iban\":\"23 4567 8902 3456 7892 3456 78\",\"tax_number\":\"7418520963\",\"daily_rate\":\"500\"}', NULL, 'APPROVED', 'ACTIVE', '2024-12-06 22:46:00', NULL, NULL),
+(20, 113691405, '5301556515', '51651651652', '{\"phone\":\"5301556515\",\"identity_number\":\"51651651652\",\"birth_year\":null,\"location\":{\"country\":null,\"city\":null}}', '{\"experience\":null,\"skills\":[\"\"],\"education\":null,\"certifications\":null,\"portfolio\":null,\"references\":null}', '{\"account_holder\":\"fewfew\",\"bank_name\":\"Ziraat\",\"iban\":\"54 1561 5616 5165 1651 6515 16\",\"tax_number\":\"1561651651\",\"daily_rate\":\"500\"}', NULL, 'APPROVED', 'ACTIVE', '2024-12-19 11:17:00', '2024-12-19 11:17:18', NULL),
+(21, 589356038, '5301556515', '51651651652', '{\"phone\":\"5301556515\",\"identity_number\":\"51651651652\",\"birth_year\":null,\"location\":{\"country\":null,\"city\":null}}', '{\"experience\":null,\"skills\":[\"\"],\"education\":null,\"certifications\":null,\"portfolio\":null,\"references\":null}', '{\"account_holder\":\"Can\",\"bank_name\":\"Odeabank\",\"iban\":\"16 5151 6156 1516 5156 1651 65\",\"tax_number\":\"5156165561\",\"daily_rate\":\"500\"}', NULL, 'APPROVED', 'ACTIVE', '2024-12-19 20:08:40', '2024-12-19 20:09:47', NULL);
 
 -- --------------------------------------------------------
 
@@ -128,7 +130,7 @@ CREATE TABLE `gigs` (
 --
 
 INSERT INTO `gigs` (`gig_id`, `freelancer_id`, `title`, `category`, `subcategory`, `description`, `requirements`, `price`, `pricing_type`, `delivery_time`, `revision_count`, `status`, `media_data`, `agreement_accepted`, `views`, `milestones_data`, `nda_data`, `created_at`, `updated_at`, `mod_note`, `deliverables`) VALUES
-(21, 18, 'l', 'Grafik & Tasarım', 'Web & Mobil Arayüz Tasarımı', '<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>', 'dsfghjklşiişf<<uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk', 450.00, 'WEEKLY', 3, 2, 'APPROVED', '{\"images\":[\"uploads\\/photos\\/gig_67538000a9224.png\"],\"video\":null}', 1, 0, 'null', 'null', '2024-12-06 22:51:44', '2024-12-06 22:52:30', NULL, '[\".psd\",\".jpeg\",\".jpg\",\".png\",\".eps\",\".tiff\",\".cdr\",\".ai\"]');
+(22, 21, 'Ben, web sitenizin arayüzünü Figma ile çizerim.', 'Grafik & Tasarım', 'Web & Mobil Arayüz Tasarımı', '<p>👋 Eğer olağan&uuml;st&uuml; bir uygulama fikriniz var ve hayranlık uyandıran kullanıcı aray&uuml;zleri sunacak bir tasarımcı arayışındaysanız, doğru adrese geldiniz!<br><br>📱Mobil uygulamanız veya Websiteniz i&ccedil;in sofistike, &ccedil;ağdaş ve eşsiz bir kullanıcı aray&uuml;z&uuml; oluşturmak i&ccedil;in benimle iletişime ge&ccedil;ebilirsiniz.<br><br>❇️ Bu hizmet şunları i&ccedil;erir:<br>* Tam Memnuniyet<br>* Y&uuml;ksek &Ccedil;&ouml;z&uuml;n&uuml;rl&uuml;kl&uuml; Tasarım<br>* Pixel Perfect Tasarım<br>* Modern ve Saf Tasarım<br>* Hızlı Teslimat<br>* G&uuml;ncel UI Trendleri<br><br>Başlamam i&ccedil;in ihtiyacım olan şeyler:<br>Her ekranın nasıl g&ouml;r&uuml;nmesi gerektiği hakkında taslaklar veya a&ccedil;ıklamalar<br>Tercih edilen renk şeması (isteğe bağlı)<br>Hedef kitlesi (isteğe bağlı)<br><br>💠 Hakkımda:<br><br>5 yıllık uygulama tasarımı deneyimim var. Mobil uygulamalar i&ccedil;in g&ouml;rsel a&ccedil;ıdan &ccedil;arpıcı ve kullanıcı dostu aray&uuml;zler oluşturmada uzmanlaştım. Uygulama fikrinizi etkileyici ve b&uuml;y&uuml;leyici bir tasarıma d&ouml;n&uuml;şt&uuml;rmeme izin verin!<br><br>Kullanılan Yazılım:<br>Figma<br><br>Not:<br>Uygulamanızı geliştirmeyeceğim, uygulamanızın nasıl g&ouml;r&uuml;neceğini tasarlarım. Teslimat kod i&ccedil;ermez.<br><br>Siparişiniz vermeden &ouml;nce, mesaj atıp fiyat teklifi alabilirsiniz. İlanda yazan fiyat sayfa başına olan fiyattır. ;<br><br>Web fiyatı ile mobil fiyatı farklıdır.<br>Web i&ccedil;in ekran başına ;<br>🧍 [Temel Paket 1400 TL,]<br>🚶 [Standart Paket 2300 TL]<br>🏃 [Pro Paket 3200 TL,]<br>fiyatlandırmam mevcuttur. Landing Page tasarımlar i&ccedil;in &uuml;cret farklıdır. L&uuml;tfen fiyat sorunuz.</p>', 'Renk ve font tercihleri', 1200.00, 'ONE_TIME', 12, 1, 'APPROVED', '{\"images\":[\"uploads\\/photos\\/gig_67647e270147e.png\"],\"video\":null}', 1, 0, 'null', 'null', '2024-12-19 20:12:23', '2024-12-19 20:17:50', NULL, '[\".fig\"]');
 
 -- --------------------------------------------------------
 
@@ -279,7 +281,8 @@ CREATE TABLE `invitations` (
 
 INSERT INTO `invitations` (`invitation_id`, `inviter_id`, `invited_user_id`, `invitation_code`, `used_at`) VALUES
 (21, 113691405, 395548956, '674DB6106', NULL),
-(22, 113691405, 768556619, '674DB6106', NULL);
+(22, 113691405, 768556619, '674DB6106', NULL),
+(23, 113691405, 589356038, '674DB6106', NULL);
 
 -- --------------------------------------------------------
 
@@ -313,13 +316,6 @@ CREATE TABLE `jobs` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Tablo döküm verisi `jobs`
---
-
-INSERT INTO `jobs` (`job_id`, `gig_id`, `client_id`, `freelancer_id`, `title`, `description`, `requirements`, `category`, `subcategory`, `budget`, `status`, `delivery_deadline`, `completed_at`, `revision_count`, `max_revisions`, `milestones_data`, `deliverables_data`, `transaction_id`, `cancellation_reason`, `client_rating`, `freelancer_rating`, `created_at`, `updated_at`) VALUES
-(16, 21, 113691405, 18, 'l', '<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>\r\n<p>dsfghjklşiişf&lt;&lt;uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk</p>', 'dsfghjklşiişf<<uışi,şldsadgiş,işkjhglşkjdffhjki,şilgfdfghğ,şlhgcvjklşi,şjvcxhjklilkjgcxcvhjklkjgcxcvhjklşljhfxzhjklşlkgcxzxfhjkjhcghjıopkjvbbhjk', 'Grafik & Tasarım', 'Web & Mobil Arayüz Tasarımı', 450.00, 'COMPLETED', '2024-12-15 10:54:37', '2024-12-12 12:55:51', 0, 2, 'null', '{\"files\":[\"675add3435300_675874489b8b4_7e7a242c6b7eacc1.jpg\"],\"note\":\"hayr\",\"delivered_at\":\"2024-12-12 13:55:16\"}', 66685252486, NULL, NULL, NULL, '2024-12-12 12:54:37', '2024-12-12 12:55:51');
-
 -- --------------------------------------------------------
 
 --
@@ -335,13 +331,6 @@ CREATE TABLE `job_reviews` (
   `review_text` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Tablo döküm verisi `job_reviews`
---
-
-INSERT INTO `job_reviews` (`review_id`, `job_id`, `client_id`, `freelancer_id`, `rating`, `review_text`, `created_at`) VALUES
-(9, 16, 113691405, 18, 5, 'nsachsac', '2024-12-12 12:55:51');
 
 -- --------------------------------------------------------
 
@@ -378,7 +367,11 @@ INSERT INTO `login_attempts` (`attempt_id`, `user_id`, `ip_address`, `attempt_ti
 (105, 395548956, '5.25.162.177', '2024-12-11 08:31:49', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '131.0.0.0', 'Windows', 0),
 (106, 395548956, '5.25.162.177', '2024-12-11 10:00:17', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '131.0.0.0', 'Windows', 0),
 (107, 395548956, '194.27.158.149', '2024-12-12 12:51:52', 'SUCCESS', 'Türkiye', 'Muğla', 'Muğla', 'National Academic Network and Information Center', 'Europe/Istanbul', 'Chrome', '131.0.0.0', 'Windows', 0),
-(108, 113691405, '194.27.158.149', '2024-12-12 12:53:33', 'SUCCESS', 'Türkiye', 'Muğla', 'Muğla', 'National Academic Network and Information Center', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0);
+(108, 113691405, '194.27.158.149', '2024-12-12 12:53:33', 'SUCCESS', 'Türkiye', 'Muğla', 'Muğla', 'National Academic Network and Information Center', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(111, 589356038, '5.25.174.161', '2024-12-19 18:20:29', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(112, 589356038, '178.240.180.58', '2024-12-19 23:05:44', 'SUCCESS', 'Turkey', 'Kepez', 'Antalya', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0),
+(113, 395548956, '5.27.29.19', '2024-12-20 00:20:05', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Turkcell Internet', 'Europe/Istanbul', 'Chrome', '131.0.0.0', 'Windows', 0),
+(114, 589356038, '188.3.202.234', '2024-12-22 11:37:37', 'SUCCESS', 'Türkiye', 'Izmir', 'İzmir Province', 'Vodafone Net DSL - ADANA', 'Europe/Istanbul', 'Chrome', '128.0.0.0', 'Windows', 0);
 
 -- --------------------------------------------------------
 
@@ -387,19 +380,29 @@ INSERT INTO `login_attempts` (`attempt_id`, `user_id`, `ip_address`, `attempt_ti
 --
 
 CREATE TABLE `projects` (
-  `project_id` varchar(25) NOT NULL,
-  `user_id` int(11) NOT NULL,
+  `project_id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `project_root` varchar(255) NOT NULL COMMENT 'JSON dosyasının yolu',
-  `preview_image` varchar(255) NOT NULL,
-  `likes_data` longtext NOT NULL DEFAULT '[]' COMMENT 'Beğenen kullanıcı ID''lerini içeren JSON array',
-  `views` int(11) DEFAULT 0,
+  `description` text NOT NULL,
   `tags` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`tags`)),
-  `visibility` enum('PUBLIC','PRIVATE') DEFAULT 'PUBLIC',
+  `visibility` enum('public','private','followers','connections') NOT NULL DEFAULT 'public',
+  `owner_id` int(11) NOT NULL,
+  `collaborators` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT '[]' COMMENT 'Array of user IDs who can edit the project' CHECK (json_valid(`collaborators`)),
+  `invite_code` varchar(255) DEFAULT NULL COMMENT 'Unique code for inviting collaborators',
+  `invite_expires_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `status` enum('active','archived','deleted') NOT NULL DEFAULT 'active',
+  `additional_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'For future extensibility' CHECK (json_valid(`additional_data`)),
+  `file_path` varchar(255) DEFAULT NULL,
+  `preview_image` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `projects`
+--
+
+INSERT INTO `projects` (`project_id`, `title`, `description`, `tags`, `visibility`, `owner_id`, `collaborators`, `invite_code`, `invite_expires_at`, `created_at`, `updated_at`, `status`, `additional_data`, `file_path`, `preview_image`) VALUES
+(3, 'Html deneme', 'mvjermvjerm', '[\"html\",\"css\",\"js\"]', 'public', 589356038, '[]', NULL, NULL, '2024-12-22 10:02:35', '2024-12-22 11:47:07', 'active', NULL, '456e93a24150cc896e390f87c20149da.json', '38b5e78552f5fd97821ea7935f53a44a.jpg');
 
 -- --------------------------------------------------------
 
@@ -424,9 +427,9 @@ INSERT INTO `referral_sources` (`source_id`, `user_id`, `source_type`, `specific
 (58, 113691405, 'ORGANIC', '674DB6106', 0, '2024-12-02 13:29:24'),
 (59, 395548956, 'ORGANIC', '674DB6776', 1, '2024-12-02 13:30:48'),
 (60, 768556619, 'ORGANIC', '67506685F', 1, '2024-12-04 14:26:37'),
-(61, 384546394, 'ORGANIC', '6750BE7FC', 0, '2024-12-04 20:41:47'),
 (62, 601838105, 'ORGANIC', '6752CF7C9', 0, '2024-12-06 10:18:43'),
-(63, 257036736, 'ORGANIC', '6752CFBB4', 0, '2024-12-06 10:19:51');
+(63, 257036736, 'ORGANIC', '6752CFBB4', 0, '2024-12-06 10:19:51'),
+(64, 589356038, 'ORGANIC', '67644233E', 1, '2024-12-19 15:57:01');
 
 -- --------------------------------------------------------
 
@@ -563,6 +566,7 @@ CREATE TABLE `transactions` (
 --
 
 INSERT INTO `transactions` (`transaction_id`, `sender_id`, `receiver_id`, `amount`, `transaction_type`, `status`, `description`, `created_at`) VALUES
+(11386004818, 589356038, 589356038, 1000.00, 'DEPOSIT', 'COMPLETED', 'Credit card deposit to wallet', '2024-12-19 20:03:11'),
 (66685252486, 113691405, 395548956, 450.00, 'PAYMENT', 'COMPLETED', 'Payment for gig: l', '2024-12-12 12:54:37');
 
 -- --------------------------------------------------------
@@ -595,8 +599,8 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`user_id`, `username`, `email`, `phone`, `password`, `full_name`, `google_id`, `is_verified`, `remember_token`, `two_factor_auth`, `user_type`, `created_at`, `remember_token_expires_at`, `subscription_plan`) VALUES
 (113691405, 'can', 'CAN@CAN.c', NULL, '$2y$10$DYcn9FVutlBmN3TimYX3ZOEzHn2W7KEr.GwjLsUQFmrNJhYgaqoG.', 'Can', NULL, 1, NULL, 0, 'user', '2024-12-02 13:29:24', NULL, 'basic'),
 (257036736, 'mehmetuzar', 'mehmet@uzar.com', NULL, '$2y$10$wUld3G2m7jxWF9YB.PZvFO05QVrYMK4WIH0YRUH3Y78H2EHhlTHsW', 'Mehmet Uzar', NULL, 1, NULL, 0, 'user', '2024-12-06 10:19:51', NULL, 'basic'),
-(384546394, 'canyilmaz', 'cnylmz735@gmail.com', NULL, '', 'Can Yılmaz', '105226956217972839065', 1, NULL, 0, 'user', '2024-12-04 20:41:47', NULL, 'basic'),
 (395548956, 'tospaa1', 'osmananlatici@gmail.com', NULL, '$2y$10$Ohq8R.RJkkA8HR/R2N4yVuZodh87G35F.nJp4XVVJqTWflJjyArsy', 'osman', NULL, 1, NULL, 0, 'user', '2024-12-02 13:30:48', NULL, 'id_plus_pro'),
+(589356038, 'canyilmaz', 'cnylmz735@gmail.com', NULL, '$2y$10$kLhata57xoRHwIGCuliR5eRUXGUPWMHThWqziH683AieOJuxlq2aK', 'Can', NULL, 1, NULL, 0, 'user', '2024-12-19 15:57:01', NULL, 'basic'),
 (601838105, 'denemehesap', 'lurephpmailersmtp@gmail.com', NULL, '', 'can yılmaz', '111671799081259037329', 1, NULL, 0, 'user', '2024-12-06 10:18:43', NULL, 'basic'),
 (768556619, 'emir', 'emirpaytar2005@gmail.com', NULL, '$2y$10$5DV7oB9WIU6v3QL7xWxK5uvFz.TVkpVtOpKG.zFtP8ArL8vmpeZBm', 'emir', NULL, 1, NULL, 0, 'user', '2024-12-04 14:26:37', NULL, 'basic');
 
@@ -642,12 +646,12 @@ CREATE TABLE `user_extended_details` (
 --
 
 INSERT INTO `user_extended_details` (`detail_id`, `user_id`, `profile_photo_url`, `cover_photo_url`, `basic_info`, `education_history`, `work_experience`, `skills_matrix`, `portfolio_showcase`, `professional_profile`, `network_links`, `achievements`, `community_engagement`, `performance_metrics`, `created_at`, `updated_at`, `profile_completeness`, `owned_badges`) VALUES
-(24, 113691405, 'profile/avatars/113691405.jpg', 'undefined', '{\"full_name\": \"Can\", \"age\": null, \"biography\": null, \"location\": {\"city\": null, \"country\": null}, \"contact\": {\"email\": null, \"website\": null}, \"languages\": []}', NULL, NULL, '{\"technical_skills\": [], \"soft_skills\": [], \"tools\": []}', NULL, NULL, '{\"professional\": {}, \"social\": {}, \"portfolio_sites\": {}}', NULL, NULL, NULL, '2024-12-02 13:29:26', '2024-12-06 20:51:06', 0.00, '[]'),
+(24, 113691405, 'profile/avatars/113691405.jpg', 'undefined', '{\"full_name\":\"Can\",\"age\":20,\"biography\":\"ero\\u0131grem\",\"location\":{\"city\":\"mremgkerm\",\"country\":\"kmgkmre\"},\"contact\":{\"email\":\"kerwmgkewmf\",\"website\":\"krmgermg\"},\"languages\":[\"glkremgre\"]}', '[]', '[]', '{\"technical_skills\":[],\"soft_skills\":[],\"tools\":[]}', '[]', '{\"summary\":\"\",\"expertise_areas\":[],\"certifications\":[]}', '{\"professional\":[],\"social\":[],\"portfolio_sites\":[]}', '[]', NULL, NULL, '2024-12-02 13:29:26', '2024-12-19 11:06:53', 20.00, '[]'),
 (25, 395548956, 'profile/avatars/395548956.jpg', 'profile/covers/395548956.jpg', '{\"full_name\":\"osman\",\"age\":20,\"biography\":\"ben osman taha anlat\\u0131c\\u0131 web sitesi , hosting , seo ile ilgili \\u00e7al\\u0131\\u015fmalar yapmaktay\\u0131m yakla\\u015f\\u0131k 8 y\\u0131ld\\u0131r reklam sekt\\u00f6r\\u00fcndeyim \\nprofesyonellerle \\u00e7al\\u0131\\u015fmak i\\u00e7in do\\u011fru adre\\u20ba\",\"location\":{\"city\":\"bursa\",\"country\":\"t\\u00fcrkiye\"},\"contact\":{\"email\":\"osmananlatici@gmail.com\",\"website\":\"medyametot.com\"},\"languages\":[\"t\\u00fcrk\\u00e7e\",\"ingilizce\"]}', '[{\"level\":\"university\",\"institution\":\"MCB\\u00dc\",\"degree\":\"Bilgisayar programc\\u0131l\\u0131\\u011f\\u0131\",\"gpa\":2.7,\"start_date\":\"2023-09\",\"end_date\":\"2025-06\"}]', '[{\"company\":\"Burhan reklam \",\"position\":\"cnc makinalar\\u0131 ve bask\\u0131 makinkar\\u0131 kontrol\\u00fc , bak\\u0131m\\u0131 ,tamiri\",\"start_date\":\"2018-06\",\"end_date\":\"2022-03\",\"description\":\"reklam at\\u00f6lyesinde t\\u00fcm makinalar\\u0131n bak\\u0131m\\u0131  tamiri ve operat\\u00f6rl\\u00fc\\u011f\\u00fc \"},{\"company\":\"medya metot\",\"position\":\"web master , grafiker\",\"start_date\":\"2022-06\",\"end_date\":\"2024-08\",\"description\":\"web sitesi ve genel tasar\\u0131m uzman\\u0131 \"}]', '{\"technical_skills\":[\"programlama (web)\",\"tasar\\u0131m\",\"cnc makine operat\\u00f6rl\\u00fc\\u011f\\u00fc\"],\"soft_skills\":[\"lider\",\"joker eleman\",\"hi\\u00e7bir \\u015fey imkans\\u0131z de\\u011fildir\"],\"tools\":[\"corel\",\"autocad\",\"dreamviewer\",\"photoshop\"]}', '[{\"title\":\"medya metot\",\"description\":\"kendi firmam\\u0131z i\\u00e7in olu\\u015fturmakta oldu\\u011fumuz web sitemiz\",\"url\":\"www.medyametot.com\"},{\"title\":\"skljdalja\",\"description\":\"klsfjkasld\",\"url\":\"kldsjfljs\"}]', '{\"summary\":\"y\\u0131llard\\u0131r s\\u00fcr\\u00fcn\\u00fcyor\",\"expertise_areas\":[\"hosting hizmetleri\"],\"certifications\":[\"sasa\"]}', '{\"professional\":{\"github\":\"tospaa1\"},\"social\":{\"instagram\":\"osmantahaaa\"},\"portfolio_sites\":[]}', '[{\"title\":\"jksfsdkjf\",\"issuer\":\"kjfsdfkjs\",\"date\":\"2024-11\",\"description\":\"ljkldjgskldf\"}]', NULL, NULL, '2024-12-02 13:30:50', '2024-12-06 22:43:19', 79.00, '[1]'),
 (26, 768556619, 'profile/avatars/768556619.jpg', 'undefined', '{\"full_name\":\"emir\",\"age\":20,\"biography\":\"kemrogkreg\",\"location\":{\"city\":\"ferreg\",\"country\":\"qrgefwe\"},\"contact\":{\"email\":\"fewfew@f.f\",\"website\":\"efwefw.c\"},\"languages\":[\"T\\u00fcrk\\u00e7e\",\"\\u0130ngilizce\",\"Rus\\u00e7a\"]}', '[]', '[]', '{\"technical_skills\":[],\"soft_skills\":[],\"tools\":[]}', '[]', '{\"summary\":\"\",\"expertise_areas\":[],\"certifications\":[]}', '{\"professional\":[],\"social\":[],\"portfolio_sites\":[]}', '[]', NULL, NULL, '2024-12-04 14:26:39', '2024-12-04 14:31:13', 20.00, '[]'),
-(27, 384546394, 'profile/avatars/384546394.jpg', 'undefined', '{\"full_name\":\"Can Y\\u0131lmaz\",\"age\":20,\"biography\":\"efwfew\",\"location\":{\"city\":\"fewfew\",\"country\":\"ewffew\"},\"contact\":{\"email\":\"fewfew\",\"website\":\"fewfew\"},\"languages\":[\"fewfew\"]}', '[]', '[]', '{\"technical_skills\":[],\"soft_skills\":[],\"tools\":[]}', '[]', '{\"summary\":\"\",\"expertise_areas\":[],\"certifications\":[]}', '{\"professional\":[],\"social\":[],\"portfolio_sites\":[]}', '[]', NULL, NULL, '2024-12-04 20:41:47', '2024-12-04 22:13:19', 20.00, '[]'),
 (28, 601838105, 'profile/avatars/601838105.jpg', 'undefined', '{\"full_name\":\"can y\\u0131lmaz\",\"age\":null,\"biography\":null,\"location\":{\"city\":null,\"country\":null},\"contact\":{\"email\":null,\"website\":null},\"languages\":[]}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2024-12-06 10:18:43', '2024-12-06 10:19:10', 12.50, '[]'),
-(29, 257036736, 'profile/avatars/257036736.jpg', 'undefined', '{\"full_name\": \"Mehmet Uzar\", \"age\": null, \"biography\": null, \"location\": {\"city\": null, \"country\": null}, \"contact\": {\"email\": null, \"website\": null}, \"languages\": []}', NULL, NULL, '{\"technical_skills\": [], \"soft_skills\": [], \"tools\": []}', NULL, NULL, '{\"professional\": {}, \"social\": {}, \"portfolio_sites\": {}}', NULL, NULL, NULL, '2024-12-06 10:19:53', '2024-12-06 10:19:53', 0.00, '[]');
+(29, 257036736, 'profile/avatars/257036736.jpg', 'undefined', '{\"full_name\": \"Mehmet Uzar\", \"age\": null, \"biography\": null, \"location\": {\"city\": null, \"country\": null}, \"contact\": {\"email\": null, \"website\": null}, \"languages\": []}', NULL, NULL, '{\"technical_skills\": [], \"soft_skills\": [], \"tools\": []}', NULL, NULL, '{\"professional\": {}, \"social\": {}, \"portfolio_sites\": {}}', NULL, NULL, NULL, '2024-12-06 10:19:53', '2024-12-06 10:19:53', 0.00, '[]'),
+(43, 589356038, 'profile/avatars/589356038.jpg', 'profile/covers/589356038.jpg', '{\"full_name\":\"Can Y\\u0131lmaz\",\"age\":20,\"biography\":\"LureID Founder\",\"location\":{\"city\":\"Antalya\",\"country\":\"T\\u00fcrkiye\"},\"contact\":{\"email\":\"\",\"website\":\"http:\\/\\/lureid.xyz\"},\"languages\":[\"T\\u00fcrk\\u00e7e\",\"\\u0130ngilizce\"]}', '[{\"level\":\"university\",\"institution\":\"Manisa Celal Bayar \\u00dcniversitesi\",\"degree\":\"B\\u0130lgisayar Programc\\u0131l\\u0131\\u011f\\u0131\",\"gpa\":3.1,\"start_date\":\"2023-09\",\"end_date\":\"2025-06\"}]', '[]', '{\"technical_skills\":[\"PHP\",\"Javascript\"],\"soft_skills\":[\"Tak\\u0131m \\u00c7al\\u0131\\u015fmas\\u0131\"],\"tools\":[\"Visual Studio Code\",\"Figma\"]}', '[]', '{\"summary\":\"\",\"expertise_areas\":[],\"certifications\":[]}', '{\"professional\":{\"github\":\"canyilmaz07\"},\"social\":[],\"portfolio_sites\":[]}', '[]', NULL, NULL, '2024-12-19 15:57:03', '2024-12-19 20:20:36', 25.00, '[]');
 
 -- --------------------------------------------------------
 
@@ -677,9 +681,9 @@ INSERT INTO `user_settings` (`setting_id`, `user_id`, `language`, `timezone`, `r
 (18, 113691405, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-12-02 13:29:24', NULL, 'light', 'Inter'),
 (19, 395548956, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-12-02 13:30:48', NULL, 'light', 'Inter'),
 (20, 768556619, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-12-04 14:26:37', '2024-12-04 14:30:43', 'light', 'Inter'),
-(21, 384546394, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-12-04 20:41:47', NULL, 'light', 'Inter'),
 (22, 601838105, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-12-06 10:18:43', NULL, 'light', 'Inter'),
-(23, 257036736, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-12-06 10:19:51', NULL, 'light', 'Inter');
+(23, 257036736, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-12-06 10:19:51', NULL, 'light', 'Inter'),
+(24, 589356038, 'tr', 'Europe/Istanbul', 'TR', 'DD.MM.YYYY', '24h', '2024-12-19 15:57:01', NULL, 'light', 'Inter');
 
 -- --------------------------------------------------------
 
@@ -717,12 +721,12 @@ CREATE TABLE `wallet` (
 --
 
 INSERT INTO `wallet` (`wallet_id`, `user_id`, `balance`, `coins`, `created_at`, `updated_at`, `last_transaction_date`) VALUES
-(70, 113691405, 0.00, 0, '2024-12-02 13:29:24', '2024-12-11 07:44:57', '2024-12-06 22:54:01'),
+(70, 113691405, 0.00, 50, '2024-12-02 13:29:24', '2024-12-19 15:57:01', '2024-12-19 15:57:01'),
 (71, 395548956, 900.00, 0, '2024-12-02 13:30:48', '2024-12-12 12:55:51', '2024-12-12 12:55:51'),
 (72, 768556619, 0.00, 0, '2024-12-04 14:26:37', '2024-12-05 15:33:44', '2024-12-04 14:26:37'),
-(73, 384546394, 1550.00, 0, '2024-12-04 20:41:47', '2024-12-11 10:16:35', '2024-12-11 10:16:35'),
 (74, 601838105, 0.00, 0, '2024-12-06 10:18:43', NULL, '2024-12-06 10:18:43'),
-(75, 257036736, 0.00, 0, '2024-12-06 10:19:51', NULL, '2024-12-06 10:19:51');
+(75, 257036736, 0.00, 0, '2024-12-06 10:19:51', NULL, '2024-12-06 10:19:51'),
+(76, 589356038, 1000.00, 25, '2024-12-19 15:57:01', '2024-12-19 20:03:11', '2024-12-19 20:03:11');
 
 --
 -- Dökümü yapılmış tablolar için indeksler
@@ -800,7 +804,8 @@ ALTER TABLE `login_attempts`
 --
 ALTER TABLE `projects`
   ADD PRIMARY KEY (`project_id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD UNIQUE KEY `invite_code` (`invite_code`),
+  ADD KEY `owner_id` (`owner_id`);
 
 --
 -- Tablo için indeksler `referral_sources`
@@ -905,13 +910,13 @@ ALTER TABLE `badges`
 -- Tablo için AUTO_INCREMENT değeri `freelancers`
 --
 ALTER TABLE `freelancers`
-  MODIFY `freelancer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `freelancer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `gigs`
 --
 ALTER TABLE `gigs`
-  MODIFY `gig_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `gig_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `gig_categories`
@@ -923,7 +928,7 @@ ALTER TABLE `gig_categories`
 -- Tablo için AUTO_INCREMENT değeri `invitations`
 --
 ALTER TABLE `invitations`
-  MODIFY `invitation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `invitation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `jobs`
@@ -941,13 +946,19 @@ ALTER TABLE `job_reviews`
 -- Tablo için AUTO_INCREMENT değeri `login_attempts`
 --
 ALTER TABLE `login_attempts`
-  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=109;
+  MODIFY `attempt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=115;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `projects`
+--
+ALTER TABLE `projects`
+  MODIFY `project_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `referral_sources`
 --
 ALTER TABLE `referral_sources`
-  MODIFY `source_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
+  MODIFY `source_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `staff`
@@ -971,13 +982,13 @@ ALTER TABLE `subscriptions`
 -- Tablo için AUTO_INCREMENT değeri `temp_gigs`
 --
 ALTER TABLE `temp_gigs`
-  MODIFY `temp_gig_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `temp_gig_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `temp_users`
 --
 ALTER TABLE `temp_users`
-  MODIFY `temp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
+  MODIFY `temp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=129;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `users`
@@ -989,13 +1000,13 @@ ALTER TABLE `users`
 -- Tablo için AUTO_INCREMENT değeri `user_extended_details`
 --
 ALTER TABLE `user_extended_details`
-  MODIFY `detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `user_settings`
 --
 ALTER TABLE `user_settings`
-  MODIFY `setting_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `setting_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `verification`
@@ -1007,7 +1018,7 @@ ALTER TABLE `verification`
 -- Tablo için AUTO_INCREMENT değeri `wallet`
 --
 ALTER TABLE `wallet`
-  MODIFY `wallet_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
+  MODIFY `wallet_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
 
 --
 -- Dökümü yapılmış tablolar için kısıtlamalar
@@ -1071,7 +1082,7 @@ ALTER TABLE `login_attempts`
 -- Tablo kısıtlamaları `projects`
 --
 ALTER TABLE `projects`
-  ADD CONSTRAINT `projects_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `projects_ibfk_1` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 
 --
 -- Tablo kısıtlamaları `referral_sources`

@@ -224,8 +224,6 @@ function generateCard($i)
 <body class="bg-white">
     <?php include 'components/menu.php'; ?>
 
-    <a href="components/projects/projects.php" style="position:absolute; top: 250px">Projeler</a>
-
     <div id="orderSuccessModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white rounded-lg max-w-md w-full p-6 relative">

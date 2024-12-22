@@ -1,0 +1,5 @@
+{
+    "html": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>\u00d6nizleme<\/title>\n<\/head>\n<body>\n\t<h1>Merhaba D\u00fcnya!<\/h1>\n\t<p>Kod yazmaya ba\u015fla<\/p>\n<\/body>\n<\/html>",
+    "css": "body {\n\tbackground-color: #f0f0f0;\n\tcolor: #333;\n\tfont-family: Arial, sans-serif;\n\tpadding: 20px;\n}\n\nh1 {\n\tcolor: #2196F3;\n}",
+    "js": "\/\/ JavaScript kodunuz buraya\nconsole.log(\"JavaScript'ten merhaba!\");\n\n\/\/ \u00d6rnek: T\u0131klama olay\u0131\ndocument.querySelector(\"h1\").addEventListener(\"click\", () => {\n\talert(\"Merhaba!\");\n});"
+}

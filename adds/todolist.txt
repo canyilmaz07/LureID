@@ -436,3 +436,15 @@ Bu özellikleri eklerken kullanıcılarınızdan düzenli geri bildirim almayı 
 
 
 LureID: Üretmek, Öğrenmek, Kodlamak, Satmak, İlham Vermek ve Paylaşmak İsteyenler İçin Bir Teknoloji Üssü.
+
+
+
+
+
+LureID, web teknolojileri alanında kullanıcıların ihtiyaçlarını karşılamak ve onları bir araya getirmek amacıyla geliştirilmiş yenilikçi bir platformdur. Bu platform, yazılım ve tasarım dünyasına dair geniş bir yelpazede hizmet sunarak, kullanıcılarına kapsamlı bir deneyim yaşatmayı hedefler. LureID, işveren ve işçi rolleri ile projelerin yönetimini kolaylaştırırken, projelere ücret karşılığı yardım alma imkanı sunar. Kullanıcılar arasında güven ve şeffaflığı artırmak amacıyla puanlama ve yorum sistemleri entegre edilmiştir. Ayrıca, randevu ve milestone sistemleri ile projelerin daha verimli bir şekilde yönetilmesi sağlanır.
+
+Platform, kullanıcıların projelerini versiyon kontrolü altında tutmalarına ve JSON tabanlı depolama ile projelerini güvenli bir şekilde saklamalarına olanak tanır. Bu sayede, kullanıcılar projelerinin farklı sürümlerini kolayca yönetebilir ve güncelleyebilirler. Kullanıcılar, projelerinin UI çıktılarının sosyal bir platformda paylaşılmasına olanak tanıyan özellikler ile beğeni, yorum ve takdir sistemleri üzerinden etkileşimde bulunabilirler.
+
+Eğitim ve öğretim alanında, LureID, öğrenci ve öğretmen rolleri ile ders grupları, quiz ve puan sistemleri gibi özellikler sunar. Kullanıcılar, ücretli ders içeriklerine erişebilir ve topluluk içerisinde soru sorma gibi imkanlardan faydalanabilirler. Topluluk odaklı bir yapı sunan LureID, kullanıcıların kod blokları ve projeleri üzerinde işbirliği yapmalarına olanak tanır. Kullanıcılar, hazır kod şablonları üzerinde çalışarak, bu kodları paylaşabilir veya satabilirler. Ayrıca, kullanıcılar profillerini özelleştirerek, kendi verilerini paylaşma özgürlüğüne sahip olurlar.
+
+LureID, kullanıcılarına erken erişimde kod yazma, syntax hata yönetimi ve renklendirme gibi özellikler sunarak, projelerinin geliştirme sürecini kolaylaştırır. Kullanıcılar, projelerini JSON'dan zip haline çevirip indirebilir veya final sürümleri oluşturabilirler. Ayrıca, projelerin site içinde localhostta görüntülenmesi ve domain üzerinde test edilmesi mümkündür. Platform, kullanıcılarına aylık veya yıllık abonelikler sunarak, sürekli güncellemeler ve yeni özellikler ile kullanıcı deneyimini zenginleştirir. LureID, kullanıcı dostu arayüzü ve sürekli optimize edilen yapısı ile yazılım ve tasarım dünyasında bir çatı platform olmayı hedefler.

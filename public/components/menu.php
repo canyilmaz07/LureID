@@ -1249,6 +1249,10 @@ if (isset($_SESSION['user_id'])) {
                         <span>Satıcı Profili Oluştur</span>
                     </a>
                 <?php endif; ?>
+                <a href="/public/components/projects/projects.php" class="profile-menu-item">
+                        <img src="/sources/icons/bulk/task-square.svg" alt="projects" class="white-icon">
+                        <span>Projeler</span>
+                    </a>
                 <form method="POST" action="/auth/logout.php" class="profile-menu-item logout-item">
                     <img src="/sources/icons/bulk/logout.svg" alt="logout" class="white-icon">
                     <button type="submit"
