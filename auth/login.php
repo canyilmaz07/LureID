@@ -36,7 +36,7 @@ $logger = new Logger();
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Google Client Setup
+// Google İstemci Kurulumu
 function getGoogleClient()
 {
     $config = require '../config/google.php';
@@ -48,7 +48,7 @@ function getGoogleClient()
     return $client;
 }
 
-// Google Auth handler
+// Google Auth işleyicisi
 if (isset($_GET['code'])) {
     try {
         $client = getGoogleClient();
@@ -63,7 +63,8 @@ if (isset($_GET['code'])) {
         $name = $google_account_info->name;
         $google_id = $google_account_info->id;
 
-        // Connect to database
+        // Veritabanına bağlanın
+
         $dbConfig = require '../config/database.php';
         $db = new PDO(
             "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}",
@@ -76,13 +77,13 @@ if (isset($_GET['code'])) {
         $db->beginTransaction();
 
         try {
-            // Check if user exists
+            // Kullanıcının var olup olmadığını kontrol edin
             $stmt = $db->prepare("SELECT * FROM users WHERE google_id = ? OR email = ?");
             $stmt->execute([$google_id, $email]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user) {
-                // Existing user - Set session and redirect
+                // Mevcut kullanıcı - Oturumu ayarlayın ve yönlendirin
                 $_SESSION['user_id'] = $user['user_id'];
                 $_SESSION['username'] = $user['username'];
                 $logger->log("Successful Google login for: {$email}");
@@ -267,12 +268,12 @@ class Auth
     {
         $userAgent = $_SERVER['HTTP_USER_AGENT'];
 
-        // Browser detection
+        // Tarayıcı Algılama
         $browser = "Unknown";
         $version = "Unknown";
         $os = "Unknown";
 
-        // Browser check
+        // Tarayıcı Kontrolü
         if (preg_match('/MSIE/i', $userAgent)) {
             $browser = "Internet Explorer";
         } elseif (preg_match('/Firefox/i', $userAgent)) {
@@ -287,7 +288,7 @@ class Auth
             $browser = "Edge";
         }
 
-        // Version check
+        // Versiyon Kontrolü
         if (preg_match('/' . $browser . '\/([0-9.]+)/i', $userAgent, $matches)) {
             $version = $matches[1];
         }
@@ -651,7 +652,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             exit;
         }
 
-        // Update temp user with username
+        // Geçici kullanıcıyı kullanıcı adıyla güncelle
         if (isset($_POST['update_temp_user'])) {
             try {
                 $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
@@ -675,7 +676,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             exit;
         }
 
-        // Check username availability
+        // Kullanıcı adının kullanılabilirliğini kontrol edin
         if (isset($_POST['check_username'])) {
             $username = filter_var($_POST['username'], FILTER_SANITIZE_STRING);
 
@@ -687,14 +688,14 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             exit;
         }
 
-        // Complete Google registration
+        // Google kaydını tamamlayın
         if (isset($_POST['complete_google_registration'])) {
             try {
                 $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
                 $googleId = filter_var($_POST['google_id'], FILTER_SANITIZE_STRING);
                 $referralCode = isset($_POST['referral_code']) ? filter_var($_POST['referral_code'], FILTER_SANITIZE_STRING) : null;
 
-                // Get temp user data
+                // Geçici kullanıcı verilerini alın
                 $stmt = $auth->db->prepare("SELECT * FROM temp_users WHERE email = ? AND google_id = ?");
                 $stmt->execute([$email, $googleId]);
                 $tempUser = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -703,18 +704,18 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                     throw new Exception("Temporary user not found");
                 }
 
-                // Begin transaction
+                // İşlemi başlat
                 $auth->db->beginTransaction();
 
                 try {
-                    // Generate unique user ID
+                    // Benzersiz kullanıcı kimliği oluştur
                     do {
                         $userId = mt_rand(100000000, 999999999);
                         $stmt = $auth->db->prepare("SELECT COUNT(*) FROM users WHERE user_id = ?");
                         $stmt->execute([$userId]);
                     } while ($stmt->fetchColumn() > 0);
 
-                    // Insert into users table
+                    // Kullanıcılar tablosuna ekle
                     $stmt = $auth->db->prepare("
                         INSERT INTO users (
                             user_id, username, email, password, 
@@ -729,7 +730,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                         $googleId
                     ]);
 
-                    // Insert referral source
+                    // Yönlendirme kaynağı ekleyin
                     $stmt = $auth->db->prepare("
                         INSERT INTO referral_sources (
                             user_id, source_type, specific_source, is_referral_signup
@@ -741,7 +742,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                         $referralCode ? 1 : 0
                     ]);
 
-                    // Create wallet for new user
+                    // Yeni kullanıcı için cüzdan oluştur
+
                     $stmt = $auth->db->prepare("
                         INSERT INTO wallet (
                             user_id, coins, last_transaction_date
@@ -750,7 +752,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                     $initialCoins = $referralCode ? 25 : 0;
                     $stmt->execute([$userId, $initialCoins]);
 
-                    // Create extended user details
+                    // Genişletilmiş kullanıcı ayrıntıları oluşturun
                     $stmt = $auth->db->prepare("
                         INSERT INTO user_extended_details (
                             user_id, 
@@ -775,7 +777,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                     $stmt->execute([$userId, $basicInfo, 0]);
 
                     if ($referralCode) {
-                        // Get referrer's user ID
+                        //Yönlendirenin kullanıcı kimliğini alın
+
                         $stmt = $auth->db->prepare("
                             SELECT user_id 
                             FROM referral_sources 
@@ -785,7 +788,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                         $referrerId = $stmt->fetchColumn();
 
                         if ($referrerId) {
-                            // Update referrer's wallet
+                            // Yönlendirenin cüzdanını güncelleyin
+
                             $stmt = $auth->db->prepare("
                                 INSERT INTO wallet (user_id, coins, last_transaction_date)
                                 VALUES (?, 50, CURRENT_TIMESTAMP)
@@ -795,7 +799,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                             ");
                             $stmt->execute([$referrerId]);
 
-                            // Record invitation
+                            // Daveti kaydet
+
                             $stmt = $auth->db->prepare("
                                 INSERT INTO invitations (
                                     inviter_id, invited_user_id, invitation_code
@@ -803,7 +808,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                             ");
                             $stmt->execute([$referrerId, $userId, $referralCode]);
 
-                            // Log transactions
+                            // İşlemleri günlüğe kaydet
                             $stmt = $auth->db->prepare("
                                 INSERT INTO transactions (
                                     transaction_id, sender_id, receiver_id, amount,
@@ -823,11 +828,13 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                         }
                     }
 
-                    // Delete temp user
+                    // Geçici kullanıcıyı sil
+
                     $stmt = $auth->db->prepare("DELETE FROM temp_users WHERE email = ?");
                     $stmt->execute([$email]);
 
-                    // Set session variables
+                    // Oturum değişkenlerini ayarlayın
+
                     $_SESSION['user_id'] = $userId;
                     $_SESSION['username'] = $tempUser['username'];
 
@@ -850,7 +857,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             exit;
         }
 
-        // Check referral code
+        // Yönlendirme kodunu kontrol edin
         if (isset($_POST['check_referral'])) {
             $code = filter_var($_POST['referralCode'], FILTER_SANITIZE_STRING);
             $stmt = $auth->db->prepare("
@@ -864,7 +871,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             exit;
         }
 
-        // Resend Code
+        // Kodu Yeniden Gönder
+
         if (isset($_POST['resend']) && isset($_SESSION['pending_2fa'])) {
             $userId = $_SESSION['pending_2fa']['user_id'];
             $username = $_SESSION['pending_2fa']['username'];
@@ -1197,7 +1205,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
 
     <!-- Back Navigation -->
     <a href="../" class="nav-back absolute top-10 left-10 text-gray-800 hover:text-gray-600 font-semibold text-sm z-20">
-        ← Get back
+        ← Geri Dön 
     </a>
 
     <!-- Main Layout -->
@@ -1207,9 +1215,9 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             <div id="login-form-container" class="max-w-[400px] md:max-w-full w-full md:-mt-20">
                 <h1
                     class="form-title text-[2em] md:text-[24px] font-bold text-[#111827] text-center uppercase tracking-wider font-['Bebas_Neue']">
-                    Connect Your LUREID
+                    LUREID'e Bağlan
                 </h1>
-                <p class="subtitle text-[#6B7280] text-center mb-12 md:mb-8 md:text-[14px]">Welcome back!</p>
+                <p class="subtitle text-[#6B7280] text-center mb-12 md:mb-8 md:text-[14px]">Tekrar Hoşgeldiniz!</p>
 
                 <!-- Google Sign In -->
                 <?php
@@ -1220,7 +1228,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                     class="social-button w-full h-[60px] md:h-[52px] flex items-center justify-center gap-3 bg-[#4F46E5] text-white rounded-lg mb-5 text-sm font-semibold transition-all hover:bg-[#0b0086] shadow-lg">
                     <img src="../sources/icons/Logos/bold/google-1.svg" alt="Google"
                         class="h-5 w-5 brightness-0 invert">
-                    Use your Google Account
+                    Google Hesabınızı Kullanın
                 </a>
 
                 <div class="divider relative my-6 md:my-6">
@@ -1228,7 +1236,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                         <div class="w-full border-t border-[#E5E7EB]"></div>
                     </div>
                     <div class="relative flex justify-center">
-                        <span class="px-3 bg-[#f9f9f9] text-[#888] text-sm">or</span>
+                        <span class="px-3 bg-[#f9f9f9] text-[#888] text-sm">veya</span>
                     </div>
                 </div>
 
@@ -1241,7 +1249,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                                     height="20" alt="user icon">
                                 <input type="text" id="email" name="email"
                                     class="form-input w-full h-[60px] md:h-[48px] pl-[55px] pr-[25px] border border-[#E5E7EB] rounded-lg text-[13px] md:text-[14px] font-medium bg-[#f9f9f9] focus:outline-none focus:border-[#4F46E5] transition-colors"
-                                    placeholder="Email or username" required>
+                                    placeholder="E-posta veya Kullanıcı Adı" required>
                             </div>
 
                             <!-- Password input -->
@@ -1250,7 +1258,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                                     height="20" alt="lock icon">
                                 <input type="password" id="password" name="password"
                                     class="form-input w-full h-[60px] md:h-[48px] pl-[55px] pr-[25px] border border-[#E5E7EB] rounded-lg text-[13px] md:text-[14px] font-medium bg-[#f9f9f9] focus:outline-none focus:border-[#4F46E5] transition-colors"
-                                    placeholder="Password" required>
+                                    placeholder="Şifre" required>
                             </div>
 
                             <div class="flex items-center pl-[11px]">
@@ -1264,7 +1272,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                                     </div>
                                     <span
                                         class="ml-2 text-[13px] pl-[6px] text-[#6B7280] font-medium group-hover:text-[#4F46E5] transition-colors">
-                                        Remember me
+                                        Beni Hatırla
+
                                     </span>
                                 </label>
                             </div>
@@ -1329,12 +1338,12 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
 
                     <button type="submit"
                         class="form-button w-full h-[60px] md:h-[52px] bg-black text-white rounded-lg text-sm font-semibold transition-colors hover:bg-[#3f3f3f] shadow-lg">
-                        Sign In
+                        Giriş Yap
                     </button>
 
                     <a href="forgot-password.php"
                         class="block text-center text-[13px] font-semibold text-[#333] hover:text-[#4F46E5] transition-colors">
-                        Forgot password?
+                        Şifremi Unuttum
                     </a>
                 </form>
             </div>
@@ -1343,9 +1352,10 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             <div
                 class="bottom-links absolute bottom-10 md:fixed md:bottom-8 text-center text-[#888] text-[13px] w-full">
                 <p>
-                    Don't have an account yet?
+                    Henüz bir hesabınız yok mu?
                     <a href="register.php" class="text-[#333] font-semibold hover:text-[#4F46E5] transition-colors">
-                        Create an account
+                        
+                    Bir hesap oluşturun
                     </a>
                 </p>
             </div>
@@ -1408,7 +1418,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.0/CustomEase.min.js"></script>
     <script src="../sources/js/slider.js" defer></script>
     <script>
-        // Toast notification system
+        // Tost bildirim sistemi
+
         const toast = {
             show(message, type = 'info') {
                 const toastElement = document.createElement('div');
@@ -1430,7 +1441,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             }
         };
 
-        // Form validation helper
+        // Form doğrulama yardımcısı
+
         const validate = {
             emailOrUsername: (value) => {
                 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1443,27 +1455,28 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             }
         };
 
-        // Google login popup handler
+        // Google giriş açılır pencere işleyicisi
         function handleGoogleLogin(authUrl) {
-            // Create overlay
+            // Yer paylaşımı oluştur
             const overlay = document.createElement('div');
             overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-40';
             document.body.appendChild(overlay);
 
-            // Calculate popup dimensions
+            // Açılır pencere boyutlarını hesapla
             const width = 600;
             const height = 650;
             const left = (window.innerWidth - width) / 2;
             const top = (window.innerHeight - height) / 2;
 
-            // Open popup
+            // Açılır pencereyi aç
             const popup = window.open(
                 authUrl,
                 'GoogleLogin',
                 `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
             );
 
-            // Poll the popup and remove overlay when closed
+            // Açılır pencereyi yoklayın ve kapatıldığında kaplamayı kaldırın
+
             const popupTimer = setInterval(() => {
                 if (popup.closed) {
                     clearInterval(popupTimer);
@@ -1718,9 +1731,9 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             updateModalContent();
         }
 
-        // Message handler for popup communication
+        // Açılan iletişim için mesaj işleyicisi
         window.addEventListener('message', (event) => {
-            // Remove any existing overlays
+            // Mevcut kaplamaları kaldırın
             const overlays = document.querySelectorAll('.bg-black.bg-opacity-50');
             overlays.forEach(overlay => overlay.remove());
 
@@ -1740,7 +1753,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             }
         });
 
-        // Normal login form handler
+        // Normal giriş formu işleyicisi
         document.addEventListener('DOMContentLoaded', function () {
             const loginForm = document.getElementById('loginForm');
             const loginFields = document.getElementById('loginFields');
@@ -1758,7 +1771,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
 
                 try {
                     if (is2FAMode) {
-                        // 2FA verification
+                        // 2FA doğrulaması
                         const code = document.getElementById('verificationCode').value.trim();
                         if (!code) {
                             throw new Error('Please enter verification code');
@@ -1781,7 +1794,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                             throw new Error(data.message || 'Invalid verification code');
                         }
                     } else {
-                        // Initial login
+                        // İlk giriş
+
                         const emailOrUsername = document.getElementById('email').value.trim();
                         const password = document.getElementById('password').value;
                         const remember = document.getElementById('remember').checked ? 'true' : 'false';
@@ -1829,7 +1843,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                 }
             });
 
-            // Resend verification code
+            // Doğrulama kodunu yeniden gönder
+
             document.getElementById('resendCode').addEventListener('click', async function () {
                 try {
                     const response = await fetch(window.location.href, {
@@ -1853,7 +1868,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             });
         });
 
-        // Update Google sign in button click handler
+        //Google oturum açma düğmesi tıklama işleyicisini güncelleyin
+
         document.querySelector('a[href*="accounts.google.com"]').addEventListener('click', (e) => {
             e.preventDefault();
             handleGoogleLogin(e.currentTarget.href);

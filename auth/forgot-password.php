@@ -495,7 +495,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
     <!-- Back Navigation -->
     <a href="login.php"
         class="nav-back absolute top-10 left-10 text-gray-800 hover:text-gray-600 font-semibold text-sm z-20">
-        ← Get back
+        ← Geri Dön
     </a>
 
     <!-- Main Layout -->
@@ -506,10 +506,10 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                 <div id="initial-content">
                     <h1
                         class="form-title text-[2em] md:text-[24px] font-bold text-[#111827] text-center uppercase tracking-wider font-['Bebas_Neue']">
-                        Reset Your Password
+                        Şifrenizi Sıfırlayın
                     </h1>
                     <p class="subtitle text-[#6B7280] text-center mb-12 md:mb-8 md:text-[14px]">
-                        Enter your email to receive reset instructions
+                    Sıfırlama talimatlarını almak için e-postanızı girin
                     </p>
 
                     <!-- Reset Form -->
@@ -523,13 +523,13 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                                     height="20" alt="email icon">
                                 <input type="text" name="email" id="email" required
                                     class="form-input w-full h-[60px] md:h-[48px] pl-[55px] pr-[25px] border border-[#E5E7EB] rounded-lg text-[13px] md:text-[14px] font-medium bg-[#f9f9f9] focus:outline-none focus:border-[#4F46E5] transition-colors"
-                                    placeholder="Email address or username">
+                                    placeholder="E-posta adresi veya kullanıcı adı">
                             </div>
                         </div>
 
                         <button type="submit"
                             class="form-button w-full h-[60px] md:h-[52px] bg-black text-white rounded-lg text-sm font-semibold transition-colors hover:bg-[#3f3f3f] shadow-lg flex items-center justify-center gap-3">
-                            <span>Send Reset Link</span>
+                            <span>Sıfırlama Bağlantısını Gönder</span>
                         </button>
                     </form>
                 </div>
@@ -543,15 +543,15 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                         </svg>
                     </div>
                     <div class="text-center space-y-3">
-                        <h3 class="text-xl font-semibold text-gray-900">Check your email</h3>
+                        <h3 class="text-xl font-semibold text-gray-900">E-postanızı kontrol edin</h3>
                         <p class="text-sm text-gray-500">
-                            We've sent a password reset link to <br>
+                        Şuraya bir şifre sıfırlama bağlantısı gönderdik: <br>
                             <span id="masked-email" class="font-medium"></span>
                         </p>
                     </div>
                     <button type="button" id="backButton"
                         class="text-sm font-medium text-[#4F46E5] hover:text-[#0b0086] transition-colors">
-                        ← Try another email or username
+                        ← Başka bir e-posta veya kullanıcı adı deneyin
                     </button>
                 </div>
 
@@ -559,9 +559,9 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                 <div
                     class="bottom-links absolute bottom-10 md:fixed md:bottom-8 text-center text-[#888] text-[13px] w-full">
                     <p>
-                        Remember your password?
+                    Şifrenizi hatırlıyor musunuz?
                         <a href="login.php" class="text-[#333] font-semibold hover:text-[#4F46E5] transition-colors">
-                            Sign in here
+                            Buradan oturum açın
                         </a>
                     </p>
                 </div>

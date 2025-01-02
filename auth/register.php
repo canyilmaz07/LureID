@@ -807,7 +807,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
     <!-- Back Navigation -->
     <a href="../"
         class="nav-back absolute top-10 left-10 text-gray-800 hover:text-gray-600 font-semibold text-sm z-20">
-        ← Get back
+        ← Geri Dön
     </a>
 
     <!-- Main Layout -->
@@ -817,10 +817,10 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             <div id="register-form-container" class="max-w-[400px] md:max-w-full w-full md:-mt-20">
                 <h1
                     class="form-title text-[2em] md:text-[24px] font-bold text-[#111827] text-center uppercase tracking-wider font-['Bebas_Neue']">
-                    Create Your LUREID
+                    LUREID'inizi Oluşturun
                 </h1>
                 <p class="subtitle text-[#6B7280] text-center mb-12 md:mb-8 md:text-[14px]">
-                    Join our community today!
+                    Bugün topluluğumuza katılın!
                 </p>
 
                 <!-- Progress Bar -->
@@ -841,7 +841,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                                 alt="user icon">
                             <input type="text" name="fullName" id="fullName"
                                 class="form-input w-full h-[60px] md:h-[48px] pl-[55px] pr-[25px] border border-[#E5E7EB] rounded-lg text-[13px] md:text-[14px] font-medium bg-[#f9f9f9] focus:outline-none focus:border-[#4F46E5] transition-colors"
-                                placeholder="Full Name">
+                                placeholder="Ad Soyad">
                         </div>
                         <div class="relative">
                             <img src="../sources/icons/bulk/sms.svg"
@@ -849,7 +849,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                                 alt="email icon">
                             <input type="email" name="email" id="email"
                                 class="form-input w-full h-[60px] md:h-[48px] pl-[55px] pr-[25px] border border-[#E5E7EB] rounded-lg text-[13px] md:text-[14px] font-medium bg-[#f9f9f9] focus:outline-none focus:border-[#4F46E5] transition-colors"
-                                placeholder="Email address">
+                                placeholder="Email adresi">
                         </div>
                     </div>
 
@@ -864,11 +864,11 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                                 maxlength="4" placeholder="0000">
                         </div>
                         <p class="text-center text-[13px] text-[#6B7280]">
-                            Enter the 4-digit code sent to your email
+                            E-postanıza gönderilen 4 haneli kodu girin
                         </p>
                         <button type="button" id="resendCode"
                             class="w-full text-[#4F46E5] hover:text-[#0b0086] text-sm font-semibold transition-colors">
-                            Resend Code
+                            Kodu Yeniden Gönder
                         </button>
                     </div>
 
@@ -933,11 +933,11 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                     <div class="flex gap-4">
                         <button type="button" id="prevBtn"
                             class="hidden flex-1 h-[60px] md:h-[52px] bg-white border border-[#E5E7EB] text-[#374151] rounded-lg text-sm font-semibold transition-all hover:bg-gray-50">
-                            Previous
+                            Önceki
                         </button>
                         <button type="button" id="nextBtn"
                             class="flex-1 h-[60px] md:h-[52px] bg-black text-white rounded-lg text-sm font-semibold transition-colors hover:bg-[#3f3f3f] shadow-lg">
-                            Next
+                            Sonraki
                         </button>
                     </div>
                 </form>
@@ -945,9 +945,9 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                 <!-- Bottom Links -->
                 <div class="bottom-links text-center text-[#888] text-[13px] mt-6">
                     <p>
-                        Already have an account?
+                        Zaten bir hesabınız var mı?
                         <a href="login.php" class="text-[#333] font-semibold hover:text-[#4F46E5] transition-colors">
-                            Sign in here
+                            Buradan Oturum Açın
                         </a>
                     </p>
                 </div>
@@ -1190,7 +1190,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Processing...
+            İşleniyor...
         `;
                 switch (currentStep) {
                     case STEPS.PERSONAL:
@@ -1215,7 +1215,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                             });
 
                             if (!emailCheck.available) {
-                                throw new Error('Email already registered');
+                                throw new Error('E-posta zaten kayıtlı');
                             }
 
                             // Send verification code

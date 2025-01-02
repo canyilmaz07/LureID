@@ -290,12 +290,12 @@ function generateCard($i)
 
     <?php if ($hasActiveOrders): ?>
         <a href="/public/views/orders.php"
-            class="fixed bottom-8 right-8 bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center gap-2 group">
+            class="fixed bottom-8 right-8 bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center gap-2 group z-[999]"
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            My Orders
+            Siparişlerim
             <span
                 class="bg-white text-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold">
                 <?php echo $hasActiveOrders; ?>
@@ -877,7 +877,8 @@ function generateCard($i)
             <div class="footer-top">
                 <div class="footer-logo">
                     <h2>lureid</h2>
-                    <p>Tasarımcılar için dijital platform</p>
+                    <p>Tasarımcılar, kursiyer ve eğitmenler, freelancerlar ve yazılım gelştiriciler için dijital
+                        platform</p>
                 </div>
                 <div class="footer-links">
                     <div class="footer-column">

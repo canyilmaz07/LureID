@@ -1253,6 +1253,10 @@ if (isset($_SESSION['user_id'])) {
                         <img src="/sources/icons/bulk/task-square.svg" alt="projects" class="white-icon">
                         <span>Projeler</span>
                     </a>
+                    <a href="/public/components/education/courses.php" class="profile-menu-item">
+                        <img src="/sources/icons/bulk/task-square.svg" alt="projects" class="white-icon">
+                        <span>Sınıf</span>
+                    </a>
                 <form method="POST" action="/auth/logout.php" class="profile-menu-item logout-item">
                     <img src="/sources/icons/bulk/logout.svg" alt="logout" class="white-icon">
                     <button type="submit"

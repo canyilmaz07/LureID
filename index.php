@@ -1,4 +1,11 @@
 <?php
+session_start();
+
+if (isset($_SESSION['user_id'])) {
+    header('Location: public/index.php');
+    exit;
+}
+
 // AJAX isteği kontrolü
 if (isset($_POST['loadMore'])) {
     $offset = intval($_POST['offset']);
@@ -661,7 +668,7 @@ function generateCard($i)
             <div class="footer-top">
                 <div class="footer-logo">
                     <h2>lureid</h2>
-                    <p>Tasarımcılar için dijital platform</p>
+                    <p>Tasarımcılar, kursiyer ve eğitmenler, freelancerlar ve yazılım gelştiriciler için dijital platform</p>
                 </div>
                 <div class="footer-links">
                     <div class="footer-column">
